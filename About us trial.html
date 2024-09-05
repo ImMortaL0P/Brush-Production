@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image and Scrolling Text</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      display: flex;
+      position: relative;
+    }
+
+    .image-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+	  display: flex;
+	  align-items: center;
+    }
+
+    .image-container img {
+      max-width: 50%; /* Make the image smaller */
+      height: auto;
+      display: block;
+      position: relative;
+      z-index: 2; /* Increase the z-index for the image */
+	  margin: 0 auto;
+    }
+
+    .scrolling-text-container {
+      position: absolute;
+      top: 60%; /* Adjust the position */
+      left: 100%; /* Start from the right side */
+      white-space: nowrap;
+      font-size: 48px; /* Set the font size to 120px */
+      color: #000; /* Adjust the text color */
+      animation: scrollText 8s linear infinite;
+      z-index: 1; /* Set the z-index for the scrolling text */
+    }
+
+    .scrolling-text {
+      display: inline-block;
+      padding-right: 100%;
+    }
+
+    .text-container {
+      flex: 1;
+      padding: 20px;
+      z-index: 1; /* Set the z-index for the text */
+    }
+
+    @keyframes scrollText {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-200%);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="image-container">
+    <!-- Replace 'image.png' with the path to your PNG image -->
+    <img src="Mangalam.png" alt="Image">
+    <div class="scrolling-text-container">
+      <div class="scrolling-text">
+        Mangalam | Designer, Engineer
+      </div>
+    </div>
+  </div>
+  <div class="text-container">
+    <h2>About the Image</h2>
+    <p>
+      Add your descriptive text about the image here. You can provide details, explanations, or any relevant information.
+    </p>
+  </div>
+</div>
+
+</body>
+</html>
