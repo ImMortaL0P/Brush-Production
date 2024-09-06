@@ -103,9 +103,9 @@ body{
 /* call of action */
 #cta{
     background-color: #331D2C;
-    padding: 7% 15%;
-    text-align: center;
     color: white;
+    text-align: center;
+    
 }
 
 /* footer */
@@ -132,4 +132,9 @@ body{
 .text
 {
     padding-top: 30px;
+}
+
+.cta-bg{
+    background-image: url("mobile app.jpg");
+    background-color: rgba(0,0,0,0.5);
 }
