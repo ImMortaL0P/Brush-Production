@@ -123,3 +123,13 @@ body{
     overflow: hidden; /* Hide overflow content */
     position: relative;
 }
+
+.darken
+{
+    opacity: 0.4;
+}
+
+.text
+{
+    padding-top: 30px;
+}
