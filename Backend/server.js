@@ -8,8 +8,15 @@ const port = 3000; // Backend server port
 
 // Enable CORS to allow requests from frontend (port 5500)
 app.use(cors({
-    origin: 'http://localhost:5500' // Adjust this if your frontend is served from a different origin
+    origin: 'http://localhost:5500'  // Change this to your frontend URL
 }));
+
+// Your other middleware and routes here
+
+// Start the server
+app.listen(3000, () => {
+    console.log('Backend server running on http://localhost:3000');
+});
 
 // Serve static files if needed (optional)
 // app.use(express.static('public'));
@@ -42,9 +49,4 @@ app.get('/products', (req, res) => {
         }
         res.json(results);
     });
-});
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Backend server running on http://localhost:${port}`);
 });
