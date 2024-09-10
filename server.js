@@ -7,10 +7,10 @@ app.use(cors()); // Enable CORS for all requests
 
 // MySQL database connection
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root', // Replace with your MySQL username
-    password: '', // Replace with your MySQL password
-    database: 'ecommerce'
+    host: 'sql12.freesqldatabase.com',
+    user: 'sql12730637', // Replace with your MySQL username
+    password: 'l1SYxaCmja', // Replace with your MySQL password
+    database: 'sql12730637'
 });
 
 // Connect to the database
