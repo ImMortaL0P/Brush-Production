@@ -30,7 +30,7 @@ const products = [
 function displayProducts() {
     const productList = document.getElementById('product-list');
 
-    // Loop through products and create product cards
+    // Loop through products and create product ca
     products.forEach(product => {
         const productCard = document.createElement('div');
         productCard.classList.add('product');
