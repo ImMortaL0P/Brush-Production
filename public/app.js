@@ -3,11 +3,13 @@
 // Function to fetch products from the backend server
 async function fetchProducts() {
     try {
-        const response = await fetch('http://localhost:3000/products'); // Ensure this URL matches your backend endpoint
+        const response = await fetch('http://localhost:5500/products'); 
+        console.log('Response:', response);// Ensure this URL matches your backend endpoint
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const products = await response.json();
+        console.log('Products:', products);
         displayProducts(products);
     } catch (error) {
         console.error('Error fetching products:', error);

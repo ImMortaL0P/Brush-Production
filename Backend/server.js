@@ -2,22 +2,27 @@
 
 const express = require('express');
 const mysql = require('mysql');
-const cors = require('cors'); // Import CORS
+const cors = require('cors');
 const app = express();
-const port = 3000; // Backend server port
+const port = 5500; // Backend server port
 
 // Enable CORS to allow requests from frontend (port 5500)
 app.use(cors({
-    origin: 'http://localhost:5500'  // Change this to your frontend URL
+    origin: 'http://localhost:5500',  // Ensure this matches your frontend URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow necessary HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'] // Allow necessary headers
 }));
 
-// Your other middleware and routes here
-
-// Start the server
-app.listen(3000, () => {
-    console.log('Backend server running on http://localhost:3000');
+// Your other middleware and routes
+app.get('/products', (req, res) => {
+    res.json([
+        // Array of product objects (replace with actual data from your database)
+    ]);
 });
 
+app.listen(5500, () => {
+    console.log('Server running on http://localhost:5500');
+});
 // Serve static files if needed (optional)
 // app.use(express.static('public'));
 
