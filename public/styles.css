@@ -84,6 +84,12 @@ body{
 #bestsellers{
     padding: 100px;
     text-align: center;
+    padding-bottom: 10PX;;
+}
+#newarrival{
+    padding: 100px;
+    text-align: center;
+    padding-top: 10PX;
 }
 .pricing-col {
     padding: 3% 2%;
@@ -141,4 +147,12 @@ body{
 
 .zoom
 {
+}
+
+.new-arrival
+{
+    width:50%;
+    max-width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
 }
