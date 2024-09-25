@@ -294,3 +294,85 @@ code {
     background-attachment: fixed;
     padding: 80px;
   }
+
+
+  .slider {
+    overflow: hidden;
+    max-width: 100%;
+    position: relative;
+}
+
+.slider-container {
+    display: flex;
+    transition: transform 0.3s ease;
+}
+
+.cardd {
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    margin: 0 10px;
+    flex-shrink: 0;
+    width: 300px;
+    text-align: center;
+    padding: 10px;
+}
+
+.cardd img {
+    max-width: 100%;
+    border-radius: 10px 10px 0 0;
+    object-fit: cover;
+}
+
+.cardd h3 {
+    margin: 15px 0;
+    font-size: 18px;
+    color: #000000;
+}
+
+/* .cardd button {
+    background-color: whitesmoke;
+    color: whitesmoke;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cardd button:hover {
+    background-color: black;
+    
+} */
+
+@media (max-width: 768px) {
+    .cardd {
+        width: 80%;
+    }
+}
+
+.prev-btn, .next-btn {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 10px;
+  font-size: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  transition: background-color 0.3s ease;
+}
+
+.prev-btn:hover, .next-btn:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.prev-btn {
+  left: 10px;
+}
+
+.next-btn {
+  right: 10px;
+}

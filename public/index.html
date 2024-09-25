@@ -94,7 +94,7 @@
   </style>
   <title>Brush</title>
   <!-- font awesome -->
-  <script src="script.js"></script> 
+  
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
 
   <!-- Google fonts -->
@@ -316,6 +316,64 @@
 <img src="new arrival.png">
 </div>
 
+<div class="slider">
+  <button class="prev-btn">&#10094;</button>
+  <div class="slider-container">
+      <div class="cardd">
+          <img src="product1.jpg" alt="Product 1">
+          <h3>Product 1</h3>
+          <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+      </div>
+      <div class="cardd">
+          <img src="product2.jpg" alt="Product 2">
+          <h3>Product 2</h3>
+          <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+      </div>
+      <div class="cardd">
+          <img src="Testimonials 3.jpg" alt="Product 3">
+          <h3>Product 3</h3>
+          <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+      </div>
+      <div class="cardd">
+        <img src="product3.jpg" alt="Product 3">
+        <h3>Product 3</h3>
+        <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+    </div>
+    <div class="cardd">
+      <img src="product3.jpg" alt="Product 3">
+      <h3>Product 3</h3>
+      <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+  </div>
+  <div class="cardd">
+    <img src="product3.jpg" alt="Product 3">
+    <h3>Product 3</h3>
+    <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+</div>
+<div class="cardd">
+  <img src="product3.jpg" alt="Product 3">
+  <h3>Product 3</h3>
+  <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+</div>
+<div class="cardd">
+          <img src="product3.jpg" alt="Product 3">
+          <h3>Product 3</h3>
+          <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+      </div>
+
+      <div class="cardd">
+        <img src="product3.jpg" alt="Product 3">
+        <h3>Product 3</h3>
+        <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+    </div>
+
+      <!-- Add more cards as needed -->
+  </div>
+
+  <button class="next-btn">&#10095;</button>
+
+
+</div>
+
   </section>
 
   <section id="grossing">
@@ -428,6 +486,7 @@
             </div>
        </div>
   </footer>
+
   <script>
    
 let slideIndex = 0;
@@ -449,6 +508,30 @@ function showSlides() {
   dots[slideIndex-1].className += " active";
   setTimeout(showSlides, 6000); // Change image every 6 seconds
 } 
+
+// script for making scrollable items cards
+const sliderContainer = document.querySelector('.slider-container');
+const prevBtn = document.querySelector('.prev-btn');
+const nextBtn = document.querySelector('.next-btn');
+
+let scrollAmount = 0;
+const scrollPerClick = 320;  // Adjust scroll based on card width + margin
+
+nextBtn.addEventListener('click', () => {
+    sliderContainer.scrollBy({ 
+        left: scrollPerClick, 
+        behavior: 'smooth' 
+    });
+});
+
+prevBtn.addEventListener('click', () => {
+    sliderContainer.scrollBy({ 
+        left: -scrollPerClick, 
+        behavior: 'smooth' 
+    });
+});
+
+
   </script>
 
 </body>
