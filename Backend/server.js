@@ -1,7 +1,7 @@
 // backend/server.js
 
 const express = require('express');
-const mysql = require('mysql');
+const sql = require('mssql');
 const cors = require('cors');
 const app = express();
 const port = 5500; // Backend server port
@@ -26,32 +26,37 @@ app.listen(5500, () => {
 // Serve static files if needed (optional)
 // app.use(express.static('public'));
 
-// Create connection to MySQL database
-const db = mysql.createConnection({
-    host: 'sql12.freesqldatabase.com',
-    user: 'sql12730637', // Your MySQL username
-    password: 'l1SYxaCmja', // Your MySQL password
-    database: 'sql12730637' // Replace with your database name
-});
-
-// Connect to the database
-db.connect(err => {
-    if (err) {
-        console.error('Database connection failed:', err.stack);
-        return;
+// Database configuration for Microsoft SQL Server
+const dbConfig = {
+    user: 'admin', // Your SQL Server username
+    password: 'not_ImMortaL26', // Your SQL Server password
+    server: 'products-1.c9ocia06gc0n.eu-north-1.rds.amazonaws.com', // SQL Server address or IP
+    port: 1433,
+    database: 'products', // Your database name
+    options: {
+        encrypt: true, // Use this option if you are connecting to Azure SQL Database
+        trustServerCertificate: true // Disable for secure production environments
     }
-    console.log('Connected to MySQL database');
-});
+};
+// Connect to the database
+// Connect to the SQL Server database
+sql.connect(dbConfig).then(pool => {
+    if (pool.connected) {
+        console.log('Connected to Microsoft SQL Server');
+    }
 
-// Endpoint to get products
-app.get('/products', (req, res) => {
-    const sql = 'SELECT name, price, description, imageUrl FROM products';
-    db.query(sql, (err, results) => {
-        if (err) {
+
+    // Endpoint to get products
+    app.get('/products', async (req, res) => {
+        try {
+            const result = await pool.request().query('SELECT name, price, description, imageUrl FROM products');
+            res.json(result.recordset);
+        } catch (err) {
             console.error('Error fetching products:', err);
             res.status(500).json({ error: 'Failed to fetch products' });
-            return;
         }
-        res.json(results);
     });
+
+}).catch(err => {
+    console.error('Database connection failed:', err.stack);
 });
