@@ -13,12 +13,12 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'] // Allow necessary headers
 }));
 
-// Your other middleware and routes
-app.get('/products', (req, res) => {
-    res.json([
-        // Array of product objects (replace with actual data from your database)
-    ]);
-});
+// // Your other middleware and routes
+// app.get('/products', (req, res) => {
+//     res.json([
+//         // Array of product objects (replace with actual data from your database)
+//     ]);
+// });
 
 app.listen(5500, () => {
     console.log('Server running on http://localhost:5500');
