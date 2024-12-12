@@ -11,7 +11,9 @@ app.use(cors({
     origin: 'http://localhost:5500',  // Ensure this matches your frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow necessary HTTP methods
     allowedHeaders: ['Content-Type', 'Authorization'] // Allow necessary headers
+    
 }));
+app.options('*', cors());
 
 // // Your other middleware and routes
 // app.get('/products', (req, res) => {
