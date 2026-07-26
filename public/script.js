@@ -186,13 +186,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const badgeStyle = badgeBg ? `style="background: ${badgeBg}; color: var(--bg-primary);"` : '';
         const discountPercentage = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
         
+        const stockQty = p.stockQuantity !== undefined ? p.stockQuantity : 50;
+        const isOut = stockQty <= 0;
+        
         return `
-          <div class="product-card fade-in ${delayClass} visible" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}">
+          <div class="product-card fade-in ${delayClass} visible" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
             <div class="product-card-image">
               <img src="${p.image}" alt="${p.name}">
               <span class="product-badge" ${badgeStyle}>${p.badge || badge}</span>
               <div class="product-quick-actions">
-                <button class="quick-add-btn">Add to Cart</button>
+                <button class="quick-add-btn" ${isOut ? 'disabled style="background: rgba(0,0,0,0.8); color: var(--text-muted); cursor: not-allowed;"' : ''}>
+                  ${isOut ? 'Out of Stock' : 'Add to Cart'}
+                </button>
               </div>
             </div>
             <div class="product-card-info">
@@ -412,7 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
       name: card.dataset.name,
       price: parseInt(card.dataset.price),
       originalPrice: parseInt(card.dataset.original),
-      image: card.dataset.image
+      image: card.dataset.image,
+      stockQuantity: parseInt(card.dataset.stock) || 0
     };
 
     if (!product.id || !product.name) return;
