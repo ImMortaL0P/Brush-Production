@@ -342,7 +342,18 @@
     <div class="view-section" id="inventory-view">
       <div class="header">
         <h1>Inventory & Products</h1>
-        <button class="refresh-btn" onclick="loadInventory()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <select id="inventory-cat-filter" onchange="loadInventory()" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 8px 15px; border-radius: 6px;">
+            <option value="All">All Categories</option>
+            <option value="Anime">Anime</option>
+            <option value="Movies & TV">Movies & TV</option>
+            <option value="Minimalist">Minimalist</option>
+            <option value="Cyberpunk">Cyberpunk</option>
+            <option value="Space & Sci-Fi">Space & Sci-Fi</option>
+            <option value="General">General / Other</option>
+          </select>
+          <button class="refresh-btn" onclick="loadInventory()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+        </div>
       </div>
       
 
@@ -374,7 +385,15 @@
       <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
         <form id="add-product-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
           <input type="text" id="new-prod-name" placeholder="Product Name *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <input type="text" id="new-prod-cat" placeholder="Category (e.g. Anime) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <select id="new-prod-cat" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; appearance: auto;">
+            <option value="" disabled selected>Select Category *</option>
+            <option value="Anime">Anime</option>
+            <option value="Movies & TV">Movies & TV</option>
+            <option value="Minimalist">Minimalist</option>
+            <option value="Cyberpunk">Cyberpunk</option>
+            <option value="Space & Sci-Fi">Space & Sci-Fi</option>
+            <option value="General">General / Other</option>
+          </select>
           <input type="number" id="new-prod-price" placeholder="Price (₹) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="number" id="new-prod-original-price" placeholder="Original Price (₹)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="text" id="new-prod-badge" placeholder="Badge (e.g. New, Sale)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
@@ -557,9 +576,21 @@
     async function loadInventory() {
       if (!adminToken) return;
       const tbody = document.getElementById('inventory-table-body');
+      const filter = document.getElementById('inventory-cat-filter');
+      const selectedCat = filter ? filter.value : 'All';
+      
       try {
         const res = await fetch(`${API_BASE}/products`);
-        const products = await res.json();
+        let products = await res.json();
+        
+        if (selectedCat !== 'All') {
+          products = products.filter(p => (p.category || '').toLowerCase() === selectedCat.toLowerCase());
+        }
+        
+        if (products.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No products found in this category.</td></tr>';
+          return;
+        }
         
         tbody.innerHTML = products.map(p => `
           <tr>
