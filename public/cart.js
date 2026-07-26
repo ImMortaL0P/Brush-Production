@@ -4,7 +4,7 @@
 
 const Cart = (() => {
   const STORAGE_KEY = 'brush_cart';
-  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-backend-api.onrender.com/api';
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
   let listeners = [];
 
   // ---- State ----

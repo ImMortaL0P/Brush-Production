@@ -3,7 +3,7 @@
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-backend-api.onrender.com/api';
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
 
   // ---- Navbar scroll effect ----
   const navbar = document.getElementById('navbar');
