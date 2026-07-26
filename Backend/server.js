@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const Razorpay = require('razorpay');
 
 const app = express();
+let activeAdminToken = null; // Store token in memory for simple auth
 const port = process.env.PORT || 5500;
 
 app.use(cors());
