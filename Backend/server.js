@@ -499,14 +499,27 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
 // Update product
 app.patch('/api/products/:id', requireAdmin, async (req, res) => {
   try {
-    const { name, price, badge, stockQuantity } = req.body;
+    const { name, price, badge, stockQuantity, category } = req.body;
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (price !== undefined) updateData.price = Number(price);
     if (badge !== undefined) updateData.badge = badge;
     if (stockQuantity !== undefined) updateData.stockQuantity = Number(stockQuantity);
+    if (category !== undefined) updateData.category = category;
     
-    await productsRef.doc(req.params.id.toString()).update(updateData);
+    // First try by doc ID (for newer products)
+    let docRef = productsRef.doc(req.params.id.toString());
+    const doc = await docRef.get();
+    
+    // If not found, try querying by the numeric 'id' field (for older products)
+    if (!doc.exists) {
+      const productId = parseInt(req.params.id);
+      const snapshot = await productsRef.where('id', '==', productId).limit(1).get();
+      if (snapshot.empty) return res.status(404).json({ error: 'Product not found' });
+      docRef = snapshot.docs[0].ref;
+    }
+    
+    await docRef.update(updateData);
     res.json({ success: true });
   } catch (error) {
     console.error('Update product error:', error);
@@ -572,25 +585,7 @@ app.patch('/api/orders/:orderId/status', requireAdmin, async (req, res) => {
   }
 });
 
-// Update product
-app.patch('/api/products/:id', requireAdmin, async (req, res) => {
-  try {
-    const productId = parseInt(req.params.id);
-    const snapshot = await productsRef.where('id', '==', productId).limit(1).get();
-    if (snapshot.empty) return res.status(404).json({ error: 'Product not found' });
-    
-    const docRef = snapshot.docs[0].ref;
-    const updates = req.body; // e.g. { price: 150, badge: 'Sale' }
-    
-    // Prevent updating critical fields
-    delete updates.id;
-    
-    await docRef.update(updates);
-    res.json({ message: 'Product updated successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update product' });
-  }
-});
+
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

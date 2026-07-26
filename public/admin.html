@@ -600,7 +600,15 @@
                 <img src="${p.image}" class="prod-thumb">
                 <div>
                   <input type="text" id="name-${p.id}" value="${p.name}" style="width: 200px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; font-weight:600; font-family:inherit;"><br>
-                  <small style="color:var(--text-secondary)">${p.category}</small>
+                  <select id="cat-${p.id}" style="width: 150px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:2px; border-radius:4px; font-size: 0.85rem; appearance: auto; margin-top: 5px;">
+                    <option value="Anime" ${p.category === 'Anime' ? 'selected' : ''}>Anime</option>
+                    <option value="Movies & TV" ${p.category === 'Movies & TV' ? 'selected' : ''}>Movies & TV</option>
+                    <option value="Minimalist" ${p.category === 'Minimalist' ? 'selected' : ''}>Minimalist</option>
+                    <option value="Cyberpunk" ${p.category === 'Cyberpunk' ? 'selected' : ''}>Cyberpunk</option>
+                    <option value="Space & Sci-Fi" ${p.category === 'Space & Sci-Fi' ? 'selected' : ''}>Space & Sci-Fi</option>
+                    <option value="General" ${p.category === 'General' ? 'selected' : ''}>General / Other</option>
+                    ${!['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'General'].includes(p.category) ? `<option value="${p.category}" selected>${p.category}</option>` : ''}
+                  </select>
                 </div>
               </div>
             </td>
@@ -628,6 +636,7 @@
     async function updateProduct(id) {
       if (!adminToken) return;
       const name = document.getElementById(`name-${id}`).value;
+      const category = document.getElementById(`cat-${id}`).value;
       const price = parseInt(document.getElementById(`price-${id}`).value);
       const stockQuantity = parseInt(document.getElementById(`stock-${id}`).value);
       const badge = document.getElementById(`badge-${id}`).value;
@@ -639,7 +648,7 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${adminToken}`
           },
-          body: JSON.stringify({ name, price, badge, stockQuantity })
+          body: JSON.stringify({ name, category, price, badge, stockQuantity })
         });
         handleApiError(res);
         if(!res.ok) throw new Error('Failed to update product');
