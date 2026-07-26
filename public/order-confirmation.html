@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed — Brush</title>
+  <meta name="description" content="Your Brush order has been confirmed! Track your premium poster delivery.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .confirmation-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 24px 60px;
+    }
+
+    .confirmation-card {
+      max-width: 640px;
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 40px;
+      text-align: center;
+    }
+
+    .confirmation-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00e676, #00c853);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 2.2rem;
+      color: white;
+      animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes scaleIn {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .confirmation-card h1 {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .confirmation-card .subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-bottom: 32px;
+    }
+
+    .order-id-display {
+      display: inline-block;
+      background: rgba(232, 197, 71, 0.1);
+      border: 1px solid rgba(232, 197, 71, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 12px 28px;
+      margin-bottom: 32px;
+    }
+
+    .order-id-display .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .order-id-display .id {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+
+    /* Order Details */
+    .order-details {
+      text-align: left;
+      margin: 24px 0;
+    }
+
+    .detail-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .detail-section h4 {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 0.9rem;
+    }
+
+    .detail-row .label { color: var(--text-secondary); }
+    .detail-row .value { font-weight: 600; }
+    .detail-row.total { 
+      padding-top: 12px; 
+      margin-top: 8px; 
+      border-top: 1px solid var(--border);
+      font-size: 1.05rem;
+    }
+    .detail-row.total .value { color: var(--accent); font-weight: 800; }
+    .detail-row .free { color: var(--success); }
+    .detail-row .discount { color: var(--success); }
+
+    .order-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .order-item-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .order-item-img {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--bg-secondary);
+    }
+
+    .order-item-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .order-item-info {
+      flex: 1;
+    }
+
+    .order-item-info h5 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .order-item-info p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .order-item-price {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    /* Status timeline */
+    .status-timeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 28px 0;
+      position: relative;
+    }
+
+    .status-timeline::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 40px;
+      right: 40px;
+      height: 3px;
+      background: var(--border);
+      z-index: 0;
+    }
+
+    .status-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .status-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text-muted);
+      transition: all 0.4s ease;
+    }
+
+    .status-step.active .status-dot {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    .status-step.active .status-label {
+      color: var(--text-primary);
+    }
+
+    .status-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Actions */
+    .confirmation-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .confirmation-actions .hero-cta {
+      font-size: 0.85rem;
+      padding: 14px 28px;
+    }
+
+    .confirmation-actions .outline-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid var(--border-light);
+      color: var(--text-primary);
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
+    }
+
+    .confirmation-actions .outline-btn:hover {
+      border-color: var(--accent);
+      background: rgba(232, 197, 71, 0.05);
+    }
+
+    /* Loading & Error States */
+    .loading-state, .error-state {
+      text-align: center;
+      padding: 60px 24px;
+    }
+
+    .loading-state .loader {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @media (max-width: 640px) {
+      .confirmation-card {
+        padding: 32px 20px;
+      }
+
+      .status-timeline {
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+      }
+
+      .status-timeline::before {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar scrolled" id="navbar">
+    <a href="index.html" class="nav-brand">Brush<span>.</span></a>
+    <div class="nav-actions">
+      <a href="index.html" class="nav-action-btn" aria-label="Back to store">
+        <i class="fa-solid fa-store"></i>
+      </a>
+    </div>
+  </nav>
+
+  <main class="confirmation-page">
+    <div class="confirmation-card" id="confirmation-card">
+      <div class="loading-state" id="loading-state">
+        <div class="loader"></div>
+        <p>Loading your order details...</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="cart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const card = document.getElementById('confirmation-card');
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get('orderId');
+
+      if (!orderId) {
+        card.innerHTML = `
+          <div class="error-state">
+            <i class="fa-solid fa-circle-exclamation" style="font-size:3rem;color:var(--sale-red);margin-bottom:16px;"></i>
+            <h2>No Order Found</h2>
+            <p style="color:var(--text-secondary);margin-top:8px;">No order ID was provided.</p>
+            <div class="confirmation-actions" style="margin-top:24px;">
+              <a href="index.html" class="hero-cta">Back to Store</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5500/api/orders/${orderId}`);
+        if (!response.ok) throw new Error('Order not found');
+        const data = await response.json();
+        const order = data.order;
+
+        const paymentLabel = {
+          'cod': 'Cash on Delivery',
+          'upi': 'UPI Payment',
+          'card': 'Credit/Debit Card'
+        }[order.paymentMethod] || order.paymentMethod;
+
+        card.innerHTML = `
+          <div class="confirmation-icon"><i class="fa-solid fa-check"></i></div>
+          <h1>Order Confirmed!</h1>
+          <p class="subtitle">Thank you for shopping with Brush. Your order has been placed successfully.</p>
+
+          <div class="order-id-display">
+            <span class="label">Order ID</span>
+            <span class="id">${order.orderId}</span>
+          </div>
+
+          <div class="status-timeline">
+            <div class="status-step active">
+              <div class="status-dot"><i class="fa-solid fa-check"></i></div>
+              <span class="status-label">Confirmed</span>
+            </div>
+            <div class="status-step">
+              <div class="status-dot"><i class="fa-solid fa-box"></i></div>
+              <span class="status-label">Packed</span>
+            </div>
+            <div class="status-step">
+              <div class="status-dot"><i class="fa-solid fa-truck"></i></div>
+              <span class="status-label">Shipped</span>
+            </div>
+            <div class="status-step">
+              <div class="status-dot"><i class="fa-solid fa-house"></i></div>
+              <span class="status-label">Delivered</span>
+            </div>
+          </div>
+
+          <div class="order-details">
+            <div class="detail-section">
+              <h4><i class="fa-solid fa-box-open"></i>&nbsp; Items Ordered</h4>
+              <div class="order-items-list">
+                ${order.items.map(item => `
+                  <div class="order-item-row">
+                    <div class="order-item-img"><img src="${item.image}" alt="${item.name}"></div>
+                    <div class="order-item-info">
+                      <h5>${item.name}</h5>
+                      <p>Qty: ${item.quantity}</p>
+                    </div>
+                    <span class="order-item-price">₹${item.subtotal}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <h4><i class="fa-solid fa-receipt"></i>&nbsp; Price Breakdown</h4>
+              <div class="detail-row">
+                <span class="label">Subtotal</span>
+                <span class="value">₹${order.subtotal}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Shipping</span>
+                <span class="value ${order.shipping === 0 ? 'free' : ''}">${order.shipping === 0 ? 'FREE' : '₹' + order.shipping}</span>
+              </div>
+              ${order.discount > 0 ? `
+              <div class="detail-row">
+                <span class="label">Discount (10%)</span>
+                <span class="value discount">-₹${order.discount}</span>
+              </div>
+              ` : ''}
+              <div class="detail-row total">
+                <span class="label">Total Paid</span>
+                <span class="value">₹${order.total}</span>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <h4><i class="fa-solid fa-location-dot"></i>&nbsp; Shipping To</h4>
+              <p style="font-size:0.9rem;line-height:1.6;">
+                <strong>${order.customer.name}</strong><br>
+                ${order.customer.address}<br>
+                ${order.customer.city}, ${order.customer.state} — ${order.customer.pincode}<br>
+                <span style="color:var(--text-muted);">Phone:</span> ${order.customer.phone}<br>
+                <span style="color:var(--text-muted);">Email:</span> ${order.customer.email}
+              </p>
+            </div>
+
+            <div class="detail-section">
+              <h4><i class="fa-solid fa-credit-card"></i>&nbsp; Payment & Delivery</h4>
+              <div class="detail-row">
+                <span class="label">Payment</span>
+                <span class="value">${paymentLabel}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Status</span>
+                <span class="value" style="color:var(--success);text-transform:capitalize;">${order.status}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Est. Delivery</span>
+                <span class="value">${order.estimatedDelivery}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="confirmation-actions">
+            <a href="index.html" class="hero-cta">Continue Shopping</a>
+            <button class="outline-btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Receipt</button>
+          </div>
+        `;
+      } catch (err) {
+        card.innerHTML = `
+          <div class="error-state">
+            <i class="fa-solid fa-circle-exclamation" style="font-size:3rem;color:var(--sale-red);margin-bottom:16px;display:block;"></i>
+            <h2>Could Not Load Order</h2>
+            <p style="color:var(--text-secondary);margin:8px 0 24px;">${err.message}<br><small>Make sure the backend server is running on port 5500.</small></p>
+            <div class="confirmation-actions">
+              <a href="index.html" class="hero-cta">Back to Store</a>
+            </div>
+          </div>
+        `;
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,19 +1,13 @@
 {
-  "name": "backend",
+  "name": "brush-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend for Brush poster store",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.20.0",
-    "mssql": "^12.7.0",
-    "mysql": "^2.18.1"
+    "express": "^4.18.2"
   }
 }

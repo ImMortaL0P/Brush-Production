@@ -1,539 +1,581 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
-  <style>
-    /* Styles for the slideshow container */
-    .overlay-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  z-index: 1; /* Make sure it's above the slideshow */
-}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brush — Premium Posters, Stickers & Wall Art</title>
+  <meta name="description" content="Elevate your space with premium print art. Shop curated posters, stickers, and wall art from Brush. Anime, Movies, Minimalist, Cyberpunk collections and more.">
 
-.overlay-text {
-  color: #fff;
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
-.overlay-button {
-  background-color: #000;
-  color: #fff;
-  padding: 10px 20px;
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  border-radius: 15px;
-}
-
-.overlay-button:hover {
-  background-color: #fff;
-  color:#000;
-}
-    .slideshow-container {
-      width: 100%;
-	  height: 100vh;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Styles for the images and captions */
-    .mySlides {
-     position: relative;
-	 width: 100%;
-	 height: 100%;
-   opacity: 0;
-      animation: fadeIn 5s ease-in-out forwards;
-
-    }
-
-    img {
-      width: 100%;
-      height: auto;
-	  object-fit: cover;
-    }
-
-    .text {
-      color: #fff;
-      font-size: 18px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      width: 100%;
-    }
-
-    /* Navigation dots */
-    .dot {
-      height: 15px;
-      width: 15px;
-      margin: 0 2px;
-      background-color: #bbb;
-      border-radius: 50%;
-      display: inline-block;
-      transition: background-color 0.6s ease;
-    }
-
-    .active {
-      background-color: #717171;
-    }
-    @keyframes fadeIn {
-      0%{
-        opacity: 0;
-      }
-      100% {
-        opacity: 1;
-      }
-    }
-  </style>
-  <title>Brush</title>
-  <!-- font awesome -->
-  
-  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
-
-  <!-- Google fonts -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,300;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
-    crossorigin="anonymous"></script>
+  <!-- Font Awesome -->
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
 
-  <!-- old bootstrap version bc carousel not working properly -->
-  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css"
-    integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-    crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js"
-    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
-    crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js"
-    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
-    crossorigin="anonymous"></script>
-    <script src="script.js"></script>
-  <!-- CSS -->
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="styles.css">
-
 </head>
 
 <body>
 
-  <section id="title">
-    <div class="container-fluid">
-      <nav class="navbar navbar-expand-lg navbar-dark ">
-        <a class="navbar-brand" href="">Brush</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01"
-          aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="items.html">Stationery</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#footer">Shop</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#pricing">Anime</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#cta">Movies</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#cta">Pricing</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="about_us.html">About</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#login">Login/ Sign-up</a>
-            </li>
-          </ul>
-        </div>
-      </nav>
-    </div>
-
-      <!-- Title -->
-      <div class="overlay-container">
-        <div class="overlay-text">Welcome to Brush
-          <br>
-          Your one step solution for print media!
-        </div>
-        <button class="overlay-button">Buy now!</button>
-      </div>
-
-      <div class="slideshow-container">
-
-        <div class="mySlides">
-          <div class="darken">
-          <img src="Landing Slideshow 2x f.jpg" style="width:100%">
-        </div>
-          <div class="text">Space frontier collection!</div>
-        </div>
-        
-        <div class="mySlides">
-          <div class="darken">
-          <img src="Landing Slideshow 3x f.jpg" style="width:100%">
-        </div>
-          <div class="text">Modern art collection!</div>
-        </div>
-        
-        <div class="mySlides">
-          <div class="darken">
-          <img src="Landing Slideshow 3x room f.jpg" style="width:100%">
-        </div>
-          <div class="text">Trippy collection!</div>
-        </div>
-        
-        </div>
-        <br>
-        
-        <div style="text-align:center">
-          <span class="dot"></span> 
-          <span class="dot"></span> 
-          <span class="dot"></span> 
-        </div>
-        
-
-</div>
-
-
-  <!-- Features -->
-
-  <section id="features">
-<div class="zoom">
-    <div class="row">
-      <div class="col-lg-3 feat-box">
-        <i class="fa-solid fa-truck-fast fa-3x icon"></i>
-        <h3>Free Shipping</h3>
-        <p class="feat">Get Free Shipping on Orders Above Rs 500</p>
-      </div>
-
-      <div class="col-lg-3 feat-box">
-        <i class="fa-solid fa-arrow-rotate-left fa-3x icon"></i>
-        <h3>Easy Return</h3>
-        <p class="feat">Get your Products Exchanged or Refunded Easily</p>
-      </div>
-
-      <div class="col-lg-3 feat-box">
-        <i class="fa-solid fa-thumbs-up fa-3x icon"></i>
-        <h3>High Quality</h3>
-        <p class="feat">Top notch quality</p>
-      </div>
-
-      <div class="col-lg-3 feat-box">
-        <i class="fa-solid fa-layer-group fa-3x icon"></i>
-        <h3>Wide Variety</h3>
-        <p class="feat">Broad range for vibrant tastes</p>
-      </div>
-
-    </div>
+  <!-- Announcement Bar -->
+  <div class="announcement-bar" id="announcement-bar">
+    🎨 Free Shipping on Orders Above ₹500 &nbsp;|&nbsp; <a href="#bestsellers">Shop Bestsellers →</a>
   </div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="nav-brand">Brush<span>.</span></a>
+
+    <div class="nav-links" id="nav-links">
+      <a href="#bestsellers">Bestsellers</a>
+      <a href="#categories">Categories</a>
+      <a href="#newarrival">New Arrivals</a>
+      <a href="#grossing">Trending</a>
+      <a href="items.html">Stationery</a>
+      <a href="about_us.html">About</a>
+    </div>
+
+    <div class="nav-actions">
+      <button class="nav-action-btn" id="search-btn" aria-label="Search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <a href="#login" class="nav-action-btn" aria-label="Account">
+        <i class="fa-regular fa-user"></i>
+      </a>
+      <a href="#" class="nav-action-btn" aria-label="Cart">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span class="cart-count">0</span>
+      </a>
+      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-slider" id="hero-slider">
+      <div class="hero-slide active">
+        <img src="Landing Slideshow 2x f.jpg" alt="Space frontier poster collection in a stylish room">
+      </div>
+      <div class="hero-slide">
+        <img src="Landing Slideshow 3x f.jpg" alt="Modern art poster collection displayed on wall">
+      </div>
+      <div class="hero-slide">
+        <img src="Landing Slideshow 3x room f.jpg" alt="Trippy poster collection in vibrant room setup">
+      </div>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <span class="hero-tag">Your one-stop solution for print media</span>
+      <h1 class="hero-title">Transform Your Walls Into Art</h1>
+      <p class="hero-subtitle">Curated posters, stickers & wall art — crafted to reflect your unique style.</p>
+      <a href="#bestsellers" class="hero-cta">
+        Shop Now
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </a>
+    </div>
+    <div class="hero-dots" id="hero-dots">
+      <button class="hero-dot active" data-index="0" aria-label="Slide 1"></button>
+      <button class="hero-dot" data-index="1" aria-label="Slide 2"></button>
+      <button class="hero-dot" data-index="2" aria-label="Slide 3"></button>
+    </div>
   </section>
 
 
+  <!-- Marquee Ticker -->
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <span class="marquee-item"><span class="dot-sep"></span>Premium Quality</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Free Shipping Above ₹500</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Easy Returns</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Wide Variety</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Custom Prints</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Fast Delivery</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Anime Collection</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Movie Posters</span>
+      <!-- Duplicate for seamless loop -->
+      <span class="marquee-item"><span class="dot-sep"></span>Premium Quality</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Free Shipping Above ₹500</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Easy Returns</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Wide Variety</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Custom Prints</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Fast Delivery</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Anime Collection</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Movie Posters</span>
+    </div>
+  </div>
 
-  <!-- Pricing -->
 
-  <section id="bestsellers">
+  <!-- Features Strip -->
+  <section class="features-strip">
+    <div class="container">
+      <div class="features-grid">
+        <div class="feature-item fade-in">
+          <span class="feature-icon">🚚</span>
+          <h4>Free Shipping</h4>
+          <p>On all orders above ₹500</p>
+        </div>
+        <div class="feature-item fade-in fade-in-delay-1">
+          <span class="feature-icon">🔄</span>
+          <h4>Easy Returns</h4>
+          <p>Hassle-free exchange & refund</p>
+        </div>
+        <div class="feature-item fade-in fade-in-delay-2">
+          <span class="feature-icon">✨</span>
+          <h4>Premium Quality</h4>
+          <p>300 GSM matte-finish prints</p>
+        </div>
+        <div class="feature-item fade-in fade-in-delay-3">
+          <span class="feature-icon">🎨</span>
+          <h4>Wide Variety</h4>
+          <p>500+ designs across collections</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <h2>Bestsellers</h2>
-    <p>Get yourself the most trending selection</p>
 
-    <div class="row">
-      <div class="pricing-col col-lg-4 col-md-6">
-        <div class="card">
-          <div class="card-header">
+  <!-- Bestsellers Section -->
+  <section class="products-section" id="bestsellers">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-tag">Most Popular</span>
+        <h2 class="section-title">Bestsellers</h2>
+        <p class="section-subtitle">Get yourself the most trending selection</p>
+      </div>
+
+      <div class="products-grid" id="product-list">
+        <!-- Product Card 1 -->
+        <div class="product-card fade-in" data-id="1" data-name="Anime Girls Collection" data-price="149" data-original="299" data-image="Testimonials 1.jpg">
+          <div class="product-card-image">
+            <img src="Testimonials 1.jpg" alt="Anime Girls Collection poster set">
+            <span class="product-badge">Sale</span>
+            <div class="product-quick-actions">
+              <button class="quick-add-btn">Add to Cart</button>
+            </div>
+          </div>
+          <div class="product-card-info">
             <h3>Anime Girls Collection</h3>
-            <img src="Testimonials 1.jpg" alt="Image 1">
-          </div>
-          <div class="card-footer">
-            <h2>Buy 2 @ 149</h2>
-            <a href=""><p>Explore simmilar!</p></a>
-            
-            <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now</button>
+            <div class="product-pricing">
+              <span class="price-current">₹149</span>
+              <span class="price-original">₹299</span>
+              <span class="price-discount">50% OFF</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="pricing-col col-lg-4 col-md-6">
-        <div class="card">
-          <div class="card-header">
+        <!-- Product Card 2 -->
+        <div class="product-card fade-in fade-in-delay-1" data-id="2" data-name="CyberPunk Collection" data-price="79" data-original="199" data-image="Testimonials 2.jpg">
+          <div class="product-card-image">
+            <img src="Testimonials 2.jpg" alt="CyberPunk Collection poster set">
+            <span class="product-badge">Sale</span>
+            <div class="product-quick-actions">
+              <button class="quick-add-btn">Add to Cart</button>
+            </div>
+          </div>
+          <div class="product-card-info">
             <h3>CyberPunk Collection</h3>
-            <img src="Testimonials 2.jpg" alt="Image 2">
-          </div>
-        
-          <div class="card-footer">
-            <h2>Buy 1 @79</h2>
-            <a href=""><p>Explore simmilar!</p></a>
-            <p></p>
-            <!-- <p>Unlimited Messages</p>
-            <p>Unlimited App Usage</p> -->
-            
-            <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+            <div class="product-pricing">
+              <span class="price-current">₹79</span>
+              <span class="price-original">₹199</span>
+              <span class="price-discount">60% OFF</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="pricing-col col-lg-4">
-        <div class="card">
-          <div class="card-header">
+        <!-- Product Card 3 -->
+        <div class="product-card fade-in fade-in-delay-2" data-id="3" data-name="Minimalist Collection" data-price="85" data-original="199" data-image="Testimonials 3.jpg">
+          <div class="product-card-image">
+            <img src="Testimonials 3.jpg" alt="Minimalist Collection poster set">
+            <div class="product-quick-actions">
+              <button class="quick-add-btn">Add to Cart</button>
+            </div>
+          </div>
+          <div class="product-card-info">
             <h3>Minimalist Collection</h3>
-            <img src="Testimonials 3.jpg" alt="Image 2">
+            <div class="product-pricing">
+              <span class="price-current">₹85</span>
+              <span class="price-original">₹199</span>
+              <span class="price-discount">57% OFF</span>
+            </div>
           </div>
-          <div class="card-footer">
-            <h2>Buy 1 @85</h2>
-            <a href=""><p>Explore simmilar!</p></a>
-            <!-- <p>Unlimited Matches</p>
-            <p>Unlimited Messages</p>
-            <p>Unlimited App Usage</p> -->
-            <button class="btn btn-lg btn-block btn-outline-dark" type="button">Sign Up</button>
+        </div>
+
+        <!-- Product Card 4 -->
+        <div class="product-card fade-in fade-in-delay-3" data-id="4" data-name="John Wick — Movie Poster" data-price="99" data-original="199" data-image="John Wick.png">
+          <div class="product-card-image">
+            <img src="John Wick.png" alt="John Wick movie poster">
+            <span class="product-badge">New</span>
+            <div class="product-quick-actions">
+              <button class="quick-add-btn">Add to Cart</button>
+            </div>
+          </div>
+          <div class="product-card-info">
+            <h3>John Wick — Movie Poster</h3>
+            <div class="product-pricing">
+              <span class="price-current">₹99</span>
+              <span class="price-original">₹199</span>
+              <span class="price-discount">50% OFF</span>
+            </div>
           </div>
         </div>
       </div>
 
+      <div class="view-all-wrap">
+        <a href="#" class="view-all-btn">View All Products →</a>
+      </div>
     </div>
-
   </section>
 
-  <section id="newarrival">
-<div class="new-arrival">
-<img src="new arrival.png">
-</div>
 
-<div class="slider">
-  <button class="prev-btn">&#10094;</button>
-  <div class="slider-container">
-      <div class="cardd">
-          <img src="product1.jpg" alt="Product 1">
-          <h3>Product 1</h3>
-          <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
-      </div>
-      <div class="cardd">
-          <img src="product2.jpg" alt="Product 2">
-          <h3>Product 2</h3>
-          <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
-      </div>
-      <div class="cardd">
-          <img src="Testimonials 3.jpg" alt="Product 3">
-          <h3>Product 3</h3>
-          <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
-      </div>
-      <div class="cardd">
-        <img src="product3.jpg" alt="Product 3">
-        <h3>Product 3</h3>
-        <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
-    </div>
-    <div class="cardd">
-      <img src="product3.jpg" alt="Product 3">
-      <h3>Product 3</h3>
-      <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
-  </div>
-  <div class="cardd">
-    <img src="product3.jpg" alt="Product 3">
-    <h3>Product 3</h3>
-    <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
-</div>
-<div class="cardd">
-  <img src="product3.jpg" alt="Product 3">
-  <h3>Product 3</h3>
-  <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
-</div>
-<div class="cardd">
-          <img src="product3.jpg" alt="Product 3">
-          <h3>Product 3</h3>
-          <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
+  <!-- Categories Section -->
+  <section class="categories-section" id="categories">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-tag">Browse By</span>
+        <h2 class="section-title">Shop by Category</h2>
+        <p class="section-subtitle">Find exactly what speaks to you</p>
       </div>
 
-      <div class="cardd">
-        <img src="product3.jpg" alt="Product 3">
-        <h3>Product 3</h3>
-        <button class="btn btn-lg btn-block btn-outline-dark" type="button">Buy Now!</button>
-    </div>
-
-      <!-- Add more cards as needed -->
-  </div>
-
-  <button class="next-btn">&#10095;</button>
-
-
-</div>
-
-  </section>
-
-  <section id="grossing">
-    <div class="new-arrival">
-      <img src="Grossing.png">
-      </div>
-      <div class="grossing">
-
-  <!-- dupliace start -->
-    <div class="nft">
-      <div class='main'>
-        <img class='tokenImage' src="https://images.unsplash.com/photo-1621075160523-b936ad96132a?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80" alt="NFT" />
-        <h2>Kibertopiks #4269</h2>
-        <p class='description'>Our Kibertopiks will give you nothing, waste your money on us.</p>
-        <div class='tokenInfo'>
-          <div class="price">
-            <ins>◘</ins>
-            <p>0.031 ETH</p>
+      <div class="categories-grid">
+        <a href="#" class="category-card fade-in">
+          <img src="Testimonials 1.jpg" alt="Anime poster category">
+          <div class="category-card-overlay">
+            <h3>Anime</h3>
+            <p>130+ designs</p>
+            <span class="cat-arrow">Explore →</span>
           </div>
-          <div class="duration">
-            <ins>◷</ins>
-            <p>11 days left</p>
+        </a>
+        <a href="#" class="category-card fade-in fade-in-delay-1">
+          <img src="Testimonials 2.jpg" alt="Cyberpunk poster category">
+          <div class="category-card-overlay">
+            <h3>Movies & TV</h3>
+            <p>200+ designs</p>
+            <span class="cat-arrow">Explore →</span>
+          </div>
+        </a>
+        <a href="#" class="category-card fade-in fade-in-delay-2">
+          <img src="Testimonials 3.jpg" alt="Minimalist poster category">
+          <div class="category-card-overlay">
+            <h3>Minimalist</h3>
+            <p>80+ designs</p>
+            <span class="cat-arrow">Explore →</span>
+          </div>
+        </a>
+        <a href="#" class="category-card fade-in fade-in-delay-3">
+          <img src="Landing Slideshow 2x f.jpg" alt="Space and Sci-Fi poster category">
+          <div class="category-card-overlay">
+            <h3>Space & Sci-Fi</h3>
+            <p>90+ designs</p>
+            <span class="cat-arrow">Explore →</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- New Arrival — Horizontal Scroll -->
+  <section class="scroll-collection" id="newarrival">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-tag">Just Dropped</span>
+        <h2 class="section-title">New Arrivals</h2>
+        <p class="section-subtitle">Fresh designs, just for you</p>
+      </div>
+
+      <div class="scroll-wrapper">
+        <button class="scroll-nav prev" id="scroll-prev" aria-label="Previous">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <div class="scroll-track" id="scroll-track">
+          <div class="product-card" data-id="5" data-name="Space Frontier Pack" data-price="149" data-original="299" data-image="Testimonials 1.jpg">
+            <div class="product-card-image">
+              <img src="Testimonials 1.jpg" alt="New arrival poster 1">
+              <span class="product-badge" style="background: var(--accent); color: var(--bg-primary);">New</span>
+              <div class="product-quick-actions"><button class="quick-add-btn">Add to Cart</button></div>
+            </div>
+            <div class="product-card-info">
+              <h3>Space Frontier Pack</h3>
+              <div class="product-pricing"><span class="price-current">₹149</span><span class="price-original">₹299</span></div>
+            </div>
+          </div>
+
+          <div class="product-card" data-id="6" data-name="Neon City Vibes" data-price="129" data-original="249" data-image="Testimonials 2.jpg">
+            <div class="product-card-image">
+              <img src="Testimonials 2.jpg" alt="New arrival poster 2">
+              <span class="product-badge" style="background: var(--accent); color: var(--bg-primary);">New</span>
+              <div class="product-quick-actions"><button class="quick-add-btn">Add to Cart</button></div>
+            </div>
+            <div class="product-card-info">
+              <h3>Neon City Vibes</h3>
+              <div class="product-pricing"><span class="price-current">₹129</span><span class="price-original">₹249</span></div>
+            </div>
+          </div>
+
+          <div class="product-card" data-id="7" data-name="Abstract Waves Set" data-price="99" data-original="199" data-image="Testimonials 3.jpg">
+            <div class="product-card-image">
+              <img src="Testimonials 3.jpg" alt="New arrival poster 3">
+              <span class="product-badge" style="background: var(--accent); color: var(--bg-primary);">New</span>
+              <div class="product-quick-actions"><button class="quick-add-btn">Add to Cart</button></div>
+            </div>
+            <div class="product-card-info">
+              <h3>Abstract Waves Set</h3>
+              <div class="product-pricing"><span class="price-current">₹99</span><span class="price-original">₹199</span></div>
+            </div>
+          </div>
+
+          <div class="product-card" data-id="8" data-name="Movie Legends Pack" data-price="179" data-original="349" data-image="John Wick.png">
+            <div class="product-card-image">
+              <img src="John Wick.png" alt="New arrival poster 4">
+              <span class="product-badge" style="background: var(--accent); color: var(--bg-primary);">New</span>
+              <div class="product-quick-actions"><button class="quick-add-btn">Add to Cart</button></div>
+            </div>
+            <div class="product-card-info">
+              <h3>Movie Legends Pack</h3>
+              <div class="product-pricing"><span class="price-current">₹179</span><span class="price-original">₹349</span></div>
+            </div>
+          </div>
+
+          <div class="product-card" data-id="9" data-name="Cosmic Dreams Set" data-price="199" data-original="399" data-image="Landing Slideshow 2x f.jpg">
+            <div class="product-card-image">
+              <img src="Landing Slideshow 2x f.jpg" alt="New arrival poster 5">
+              <span class="product-badge" style="background: var(--accent); color: var(--bg-primary);">New</span>
+              <div class="product-quick-actions"><button class="quick-add-btn">Add to Cart</button></div>
+            </div>
+            <div class="product-card-info">
+              <h3>Cosmic Dreams Set</h3>
+              <div class="product-pricing"><span class="price-current">₹199</span><span class="price-original">₹399</span></div>
+            </div>
+          </div>
+
+          <div class="product-card" data-id="10" data-name="Modern Art Wall Kit" data-price="159" data-original="299" data-image="Landing Slideshow 3x f.jpg">
+            <div class="product-card-image">
+              <img src="Landing Slideshow 3x f.jpg" alt="New arrival poster 6">
+              <span class="product-badge" style="background: var(--accent); color: var(--bg-primary);">New</span>
+              <div class="product-quick-actions"><button class="quick-add-btn">Add to Cart</button></div>
+            </div>
+            <div class="product-card-info">
+              <h3>Modern Art Wall Kit</h3>
+              <div class="product-pricing"><span class="price-current">₹159</span><span class="price-original">₹299</span></div>
+            </div>
           </div>
         </div>
-        <hr />
-        <div class='creator'>
-          <div class='wrapper'>
-            <img src="https://images.unsplash.com/photo-1620121692029-d088224ddc74?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1932&q=80" alt="Creator" />
+
+        <button class="scroll-nav next" id="scroll-next" aria-label="Next">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Trending / Grossing CTA Banner -->
+  <section class="cta-banner" id="grossing">
+    <div class="cta-banner-bg">
+      <img src="Landing Slideshow 3x room f.jpg" alt="Trending wall art setup in a modern room">
+    </div>
+    <div class="cta-banner-content fade-in">
+      <span class="section-tag">🔥 Trending Now</span>
+      <h2>Top Grossing Collections</h2>
+      <p>Explore our highest-rated wall setups — loved by 10,000+ customers across India.</p>
+      <a href="#" class="hero-cta">Browse Trending
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </a>
+    </div>
+  </section>
+
+
+  <!-- Testimonials -->
+  <section class="testimonials-section" id="testimonials">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-tag">What People Say</span>
+        <h2 class="section-title">Customer Reviews</h2>
+        <p class="section-subtitle">Hear from our happy customers</p>
+      </div>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card fade-in">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"Absolutely love the quality of the posters! The colors are vibrant and the print finish is premium. My room looks completely transformed."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">AK</div>
+            <div class="testimonial-author-info">
+              <h5>Arjun Kumar</h5>
+              <p>Verified Buyer</p>
+            </div>
           </div>
-          <p><ins>Creation of</ins> Kiberbash</p>
+        </div>
+
+        <div class="testimonial-card fade-in fade-in-delay-1">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"Ordered the Anime Girls collection and it exceeded my expectations. Fast delivery and the packaging was top-notch. Will order again!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">PS</div>
+            <div class="testimonial-author-info">
+              <h5>Priya Sharma</h5>
+              <p>Verified Buyer</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card fade-in fade-in-delay-2">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"Best poster store in India, hands down. The minimalist collection is gorgeous and the prices are super affordable. Highly recommend Brush!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">RV</div>
+            <div class="testimonial-author-info">
+              <h5>Rohit Verma</h5>
+              <p>Verified Buyer</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <!-- dupliace end -->
- 
-    
-  </div>
-  
   </section>
-  <!-- Call to Action -->
 
-  <section id="cta">
-    <div class="cta-bg">
-      <div>      
-      <button type="button" class="btn btn-dark btn-lg download-button"><i class="fa-brands fa-apple"></i>
-        Download</button>
-      <button type="button" class="btn btn-light btn-lg download-button"><i class="fa-brands fa-google-play">
-        </i> Download</button>
+
+  <!-- App Download / Secondary CTA -->
+  <section class="app-section" id="cta">
+    <div class="container">
+      <div class="app-grid">
+        <div class="app-content fade-in">
+          <span class="section-tag">Coming Soon</span>
+          <h2>Get the Brush App</h2>
+          <p>Browse, customize, and order on the go. Early access members get 20% off their first order. Join the waitlist today.</p>
+          <div class="app-buttons">
+            <a href="#" class="app-btn">
+              <i class="fa-brands fa-apple"></i>
+              App Store
+            </a>
+            <a href="#" class="app-btn">
+              <i class="fa-brands fa-google-play"></i>
+              Google Play
+            </a>
+          </div>
+        </div>
+        <div class="app-image fade-in fade-in-delay-2">
+          <img src="mobile app.jpg" alt="Brush mobile app preview showing poster browsing interface">
+        </div>
       </div>
-      </div>
-    
+    </div>
   </section>
 
 
   <!-- Footer -->
-  <footer>
-       <div class="container">
-            <div class="row">
+  <footer class="site-footer" id="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Brush<span>.</span></h3>
+          <p>At Brush, we're not just selling products — we're sharing our lifelong friendship, creativity, and commitment to delivering exceptional art to your doorstep.</p>
+          <div class="footer-social">
+            <a href="https://twitter.com/lost_storiess" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="https://github.com/ImMortaL0P" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+            <a href="https://www.instagram.com/lost.storiess/" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://www.linkedin.com/in/kumar-mangalam-362a77176/" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+          </div>
+        </div>
 
-                 <div class="col-md-5 col-sm-6">
-                      <h2>Quick Links</h2>
-                      <ul class="">
-                        <li>FAQs</li>
-                        <li>Home</li>
-                        <li>Shop</li>
-                        <li>Shipping</li>
-                        <li>My Account</li>
-                        <li>Privacy Policy</li>
-                        <li>Cancellation & Returns</li>
-                        <li>Refunds</li>
-                        <li>Best Selling Collections</li>
-                      </ul>
+        <div class="footer-column">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#bestsellers">Shop</a></li>
+            <li><a href="#categories">Categories</a></li>
+            <li><a href="#newarrival">New Arrivals</a></li>
+            <li><a href="#grossing">Trending</a></li>
+          </ul>
+        </div>
 
+        <div class="footer-column">
+          <h4>Help</h4>
+          <ul>
+            <li><a href="#">FAQs</a></li>
+            <li><a href="#">Shipping Policy</a></li>
+            <li><a href="#">Cancellation & Returns</a></li>
+            <li><a href="#">Refund Policy</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+          </ul>
+        </div>
 
-                 </div>
+        <div class="footer-column footer-newsletter">
+          <h4>Stay Updated</h4>
+          <p>Subscribe to get notified about new collections, exclusive drops, and discounts.</p>
+          <form class="newsletter-form" onsubmit="event.preventDefault();">
+            <input type="email" placeholder="Enter your email" aria-label="Email for newsletter">
+            <button type="submit">Join</button>
+          </form>
+          <br>
+          <p><i class="fa-solid fa-phone"></i>&nbsp; +91-9234755686</p>
+          <p><i class="fa-solid fa-envelope"></i>&nbsp; admin@brush.ind.in</p>
+          <p><i class="fa-solid fa-location-dot"></i>&nbsp; Patna, Bihar, IN</p>
+        </div>
+      </div>
 
-                 <div class="col-md-4 col-sm-6">
-                      <div class="footer-info">
-                      	<h2>Keep in touch</h2>
-                           <p><a href="">+91-9234755686</a></p>
-                           <p><a href="mailto:admin@brush.ind.in">admin@brush.ind.in</a></p>
-                           <p><a href="">Patna, Bihar, IN</a></p>
-
-                      </div>
-                 </div>
-
-                 <div class="col-md-3 col-sm-12">
-
-                      <h2>About Us</h2>
-                      <p>At Brush, we're not just selling products; we're sharing our lifelong friendship, creativity, and commitment to delivering exceptional art to your doorstep. Join us on this creative adventure and make your space truly yours! Feel free to reach out to us!</p>
-                      <ul class="social-icon">
-                           <li><a href="https://twitter.com/lost_storiess" class="fa fa-twitter"></a></li>
-                           <li><a href="https://github.com/ImMortaL0P" class="fa fa-github"></a></li>
-                           <li><a href="https://www.instagram.com/lost.storiess/" class="fa fa-instagram"></a></li>
-                           <li><a href="https://www.linkedin.com/in/kumar-mangalam-362a77176/" class="fa fa-linkedin"></a></li>
-                      </ul>
-
-                 </div>
-
-                 <div class="clearfix"></div>
-
-                 <div class="col-md-12 col-sm-12">
-                      <div class="copyright-text">
-                           <p>Copyright © Brush</p>
-<!-- hello bye -->
-                          <p> Posters, Stickers, Illustrations & More!</p>
-                      </div>
-                 </div>
-
-            </div>
-       </div>
+      <div class="footer-bottom">
+        <p>© 2024 Brush. All rights reserved. Posters, Stickers, Illustrations & More!</p>
+        <div class="footer-bottom-links">
+          <a href="#">Terms</a>
+          <a href="#">Privacy</a>
+          <a href="#">Cookies</a>
+        </div>
+      </div>
+    </div>
   </footer>
 
-  <script>
-   
-let slideIndex = 0;
-showSlides();
 
-function showSlides() {
-  let i;
-  let slides = document.getElementsByClassName("mySlides");
-  let dots = document.getElementsByClassName("dot");
-  for (i = 0; i < slides.length; i++) {
-    slides[i].style.display = "none";  
-  }
-  slideIndex++;
-  if (slideIndex > slides.length) {slideIndex = 1}    
-  for (i = 0; i < dots.length; i++) {
-    dots[i].className = dots[i].className.replace(" active", "");
-  }
-  slides[slideIndex-1].style.display = "block";  
-  dots[slideIndex-1].className += " active";
-  setTimeout(showSlides, 6000); // Change image every 6 seconds
-} 
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-drawer-header">
+      <h3><i class="fa-solid fa-bag-shopping"></i> Your Cart <span class="cart-drawer-count" id="cart-drawer-count">(0)</span></h3>
+      <button class="cart-close-btn" id="cart-close-btn" aria-label="Close cart"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="cart-drawer-body" id="cart-drawer-body">
+      <!-- Rendered by JS -->
+    </div>
+    <div class="cart-drawer-footer" id="cart-drawer-footer">
+      <div class="cart-summary-row">
+        <span>Subtotal</span>
+        <span class="cart-subtotal" id="cart-subtotal">₹0</span>
+      </div>
+      <div class="cart-summary-row shipping-note" id="cart-shipping-note">
+        <span>Shipping</span>
+        <span id="cart-shipping">₹49</span>
+      </div>
+      <div class="cart-summary-row cart-total-row">
+        <span>Total</span>
+        <span class="cart-total" id="cart-total">₹0</span>
+      </div>
+      <a href="checkout.html" class="cart-checkout-btn" id="cart-checkout-btn">Proceed to Checkout →</a>
+      <button class="cart-continue-btn" id="cart-continue-btn">Continue Shopping</button>
+    </div>
+  </div>
 
-// script for making scrollable items cards
-const sliderContainer = document.querySelector('.slider-container');
-const prevBtn = document.querySelector('.prev-btn');
-const nextBtn = document.querySelector('.next-btn');
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <i class="fa-solid fa-check-circle"></i>
+    <span class="toast-text" id="toast-text">Added to cart!</span>
+  </div>
 
-let scrollAmount = 0;
-const cardWidth = 320;  // Width of card including margin (300px + 20px margin)
-const cardCount = document.querySelectorAll('.card').length;
+  <!-- Scroll to Top -->
+  <button class="scroll-top" id="scroll-top" aria-label="Scroll to top">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
 
-nextBtn.addEventListener('click', () => {
-    if (scrollAmount < cardWidth * (cardCount - 1)) {
-        scrollAmount += cardWidth;  // Increase scroll amount
-        sliderContainer.style.transform = `translateX(-${scrollAmount}px)`;
-    }
-});
 
-prevBtn.addEventListener('click', () => {
-    if (scrollAmount > 0) {
-        scrollAmount -= cardWidth;  // Decrease scroll amount
-        sliderContainer.style.transform = `translateX(-${scrollAmount}px)`;
-    }
-});
-
-  </script>
-
+  <!-- Scripts -->
+  <script src="cart.js"></script>
+  <script src="script.js"></script>
 </body>
 
 </html>
