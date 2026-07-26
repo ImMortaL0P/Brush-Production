@@ -3,7 +3,8 @@
 // Function to fetch products from the backend server
 async function fetchProducts() {
     try {
-        const response = await fetch('http://localhost:5500/products'); 
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-backend-api.onrender.com/api';
+        const response = await fetch(`${API_BASE}/products`); 
         console.log('Response:', response);// Ensure this URL matches your backend endpoint
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
