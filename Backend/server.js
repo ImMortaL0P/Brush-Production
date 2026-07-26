@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -23,42 +24,41 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_SECRET'
 });
 
-// Setup multer for image uploads
-const uploadDir = path.join(__dirname, '../public/uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, 'prod-' + uniqueSuffix + ext);
-  }
-});
+// Setup multer for image uploads (Memory storage for Cloud deployment)
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // ==========================================
 // FIREBASE INITIALIZATION
 // ==========================================
-const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
+let serviceAccount;
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
+  if (fs.existsSync(serviceAccountPath)) {
+    serviceAccount = require(serviceAccountPath);
+  }
+}
 
-if (!fs.existsSync(serviceAccountPath)) {
-  console.error("❌ FATAL ERROR: 'serviceAccountKey.json' is missing in the Backend folder.");
-  console.error("Please download it from Firebase Console -> Project Settings -> Service Accounts -> Generate New Private Key");
+if (!serviceAccount) {
+  console.error("❌ FATAL ERROR: No Firebase credentials found. Provide FIREBASE_SERVICE_ACCOUNT env var or serviceAccountKey.json");
   process.exit(1);
 }
 
-const serviceAccount = require(serviceAccountPath);
+// Ensure you replace this with your actual Firebase Project ID if different
+const projectId = serviceAccount.project_id || 'brush-db-6a308';
+const storageBucket = `${projectId}.appspot.com`;
+
 initializeApp({
-  credential: cert(serviceAccount)
+  credential: cert(serviceAccount),
+  storageBucket: storageBucket
 });
 
-console.log('✅ Connected to Firebase Firestore!');
+console.log('✅ Connected to Firebase Firestore and Storage!');
 
 const db = getFirestore();
+const bucket = getStorage().bucket();
 const productsRef = db.collection('products');
 const ordersRef = db.collection('orders');
 
@@ -546,7 +546,17 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
 
     let imageUrl = '';
     if (req.file) {
-      imageUrl = 'uploads/' + req.file.filename;
+      const ext = path.extname(req.file.originalname) || '.jpg';
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const filename = `products/prod-${uniqueSuffix}${ext}`;
+      
+      const fileUpload = bucket.file(filename);
+      await fileUpload.save(req.file.buffer, {
+        metadata: { contentType: req.file.mimetype }
+      });
+      // Make it publicly accessible
+      await fileUpload.makePublic();
+      imageUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
     }
 
     const newProduct = {
