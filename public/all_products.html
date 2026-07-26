@@ -269,7 +269,13 @@
   <div class="all-products-container">
     <!-- Sidebar -->
     <aside class="filter-sidebar">
-      <h3>Filters</h3>
+      <h3>Search & Filters</h3>
+      <div class="filter-group">
+        <div style="position: relative;">
+          <input type="text" id="search-input" placeholder="Search products..." style="width: 100%; padding: 12px 12px 12px 35px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); outline: none;">
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+        </div>
+      </div>
       <div class="filter-group">
         <h4>Categories</h4>
         <label class="filter-label"><input type="checkbox" checked> Anime</label>
@@ -332,50 +338,80 @@
 
   <script src="cart.js"></script>
   <script>
+    let allProductsData = [];
+
     async function loadAllProducts() {
       const container = document.getElementById('list-items-container');
       try {
         const res = await fetch('http://localhost:5500/api/products');
-        const products = await res.json();
-        
-        document.getElementById('results-count').textContent = `Showing ${products.length} results`;
-        
-        container.innerHTML = products.map(p => {
-          const discountPercentage = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
-          const stockQty = p.stockQuantity !== undefined ? p.stockQuantity : 50;
-          const isOut = stockQty <= 0;
-          
-          return `
-            <div class="list-item" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
-              <div class="list-item-img-wrapper">
-                ${p.badge ? `<span class="list-item-badge">${p.badge}</span>` : ''}
-                <img src="${p.image}" alt="${p.name}">
-              </div>
-              <div class="list-item-details">
-                <h3 class="list-item-title">${p.name}</h3>
-                <span class="list-item-cat">${p.category}</span>
-                <p class="list-item-desc">${p.description || 'Premium quality poster printed on 300 GSM matte paper. Enhances the aesthetics of your space instantly.'}</p>
-                <div class="list-item-features">
-                  <span><i class="fa-solid fa-gem"></i> Premium Finish</span>
-                  <span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>
-                </div>
-              </div>
-              <div class="list-item-action">
-                <div class="list-item-price-wrapper">
-                  <span class="list-item-price">₹${p.price}</span>
-                  ${p.originalPrice > p.price ? `<span class="list-item-original">₹${p.originalPrice}</span> <span class="list-item-discount">${discountPercentage}% OFF</span>` : ''}
-                </div>
-                <button class="list-add-btn" onclick="addFromList(this)" ${isOut ? 'disabled' : ''}>
-                  ${isOut ? 'Out of Stock' : 'Add to Cart'}
-                </button>
-              </div>
-            </div>
-          `;
-        }).join('');
+        allProductsData = await res.json();
+        renderProducts(allProductsData);
       } catch (e) {
         container.innerHTML = '<p>Failed to load products.</p>';
       }
     }
+    
+    function renderProducts(products) {
+      const container = document.getElementById('list-items-container');
+      document.getElementById('results-count').textContent = `Showing ${products.length} results`;
+      
+      if (products.length === 0) {
+        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);"><i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 1rem;"></i><p>No products found matching your search.</p></div>';
+        return;
+      }
+      
+      container.innerHTML = products.map(p => {
+        const discountPercentage = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
+        const stockQty = p.stockQuantity !== undefined ? p.stockQuantity : 50;
+        const isOut = stockQty <= 0;
+        
+        return `
+          <div class="list-item" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
+            <div class="list-item-img-wrapper">
+              ${p.badge ? `<span class="list-item-badge">${p.badge}</span>` : ''}
+              <img src="${p.image}" alt="${p.name}">
+            </div>
+            <div class="list-item-details">
+              <h3 class="list-item-title">${p.name}</h3>
+              <span class="list-item-cat">${p.category}</span>
+              <p class="list-item-desc">${p.description || 'Premium quality poster printed on 300 GSM matte paper. Enhances the aesthetics of your space instantly.'}</p>
+              <div class="list-item-features">
+                <span><i class="fa-solid fa-gem"></i> Premium Finish</span>
+                <span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>
+              </div>
+            </div>
+            <div class="list-item-action">
+              <div class="list-item-price-wrapper">
+                <span class="list-item-price">₹${p.price}</span>
+                ${p.originalPrice > p.price ? `<span class="list-item-original">₹${p.originalPrice}</span> <span class="list-item-discount">${discountPercentage}% OFF</span>` : ''}
+              </div>
+              <button class="list-add-btn" onclick="addFromList(this)" ${isOut ? 'disabled' : ''}>
+                ${isOut ? 'Out of Stock' : 'Add to Cart'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // Search Functionality
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      const keyword = e.target.value.toLowerCase().trim();
+      if (!keyword) {
+        renderProducts(allProductsData);
+        return;
+      }
+      
+      const filtered = allProductsData.filter(p => {
+        return (
+          p.name.toLowerCase().includes(keyword) || 
+          p.category.toLowerCase().includes(keyword) || 
+          (p.description && p.description.toLowerCase().includes(keyword))
+        );
+      });
+      
+      renderProducts(filtered);
+    });
     
     function addFromList(btn) {
       const item = btn.closest('.list-item');
