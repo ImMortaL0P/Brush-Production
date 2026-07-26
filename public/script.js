@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="qty-control">
               <button class="qty-minus" data-id="${item.cartId || item.id}" aria-label="Decrease quantity">−</button>
               <span class="qty-value">${item.quantity}</span>
-              <button class="qty-plus" data-id="${item.cartId || item.id}" aria-label="Increase quantity">+</button>
+              <button class="qty-plus" data-id="${item.cartId || item.id}" aria-label="Increase quantity" ${item.quantity >= (item.stockQuantity !== undefined ? item.stockQuantity : 50) ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>+</button>
             </div>
             <button class="cart-item-remove" data-id="${item.cartId || item.id}" aria-label="Remove item">
               <i class="fa-solid fa-trash-can"></i>
@@ -377,7 +377,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = btn.dataset.id;
         const item = Cart.getCart().find(i => i.cartId === id || i.id === parseInt(id) || i.id === id);
         if (item) {
-          Cart.updateQuantity(id, item.quantity + 1);
+          const maxStock = item.stockQuantity !== undefined ? item.stockQuantity : 50;
+          if (item.quantity >= maxStock) {
+            showToast(`Only ${maxStock} items available in stock.`);
+          } else {
+            Cart.updateQuantity(id, item.quantity + 1);
+          }
         }
       });
     });

@@ -34,7 +34,7 @@ const Cart = (() => {
     const existing = cart.find(item => item.cartId === cartId);
     
     if (existing) {
-      existing.quantity += qty;
+      existing.quantity = Math.min(existing.quantity + qty, existing.stockQuantity || 50);
     } else {
       cart.push({
         cartId,
@@ -45,7 +45,8 @@ const Cart = (() => {
         image: product.image,
         quantity: qty,
         size,
-        gsm
+        gsm,
+        stockQuantity: product.stockQuantity !== undefined ? product.stockQuantity : 50
       });
     }
     saveCart(cart);
@@ -63,7 +64,8 @@ const Cart = (() => {
     const cart = getCart();
     const item = cart.find(i => i.cartId === cartId || i.id === cartId);
     if (item) {
-      item.quantity = Math.max(1, qty);
+      const maxStock = item.stockQuantity || 50;
+      item.quantity = Math.max(1, Math.min(qty, maxStock));
     }
     saveCart(cart);
     return cart;
