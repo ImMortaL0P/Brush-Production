@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <style>
     :root {
       --bg-primary: #0a0a0a;
@@ -380,8 +381,8 @@
           <input type="number" id="new-prod-stock" placeholder="Stock Quantity *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="text" id="new-prod-desc" placeholder="Short Description" style="grid-column: 1 / -1; background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;">
-            <label style="color: var(--text-secondary); font-size: 0.9rem;">Upload Poster (PNG/JPG):</label>
-            <input type="file" id="new-prod-image" accept="image/png, image/jpeg" required style="color: white;">
+            <label style="color: var(--text-secondary); font-size: 0.9rem;">Upload Poster (PNG/JPG/PDF):</label>
+            <input type="file" id="new-prod-image" accept="image/png, image/jpeg, application/pdf" required style="color: white;">
           </div>
           <button type="submit" class="refresh-btn" style="grid-column: 1 / -1; justify-content: center; margin-top: 10px;" id="add-prod-btn">
             <i class="fa-solid fa-plus"></i> Add Product
@@ -625,6 +626,40 @@
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';
       btn.disabled = true;
       
+      let finalImageFile = document.getElementById('new-prod-image').files[0];
+      
+      // If PDF, convert first page to JPEG
+      if (finalImageFile && finalImageFile.type === 'application/pdf') {
+        try {
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Parsing PDF...';
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+          
+          const arrayBuffer = await finalImageFile.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+          const page = await pdf.getPage(1);
+          
+          const viewport = page.getViewport({ scale: 2.0 }); // High quality scale
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          
+          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          
+          // Convert to blob
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+          finalImageFile = new File([blob], finalImageFile.name.replace('.pdf', '.jpg'), { type: 'image/jpeg' });
+        } catch (err) {
+          console.error("PDF Parsing Error:", err);
+          showToast('Failed to parse PDF. Please upload a valid file.');
+          btn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Product';
+          btn.disabled = false;
+          return;
+        }
+      }
+      
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';
+      
       const formData = new FormData();
       formData.append('name', document.getElementById('new-prod-name').value);
       formData.append('category', document.getElementById('new-prod-cat').value);
@@ -633,7 +668,7 @@
       formData.append('badge', document.getElementById('new-prod-badge').value);
       formData.append('stockQuantity', document.getElementById('new-prod-stock').value);
       formData.append('description', document.getElementById('new-prod-desc').value);
-      formData.append('image', document.getElementById('new-prod-image').files[0]);
+      formData.append('image', finalImageFile);
       
       try {
         const res = await fetch(`${API_BASE}/products`, {
