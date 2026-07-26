@@ -341,6 +341,26 @@
         <button class="refresh-btn" onclick="loadInventory()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
       </div>
       
+      <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0; font-family: 'Outfit', sans-serif;">Add New Product</h3>
+        <form id="add-product-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <input type="text" id="new-prod-name" placeholder="Product Name *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="text" id="new-prod-cat" placeholder="Category (e.g. Anime) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="number" id="new-prod-price" placeholder="Price (₹) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="number" id="new-prod-original-price" placeholder="Original Price (₹)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="text" id="new-prod-badge" placeholder="Badge (e.g. New, Sale)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="number" id="new-prod-stock" placeholder="Stock Quantity *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="text" id="new-prod-desc" placeholder="Short Description" style="grid-column: 1 / -1; background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;">
+            <label style="color: var(--text-secondary); font-size: 0.9rem;">Upload Poster (PNG/JPG):</label>
+            <input type="file" id="new-prod-image" accept="image/png, image/jpeg" required style="color: white;">
+          </div>
+          <button type="submit" class="refresh-btn" style="grid-column: 1 / -1; justify-content: center; margin-top: 10px;" id="add-prod-btn">
+            <i class="fa-solid fa-plus"></i> Add Product
+          </button>
+        </form>
+      </div>
+      
       <div class="data-table-wrapper">
         <table>
           <thead>
@@ -585,6 +605,46 @@
         showToast(e.message);
       }
     }
+
+    // Add New Product
+    document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!adminToken) return;
+      
+      const btn = document.getElementById('add-prod-btn');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';
+      btn.disabled = true;
+      
+      const formData = new FormData();
+      formData.append('name', document.getElementById('new-prod-name').value);
+      formData.append('category', document.getElementById('new-prod-cat').value);
+      formData.append('price', document.getElementById('new-prod-price').value);
+      formData.append('originalPrice', document.getElementById('new-prod-original-price').value || document.getElementById('new-prod-price').value);
+      formData.append('badge', document.getElementById('new-prod-badge').value);
+      formData.append('stockQuantity', document.getElementById('new-prod-stock').value);
+      formData.append('description', document.getElementById('new-prod-desc').value);
+      formData.append('image', document.getElementById('new-prod-image').files[0]);
+      
+      try {
+        const res = await fetch(`${API_BASE}/products`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+          body: formData
+        });
+        
+        handleApiError(res);
+        if(!res.ok) throw new Error('Failed to add product');
+        
+        showToast('New product added to inventory!');
+        document.getElementById('add-product-form').reset();
+        loadInventory();
+      } catch (err) {
+        showToast(err.message);
+      } finally {
+        btn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Product';
+        btn.disabled = false;
+      }
+    });
 
     // Init
     checkAuth();

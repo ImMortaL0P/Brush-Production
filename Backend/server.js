@@ -8,6 +8,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
+const multer = require('multer');
 
 const app = express();
 let activeAdminToken = null; // Store token in memory for simple auth
@@ -21,6 +22,23 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID',
   key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_SECRET'
 });
+
+// Setup multer for image uploads
+const uploadDir = path.join(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'prod-' + uniqueSuffix + ext);
+  }
+});
+const upload = multer({ storage: storage });
 
 // ==========================================
 // FIREBASE INITIALIZATION
@@ -475,6 +493,67 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Fetch orders error:', error);
     res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+// Update product
+app.patch('/api/products/:id', requireAdmin, async (req, res) => {
+  try {
+    const { name, price, badge, stockQuantity } = req.body;
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (price !== undefined) updateData.price = Number(price);
+    if (badge !== undefined) updateData.badge = badge;
+    if (stockQuantity !== undefined) updateData.stockQuantity = Number(stockQuantity);
+    
+    await productsRef.doc(req.params.id.toString()).update(updateData);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({ error: 'Failed to update product' });
+  }
+});
+
+app.post('/api/products', requireAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const { name, category, price, originalPrice, badge, description, stockQuantity } = req.body;
+    
+    if (!name || !price) {
+      return res.status(400).json({ error: 'Name and price are required' });
+    }
+
+    // Auto-generate numeric ID based on highest existing ID
+    const snapshot = await productsRef.get();
+    let maxId = 0;
+    snapshot.forEach(doc => {
+      const docId = parseInt(doc.id, 10);
+      if (!isNaN(docId) && docId > maxId) maxId = docId;
+    });
+    const newId = maxId + 1;
+
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = 'uploads/' + req.file.filename;
+    }
+
+    const newProduct = {
+      id: newId,
+      name,
+      category: category || 'Miscellaneous',
+      price: Number(price),
+      originalPrice: Number(originalPrice || price),
+      badge: badge || '',
+      description: description || '',
+      stockQuantity: Number(stockQuantity || 0),
+      image: imageUrl,
+      createdAt: FieldValue.serverTimestamp()
+    };
+
+    await productsRef.doc(newId.toString()).set(newProduct);
+    res.status(201).json(newProduct);
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({ error: 'Failed to create product' });
   }
 });
 
