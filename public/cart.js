@@ -108,7 +108,7 @@ const Cart = (() => {
   }
 
   // ---- Order placement ----
-  async function placeOrder(customerData, paymentMethod) {
+  async function placeOrder(customerData, paymentMethod, rzpOrderId = null, rzpPaymentId = null, rzpSignature = null) {
     const cart = getCart();
     if (cart.length === 0) throw new Error('Cart is empty');
 
@@ -120,7 +120,10 @@ const Cart = (() => {
         size: item.size || 'A4',
         gsm: item.gsm || '80'
       })),
-      paymentMethod: paymentMethod
+      paymentMethod: paymentMethod,
+      razorpay_order_id: rzpOrderId,
+      razorpay_payment_id: rzpPaymentId,
+      razorpay_signature: rzpSignature
     };
 
     const response = await fetch(`${API_BASE}/orders`, {

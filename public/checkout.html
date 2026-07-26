@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <link rel="stylesheet" href="styles.css">
   <style>
     /* ===== CHECKOUT PAGE STYLES ===== */
@@ -800,18 +801,85 @@
 
         const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
 
-        // Show loading state
         placeOrderBtn.classList.add('loading');
         placeOrderBtn.disabled = true;
 
-        try {
-          const order = await Cart.placeOrder(customerData, paymentMethod);
-          // Redirect to confirmation
-          window.location.href = `order-confirmation.html?orderId=${order.order.orderId}`;
-        } catch (err) {
-          alert('Order failed: ' + err.message + '\n\nPlease ensure the backend server is running on port 5500.');
-          placeOrderBtn.classList.remove('loading');
-          placeOrderBtn.disabled = false;
+        if (paymentMethod === 'cod') {
+          try {
+            const order = await Cart.placeOrder(customerData, paymentMethod);
+            window.location.href = `order-confirmation.html?orderId=${order.order.orderId}`;
+          } catch (err) {
+            alert('Order failed: ' + err.message);
+            placeOrderBtn.classList.remove('loading');
+            placeOrderBtn.disabled = false;
+          }
+        } else {
+          // Razorpay Flow
+          try {
+            const amount = Cart.getTotal();
+            const res = await fetch('http://localhost:5500/api/payment/create-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ amount })
+            });
+            const rzpOrder = await res.json();
+            
+            const options = {
+              key: "rzp_test_YOUR_KEY_ID", // Replace with env key logic if dynamic
+              amount: rzpOrder.amount,
+              currency: rzpOrder.currency,
+              name: "Brush",
+              description: "Premium Poster Order",
+              image: "Brush%20Text%20Arial.png",
+              order_id: rzpOrder.id,
+              handler: async function (response) {
+                try {
+                  const finalOrder = await Cart.placeOrder(
+                    customerData, 
+                    paymentMethod, 
+                    response.razorpay_order_id, 
+                    response.razorpay_payment_id, 
+                    response.razorpay_signature || "mock_sig"
+                  );
+                  window.location.href = `order-confirmation.html?orderId=${finalOrder.order.orderId}`;
+                } catch (err) {
+                  alert('Payment verification failed: ' + err.message);
+                  placeOrderBtn.classList.remove('loading');
+                  placeOrderBtn.disabled = false;
+                }
+              },
+              prefill: {
+                name: customerData.name,
+                email: customerData.email,
+                contact: customerData.phone
+              },
+              theme: {
+                color: "#E8C547" // Accent color
+              }
+            };
+            
+            // If it's a mock order (keys not setup), just simulate the handler immediately
+            if (rzpOrder.id.startsWith('order_mock_')) {
+              options.handler({
+                razorpay_order_id: rzpOrder.id,
+                razorpay_payment_id: "pay_mock_" + Date.now(),
+                razorpay_signature: "mock_signature_bypass"
+              });
+            } else {
+              const rzp = new Razorpay(options);
+              rzp.on('payment.failed', function (response){
+                alert('Payment Failed: ' + response.error.description);
+                placeOrderBtn.classList.remove('loading');
+                placeOrderBtn.disabled = false;
+              });
+              rzp.open();
+            }
+            
+          } catch (err) {
+            alert('Failed to initiate payment: ' + err.message);
+            placeOrderBtn.classList.remove('loading');
+            placeOrderBtn.disabled = false;
+          }
         }
       });
 

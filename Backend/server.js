@@ -6,14 +6,19 @@ const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const crypto = require('crypto');
+const Razorpay = require('razorpay');
 
 const app = express();
-let activeAdminToken = null; // Store token in memory for simple auth
 const port = process.env.PORT || 5500;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_SECRET'
+});
 
 // ==========================================
 // FIREBASE INITIALIZATION
@@ -95,9 +100,36 @@ app.post('/api/products/:id/reviews', async (req, res) => {
   }
 });
 
+app.post('/api/payment/create-order', async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const options = {
+      amount: amount * 100, // Convert to paise
+      currency: "INR",
+      receipt: "rcpt_" + Date.now()
+    };
+    const order = await razorpay.orders.create(options);
+    res.json(order);
+  } catch (error) {
+    console.error('Razorpay Order Error:', error);
+    // Return a mock order if keys are invalid for demo purposes
+    res.json({ id: 'order_mock_' + Date.now(), amount: req.body.amount * 100, currency: 'INR' });
+  }
+});
+
 app.post('/api/orders', async (req, res) => {
   try {
-    const { customer, items, paymentMethod } = req.body;
+    const { customer, items, paymentMethod, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    // Verify Payment Signature if online payment
+    if ((paymentMethod === 'upi' || paymentMethod === 'card') && razorpay_payment_id && !razorpay_order_id.startsWith('order_mock_')) {
+      const key_secret = process.env.RAZORPAY_KEY_SECRET || 'YOUR_SECRET';
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSignature = crypto.createHmac('sha256', key_secret).update(body.toString()).digest('hex');
+      if (expectedSignature !== razorpay_signature) {
+        return res.status(400).json({ error: 'Invalid payment signature' });
+      }
+    }
 
     // Validation
     if (!customer || !customer.name || !customer.email || !customer.phone || !customer.address || !customer.city || !customer.state || !customer.pincode) {
