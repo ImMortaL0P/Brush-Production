@@ -342,24 +342,35 @@
     let allProductsData = [];
 
     function applyFilters() {
-      const keyword = document.getElementById('search-input').value.toLowerCase().trim();
-      const checkedCats = Array.from(document.querySelectorAll('.cat-cb:checked')).map(cb => cb.value.toLowerCase());
-      
-      const filtered = allProductsData.filter(p => {
-        // Keyword match
-        const matchesKeyword = !keyword || (
-          p.name.toLowerCase().includes(keyword) || 
-          p.category.toLowerCase().includes(keyword) || 
-          (p.description && p.description.toLowerCase().includes(keyword))
-        );
+      try {
+        const searchInput = document.getElementById('search-input');
+        const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const checkedCats = Array.from(document.querySelectorAll('.cat-cb:checked')).map(cb => cb.value.toLowerCase());
         
-        // Category match
-        const matchesCat = checkedCats.length === 0 || checkedCats.some(c => p.category.toLowerCase().includes(c));
+        const filtered = allProductsData.filter(p => {
+          const cat = p.category ? p.category.toLowerCase() : '';
+          const name = p.name ? p.name.toLowerCase() : '';
+          const desc = p.description ? p.description.toLowerCase() : '';
+          
+          // Keyword match
+          const matchesKeyword = !keyword || (
+            name.includes(keyword) || 
+            cat.includes(keyword) || 
+            desc.includes(keyword)
+          );
+          
+          // Category match - check name and desc too because the DB currently has all categories set to 'Posters'
+          const matchesCat = checkedCats.length === 0 || checkedCats.some(c => 
+            cat.includes(c) || name.includes(c) || desc.includes(c)
+          );
+          
+          return matchesKeyword && matchesCat;
+        });
         
-        return matchesKeyword && matchesCat;
-      });
-      
-      renderProducts(filtered);
+        renderProducts(filtered);
+      } catch (err) {
+        console.error("Filter error:", err);
+      }
     }
     
     // Search Functionality
@@ -392,7 +403,8 @@
         
         applyFilters();
       } catch (e) {
-        container.innerHTML = '<p>Failed to load products.</p>';
+        console.error("Load products error:", e);
+        container.innerHTML = '<p>Failed to load products. Check console for details.</p>';
       }
     }
     
