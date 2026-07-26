@@ -27,34 +27,41 @@ const Cart = (() => {
   }
 
   // ---- Public API ----
-  function addItem(product, qty = 1) {
+  function addItem(product, qty = 1, size = 'A4', gsm = '80', finalPrice = null) {
     const cart = getCart();
-    const existing = cart.find(item => item.id === product.id);
+    const cartId = `${product.id}_${size}_${gsm}`;
+    const priceToUse = finalPrice !== null ? finalPrice : product.price;
+    const existing = cart.find(item => item.cartId === cartId);
+    
     if (existing) {
       existing.quantity += qty;
     } else {
       cart.push({
+        cartId,
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: priceToUse,
         originalPrice: product.originalPrice || product.price,
         image: product.image,
-        quantity: qty
+        quantity: qty,
+        size,
+        gsm
       });
     }
     saveCart(cart);
     return cart;
   }
 
-  function removeItem(productId) {
-    const cart = getCart().filter(item => item.id !== productId);
+  function removeItem(cartId) {
+    // support legacy id or cartId
+    const cart = getCart().filter(item => item.cartId !== cartId && item.id !== cartId);
     saveCart(cart);
     return cart;
   }
 
-  function updateQuantity(productId, qty) {
+  function updateQuantity(cartId, qty) {
     const cart = getCart();
-    const item = cart.find(i => i.id === productId);
+    const item = cart.find(i => i.cartId === cartId || i.id === cartId);
     if (item) {
       item.quantity = Math.max(1, qty);
     }
@@ -105,7 +112,12 @@ const Cart = (() => {
 
     const orderPayload = {
       customer: customerData,
-      items: cart.map(item => ({ productId: item.id, quantity: item.quantity })),
+      items: cart.map(item => ({ 
+        productId: item.id, 
+        quantity: item.quantity,
+        size: item.size || 'A4',
+        gsm: item.gsm || '80'
+      })),
       paymentMethod: paymentMethod
     };
 

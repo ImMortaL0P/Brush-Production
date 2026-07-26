@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmed — Brush</title>
   <meta name="description" content="Your Brush order has been confirmed! Track your premium poster delivery.">
+  <link rel="icon" href="Brush%20Text%20Arial.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -309,7 +310,9 @@
 
   <!-- Navbar -->
   <nav class="navbar scrolled" id="navbar">
-    <a href="index.html" class="nav-brand">Brush<span>.</span></a>
+      <a href="index.html" class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
+        <img src="Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 32px; width: auto;">
+      </a>
     <div class="nav-actions">
       <a href="index.html" class="nav-action-btn" aria-label="Back to store">
         <i class="fa-solid fa-store"></i>
@@ -457,7 +460,7 @@
 
           <div class="confirmation-actions">
             <a href="index.html" class="hero-cta">Continue Shopping</a>
-            <button class="outline-btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Receipt</button>
+            <a href="http://localhost:5500/api/orders/${orderId}/invoice" target="_blank" class="outline-btn"><i class="fa-solid fa-file-pdf"></i> Download Invoice</a>
           </div>
         `;
       } catch (err) {
