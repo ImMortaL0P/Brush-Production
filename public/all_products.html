@@ -276,12 +276,13 @@
           <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
         </div>
       </div>
-      <div class="filter-group">
+      <div class="filter-group" id="category-filters">
         <h4>Categories</h4>
-        <label class="filter-label"><input type="checkbox" checked> Anime</label>
-        <label class="filter-label"><input type="checkbox" checked> Movies & TV</label>
-        <label class="filter-label"><input type="checkbox" checked> Minimalist</label>
-        <label class="filter-label"><input type="checkbox" checked> Cyberpunk</label>
+        <label class="filter-label"><input type="checkbox" value="Anime" checked class="cat-cb"> Anime</label>
+        <label class="filter-label"><input type="checkbox" value="Movies" checked class="cat-cb"> Movies & TV</label>
+        <label class="filter-label"><input type="checkbox" value="Minimalist" checked class="cat-cb"> Minimalist</label>
+        <label class="filter-label"><input type="checkbox" value="Cyberpunk" checked class="cat-cb"> Cyberpunk</label>
+        <label class="filter-label"><input type="checkbox" value="Space" checked class="cat-cb"> Space & Sci-Fi</label>
       </div>
       <div class="filter-group">
         <h4>Price</h4>
@@ -340,12 +341,56 @@
   <script>
     let allProductsData = [];
 
+    function applyFilters() {
+      const keyword = document.getElementById('search-input').value.toLowerCase().trim();
+      const checkedCats = Array.from(document.querySelectorAll('.cat-cb:checked')).map(cb => cb.value.toLowerCase());
+      
+      const filtered = allProductsData.filter(p => {
+        // Keyword match
+        const matchesKeyword = !keyword || (
+          p.name.toLowerCase().includes(keyword) || 
+          p.category.toLowerCase().includes(keyword) || 
+          (p.description && p.description.toLowerCase().includes(keyword))
+        );
+        
+        // Category match
+        const matchesCat = checkedCats.length === 0 || checkedCats.some(c => p.category.toLowerCase().includes(c));
+        
+        return matchesKeyword && matchesCat;
+      });
+      
+      renderProducts(filtered);
+    }
+    
+    // Search Functionality
+    document.getElementById('search-input').addEventListener('input', applyFilters);
+    
+    // Checkbox Functionality
+    document.querySelectorAll('.cat-cb').forEach(cb => {
+      cb.addEventListener('change', applyFilters);
+    });
+    
     async function loadAllProducts() {
       const container = document.getElementById('list-items-container');
       try {
         const res = await fetch('http://localhost:5500/api/products');
         allProductsData = await res.json();
-        renderProducts(allProductsData);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryParam = urlParams.get('category');
+        
+        if (categoryParam) {
+          // Uncheck all except the one from URL
+          document.querySelectorAll('.cat-cb').forEach(cb => {
+            if (cb.value.toLowerCase() === categoryParam.toLowerCase() || categoryParam.toLowerCase().includes(cb.value.toLowerCase())) {
+              cb.checked = true;
+            } else {
+              cb.checked = false;
+            }
+          });
+        }
+        
+        applyFilters();
       } catch (e) {
         container.innerHTML = '<p>Failed to load products.</p>';
       }
@@ -393,25 +438,6 @@
         `;
       }).join('');
     }
-    
-    // Search Functionality
-    document.getElementById('search-input').addEventListener('input', (e) => {
-      const keyword = e.target.value.toLowerCase().trim();
-      if (!keyword) {
-        renderProducts(allProductsData);
-        return;
-      }
-      
-      const filtered = allProductsData.filter(p => {
-        return (
-          p.name.toLowerCase().includes(keyword) || 
-          p.category.toLowerCase().includes(keyword) || 
-          (p.description && p.description.toLowerCase().includes(keyword))
-        );
-      });
-      
-      renderProducts(filtered);
-    });
     
     function addFromList(btn) {
       const item = btn.closest('.list-item');
