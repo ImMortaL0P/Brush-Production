@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -98,6 +99,10 @@ app.post('/api/products/:id/reviews', async (req, res) => {
     console.error('Review error:', error);
     res.status(500).json({ error: 'Failed to add review' });
   }
+});
+
+app.get('/api/config/razorpay', (req, res) => {
+  res.json({ key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID' });
 });
 
 app.post('/api/payment/create-order', async (req, res) => {

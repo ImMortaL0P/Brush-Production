@@ -824,8 +824,11 @@
             });
             const rzpOrder = await res.json();
             
+            const configRes = await fetch('http://localhost:5500/api/config/razorpay');
+            const configData = await configRes.json();
+            
             const options = {
-              key: "rzp_test_YOUR_KEY_ID", // Replace with env key logic if dynamic
+              key: configData.key_id,
               amount: rzpOrder.amount,
               currency: rzpOrder.currency,
               name: "Brush",
