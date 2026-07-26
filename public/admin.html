@@ -297,6 +297,9 @@
     <div class="nav-item" data-target="inventory-view">
       <i class="fa-solid fa-warehouse"></i> Inventory
     </div>
+    <div class="nav-item" data-target="add-product-view">
+      <i class="fa-solid fa-plus-circle"></i> Add Product
+    </div>
     
     <div style="margin-top: auto;">
       <a href="index.html" class="nav-item">
@@ -341,25 +344,7 @@
         <button class="refresh-btn" onclick="loadInventory()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
       </div>
       
-      <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
-        <h3 style="margin-top: 0; font-family: 'Outfit', sans-serif;">Add New Product</h3>
-        <form id="add-product-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-          <input type="text" id="new-prod-name" placeholder="Product Name *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <input type="text" id="new-prod-cat" placeholder="Category (e.g. Anime) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <input type="number" id="new-prod-price" placeholder="Price (₹) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <input type="number" id="new-prod-original-price" placeholder="Original Price (₹)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <input type="text" id="new-prod-badge" placeholder="Badge (e.g. New, Sale)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <input type="number" id="new-prod-stock" placeholder="Stock Quantity *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <input type="text" id="new-prod-desc" placeholder="Short Description" style="grid-column: 1 / -1; background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;">
-            <label style="color: var(--text-secondary); font-size: 0.9rem;">Upload Poster (PNG/JPG):</label>
-            <input type="file" id="new-prod-image" accept="image/png, image/jpeg" required style="color: white;">
-          </div>
-          <button type="submit" class="refresh-btn" style="grid-column: 1 / -1; justify-content: center; margin-top: 10px;" id="add-prod-btn">
-            <i class="fa-solid fa-plus"></i> Add Product
-          </button>
-        </form>
-      </div>
+
       
       <div class="data-table-wrapper">
         <table>
@@ -377,6 +362,31 @@
             <tr><td colspan="6" style="text-align: center;">Loading inventory...</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+    
+    <!-- Add Product View -->
+    <div class="view-section" id="add-product-view">
+      <div class="header">
+        <h1>Add New Product</h1>
+      </div>
+      <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <form id="add-product-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <input type="text" id="new-prod-name" placeholder="Product Name *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="text" id="new-prod-cat" placeholder="Category (e.g. Anime) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="number" id="new-prod-price" placeholder="Price (₹) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="number" id="new-prod-original-price" placeholder="Original Price (₹)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="text" id="new-prod-badge" placeholder="Badge (e.g. New, Sale)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="number" id="new-prod-stock" placeholder="Stock Quantity *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="text" id="new-prod-desc" placeholder="Short Description" style="grid-column: 1 / -1; background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;">
+            <label style="color: var(--text-secondary); font-size: 0.9rem;">Upload Poster (PNG/JPG):</label>
+            <input type="file" id="new-prod-image" accept="image/png, image/jpeg" required style="color: white;">
+          </div>
+          <button type="submit" class="refresh-btn" style="grid-column: 1 / -1; justify-content: center; margin-top: 10px;" id="add-prod-btn">
+            <i class="fa-solid fa-plus"></i> Add Product
+          </button>
+        </form>
       </div>
     </div>
 
