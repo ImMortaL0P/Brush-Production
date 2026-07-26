@@ -177,8 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error('Failed to fetch products');
       const products = await res.json();
       
-      // Split products: first half for best sellers, second half for new arrivals (or randomly)
-      const bestSellers = products.slice(0, Math.ceil(products.length / 2));
+      // Limit best sellers to 12
+      const bestSellers = products.slice(0, 12);
       const newArrivals = products.slice(Math.ceil(products.length / 2));
       
       const createProductCard = (p, delayIndex = 0, badge = 'Sale', badgeBg = '') => {

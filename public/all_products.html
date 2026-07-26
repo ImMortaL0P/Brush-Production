@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Products — Brush</title>
+  <link rel="icon" href="Brush%20Text%20Arial.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles.css">
+  
+  <style>
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding-top: 80px; /* Space for navbar */
+    }
+    
+    .all-products-container {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    
+    /* Sidebar Filters */
+    .filter-sidebar {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: sticky;
+      top: 100px;
+    }
+    .filter-sidebar h3 {
+      margin-top: 0;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .filter-group {
+      margin-bottom: 1.5rem;
+    }
+    .filter-group h4 {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.8rem;
+    }
+    .filter-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    
+    /* List View (Flipkart Style) */
+    .list-view-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .list-view-header h2 {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem;
+    }
+    
+    .list-items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .list-item {
+      display: flex;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .list-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    
+    .list-item-img-wrapper {
+      width: 250px;
+      min-width: 250px;
+      background: var(--bg-card);
+      position: relative;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .list-item-img-wrapper img {
+      width: 100%;
+      height: 250px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .list-item-badge {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: var(--accent);
+      color: var(--bg-primary);
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    
+    .list-item-details {
+      flex: 1;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .list-item-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      margin: 0 0 0.5rem 0;
+      color: var(--text-primary);
+    }
+    .list-item-cat {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .list-item-desc {
+      font-size: 0.95rem;
+      color: #d1d5db;
+      line-height: 1.5;
+      margin-bottom: auto;
+    }
+    .list-item-features {
+      margin-top: 1rem;
+      display: flex;
+      gap: 15px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .list-item-features span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .list-item-action {
+      width: 250px;
+      min-width: 250px;
+      padding: 2rem 1.5rem;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      background: rgba(255,255,255,0.01);
+    }
+    
+    .list-item-price-wrapper {
+      margin-bottom: 1.5rem;
+    }
+    .list-item-price {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-primary);
+      display: block;
+    }
+    .list-item-original {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      text-decoration: line-through;
+      margin-right: 10px;
+    }
+    .list-item-discount {
+      color: var(--success);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    
+    .list-add-btn {
+      width: 100%;
+      background: var(--accent);
+      color: var(--bg-primary);
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .list-add-btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    .list-add-btn:disabled {
+      background: rgba(0,0,0,0.8);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      border: 1px solid var(--border-color);
+    }
+    
+    @media (max-width: 992px) {
+      .all-products-container {
+        grid-template-columns: 1fr;
+      }
+      .filter-sidebar {
+        position: relative;
+        top: 0;
+      }
+      .list-item {
+        flex-direction: column;
+      }
+      .list-item-action {
+        width: 100%;
+        min-width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        align-items: center;
+        text-align: center;
+      }
+      .list-item-img-wrapper {
+        width: 100%;
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar" style="background: var(--bg-secondary);">
+    <a href="index.html" class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
+      <img src="Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 32px; width: auto;">
+    </a>
+
+    <div class="nav-links" id="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#categories">Categories</a>
+      <a href="about_us.html">About</a>
+    </div>
+
+    <div class="nav-actions">
+      <a href="#" class="nav-action-btn" aria-label="Cart" onclick="document.getElementById('cart-drawer').classList.add('open')">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span class="cart-count">0</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="all-products-container">
+    <!-- Sidebar -->
+    <aside class="filter-sidebar">
+      <h3>Filters</h3>
+      <div class="filter-group">
+        <h4>Categories</h4>
+        <label class="filter-label"><input type="checkbox" checked> Anime</label>
+        <label class="filter-label"><input type="checkbox" checked> Movies & TV</label>
+        <label class="filter-label"><input type="checkbox" checked> Minimalist</label>
+        <label class="filter-label"><input type="checkbox" checked> Cyberpunk</label>
+      </div>
+      <div class="filter-group">
+        <h4>Price</h4>
+        <label class="filter-label"><input type="checkbox"> Under ₹100</label>
+        <label class="filter-label"><input type="checkbox"> ₹100 - ₹200</label>
+        <label class="filter-label"><input type="checkbox"> Above ₹200</label>
+      </div>
+    </aside>
+
+    <!-- Main List -->
+    <main>
+      <div class="list-view-header">
+        <h2>All Products</h2>
+        <span style="color: var(--text-secondary); font-size: 0.9rem;" id="results-count">Loading...</span>
+      </div>
+      
+      <div class="list-items-container" id="list-items-container">
+        <!-- Injected via JS -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Shared Cart Drawer -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-drawer-header">
+      <h3><i class="fa-solid fa-bag-shopping"></i> Your Cart <span class="cart-drawer-count" id="cart-drawer-count">(0)</span></h3>
+      <button class="cart-close-btn" id="cart-close-btn" aria-label="Close cart"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="cart-drawer-body" id="cart-drawer-body">
+    </div>
+    <div class="cart-drawer-footer" id="cart-drawer-footer">
+      <div class="cart-summary-row">
+        <span>Subtotal</span>
+        <span class="cart-subtotal" id="cart-subtotal">₹0</span>
+      </div>
+      <div class="cart-summary-row shipping-note" id="cart-shipping-note">
+        <span>Shipping</span>
+        <span id="cart-shipping">₹49</span>
+      </div>
+      <div class="cart-summary-row cart-total-row">
+        <span>Total</span>
+        <span class="cart-total" id="cart-total">₹0</span>
+      </div>
+      <a href="checkout.html" class="cart-checkout-btn" id="cart-checkout-btn">Proceed to Checkout →</a>
+      <button class="cart-continue-btn" id="cart-continue-btn">Continue Shopping</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <i class="fa-solid fa-check-circle"></i>
+    <span class="toast-text" id="toast-text">Added to cart!</span>
+  </div>
+
+  <script src="cart.js"></script>
+  <script>
+    async function loadAllProducts() {
+      const container = document.getElementById('list-items-container');
+      try {
+        const res = await fetch('http://localhost:5500/api/products');
+        const products = await res.json();
+        
+        document.getElementById('results-count').textContent = `Showing ${products.length} results`;
+        
+        container.innerHTML = products.map(p => {
+          const discountPercentage = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
+          const stockQty = p.stockQuantity !== undefined ? p.stockQuantity : 50;
+          const isOut = stockQty <= 0;
+          
+          return `
+            <div class="list-item" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
+              <div class="list-item-img-wrapper">
+                ${p.badge ? `<span class="list-item-badge">${p.badge}</span>` : ''}
+                <img src="${p.image}" alt="${p.name}">
+              </div>
+              <div class="list-item-details">
+                <h3 class="list-item-title">${p.name}</h3>
+                <span class="list-item-cat">${p.category}</span>
+                <p class="list-item-desc">${p.description || 'Premium quality poster printed on 300 GSM matte paper. Enhances the aesthetics of your space instantly.'}</p>
+                <div class="list-item-features">
+                  <span><i class="fa-solid fa-gem"></i> Premium Finish</span>
+                  <span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>
+                </div>
+              </div>
+              <div class="list-item-action">
+                <div class="list-item-price-wrapper">
+                  <span class="list-item-price">₹${p.price}</span>
+                  ${p.originalPrice > p.price ? `<span class="list-item-original">₹${p.originalPrice}</span> <span class="list-item-discount">${discountPercentage}% OFF</span>` : ''}
+                </div>
+                <button class="list-add-btn" onclick="addFromList(this)" ${isOut ? 'disabled' : ''}>
+                  ${isOut ? 'Out of Stock' : 'Add to Cart'}
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = '<p>Failed to load products.</p>';
+      }
+    }
+    
+    function addFromList(btn) {
+      const item = btn.closest('.list-item');
+      if (!item) return;
+      
+      const product = {
+        id: parseInt(item.dataset.id),
+        name: item.dataset.name,
+        price: parseInt(item.dataset.price),
+        originalPrice: parseInt(item.dataset.original),
+        image: item.dataset.image,
+        stockQuantity: parseInt(item.dataset.stock) || 0
+      };
+      
+      Cart.addItem(product, 1);
+      
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '✓ Added!';
+      setTimeout(() => { btn.innerHTML = originalText; }, 1500);
+      
+      // Setup toast if exists
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = `${product.name} added to cart!`;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 3000);
+      
+      document.getElementById('cart-drawer').classList.add('open');
+    }
+
+    loadAllProducts();
+
+    // Re-hook up cart integration for drawer UI
+    if (typeof Cart !== 'undefined') {
+      const cartCloseBtn = document.getElementById('cart-close-btn');
+      const cartContinueBtn = document.getElementById('cart-continue-btn');
+      const cartDrawer = document.getElementById('cart-drawer');
+      
+      if(cartCloseBtn) cartCloseBtn.addEventListener('click', () => cartDrawer.classList.remove('open'));
+      if(cartContinueBtn) cartContinueBtn.addEventListener('click', () => cartDrawer.classList.remove('open'));
+      
+      // Note: renderCartDrawer is missing here, we should copy it or just let cart.js handle it if cart.js is refactored.
+      // But cart.js is just a class. We'll implement a simple renderCartDrawer here specifically for this page.
+      function renderCartDrawer() {
+        const state = Cart.getState();
+        const body = document.getElementById('cart-drawer-body');
+        document.getElementById('cart-drawer-count').textContent = \`(\${state.items.length})\`;
+        document.querySelectorAll('.cart-count').forEach(el => el.textContent = state.items.length);
+        
+        if (state.items.length === 0) {
+          body.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-secondary);">Your cart is empty.</div>';
+          document.getElementById('cart-subtotal').textContent = '₹0';
+          document.getElementById('cart-total').textContent = '₹0';
+          document.getElementById('cart-shipping').textContent = '₹0';
+          return;
+        }
+        
+        body.innerHTML = state.items.map(item => \`
+          <div class="cart-item">
+            <img src="\${item.image}" alt="\${item.name}" class="cart-item-img">
+            <div class="cart-item-details">
+              <h4>\${item.name}</h4>
+              <p class="cart-item-price">₹\${item.price}</p>
+              <div class="cart-item-qty">
+                <button onclick="Cart.updateQuantity(\${item.id}, \${item.quantity - 1})">-</button>
+                <span>\${item.quantity}</span>
+                <button onclick="Cart.updateQuantity(\${item.id}, \${item.quantity + 1})">+</button>
+              </div>
+            </div>
+            <button class="cart-item-remove" onclick="Cart.removeItem(\${item.id})"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        \`).join('');
+        
+        document.getElementById('cart-subtotal').textContent = \`₹\${state.subtotal}\`;
+        document.getElementById('cart-shipping').textContent = state.shipping === 0 ? 'FREE' : \`₹\${state.shipping}\`;
+        document.getElementById('cart-total').textContent = \`₹\${state.total}\`;
+      }
+      
+      Cart.onChange(renderCartDrawer);
+      renderCartDrawer();
+    }
+  </script>
+</body>
+</html>
