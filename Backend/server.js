@@ -33,11 +33,33 @@ const upload = multer({ storage: storage });
 // ==========================================
 let serviceAccount;
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-} else {
-  const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
-  if (fs.existsSync(serviceAccountPath)) {
-    serviceAccount = require(serviceAccountPath);
+  try {
+    // If Render converts \n to actual newlines, JSON.parse will fail. We need to re-escape them.
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    // Replace actual newline characters with \n string, but don't double escape if already escaped
+    const sanitized = raw.replace(/\r?\n/g, '\\n');
+    try {
+      serviceAccount = JSON.parse(sanitized);
+    } catch (e) {
+      serviceAccount = JSON.parse(raw);
+    }
+  } catch (err) {
+    console.error("❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:", err.message);
+  }
+}
+
+if (!serviceAccount) {
+  // Try local file, or Render Secret File path
+  const pathsToTry = [
+    path.join(__dirname, 'serviceAccountKey.json'),
+    '/etc/secrets/serviceAccountKey.json'
+  ];
+  
+  for (const p of pathsToTry) {
+    if (fs.existsSync(p)) {
+      serviceAccount = require(p);
+      break;
+    }
   }
 }
 
