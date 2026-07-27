@@ -953,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>₹${o.total}</span>
               </div>
               <div style="font-size:0.85rem;color:var(--text-secondary);">
-                Date: ${new Date(o.createdAt?._seconds ? o.createdAt._seconds*1000 : (o.createdAt || new Date())).toLocaleDateString()} | Status: ${o.status}
+                Date: ${new Date(o.createdAt?._seconds ? o.createdAt._seconds*1000 : (o.createdAt || new Date())).toLocaleDateString()} | Status: <span style="color: ${o.status === 'Cancelled' ? 'var(--sale-red)' : 'inherit'}">${o.status}</span>
               </div>
               <div style="font-size:0.85rem;margin-top:5px;">
                 ${o.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
