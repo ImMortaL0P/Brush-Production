@@ -436,6 +436,7 @@
     
     function logout() {
       sessionStorage.removeItem('brush_admin_token');
+      sessionStorage.removeItem('brush_admin_role');
       adminToken = null;
       checkAuth();
     }
@@ -465,6 +466,7 @@
         if (res.ok && data.token) {
           adminToken = data.token;
           sessionStorage.setItem('brush_admin_token', adminToken);
+          sessionStorage.setItem('brush_admin_role', data.role || 'superadmin');
           errorMsg.style.display = 'none';
           document.getElementById('login-form').reset();
           checkAuth();
@@ -512,6 +514,7 @@
         });
         handleApiError(res);
         const orders = await res.json();
+        const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
         
         if(orders.length === 0) {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No orders found.</td></tr>';
@@ -531,6 +534,7 @@
               <td>₹${o.total.toFixed(2)}</td>
               <td style="text-transform:uppercase; font-size:0.85rem; font-weight:600;">${o.paymentMethod}</td>
               <td>
+                ${role === 'superadmin' ? `
                 <select class="status-dropdown" onchange="updateOrderStatus('${o.orderId}', this.value)">
                   <option value="confirmed" ${o.status==='confirmed'?'selected':''}>Confirmed</option>
                   <option value="packed" ${o.status==='packed'?'selected':''}>Packed</option>
@@ -538,7 +542,8 @@
                   <option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option>
                   <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option>
                 </select>
-                <span class="status-badge status-${o.status}" style="margin-left: 10px;">${o.status}</span>
+                ` : ''}
+                <span class="status-badge status-${o.status}" style="margin-left: ${role === 'superadmin' ? '10px' : '0'};">${o.status}</span>
               </td>
               <td>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -548,7 +553,7 @@
                   <a href="${API_BASE}/orders/${o.orderId}/invoice" target="_blank" class="action-btn" title="Invoice">
                     <i class="fa-solid fa-file-pdf"></i>
                   </a>
-                  ${o.status !== 'cancelled' ? `
+                  ${o.status !== 'cancelled' && role === 'superadmin' ? `
                     <button class="action-btn" style="background:var(--sale-red);color:white;border:none;" onclick="cancelOrderFromAdmin('${o.orderId}')" title="Cancel Order">
                       <i class="fa-solid fa-ban"></i>
                     </button>
@@ -646,6 +651,8 @@
       const tbody = document.getElementById('inventory-table-body');
       const filter = document.getElementById('inventory-cat-filter');
       const selectedCat = filter ? filter.value : 'All';
+      const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
+      const isDisabled = role === 'stocker' ? 'disabled style="opacity:0.7"' : '';
       
       try {
         const res = await fetch(`${API_BASE}/products`);
@@ -666,8 +673,8 @@
               <div style="display:flex; align-items:center; gap:10px;">
                 <img src="${p.image}" class="prod-thumb">
                 <div>
-                  <input type="text" id="name-${p.id}" value="${p.name}" style="width: 200px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; font-weight:600; font-family:inherit;"><br>
-                  <select id="cat-${p.id}" style="width: 150px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:2px; border-radius:4px; font-size: 0.85rem; appearance: auto; margin-top: 5px;">
+                  <input type="text" id="name-${p.id}" value="${p.name}" ${isDisabled} style="width: 200px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; font-weight:600; font-family:inherit;"><br>
+                  <select id="cat-${p.id}" ${isDisabled} style="width: 150px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:2px; border-radius:4px; font-size: 0.85rem; appearance: auto; margin-top: 5px;">
                     <option value="Anime" ${p.category === 'Anime' ? 'selected' : ''}>Anime</option>
                     <option value="Movies & TV" ${p.category === 'Movies & TV' ? 'selected' : ''}>Movies & TV</option>
                     <option value="Minimalist" ${p.category === 'Minimalist' ? 'selected' : ''}>Minimalist</option>
@@ -681,11 +688,11 @@
             </td>
             <td style="font-family:monospace; color:var(--text-secondary);">${p.sku || p.id}</td>
             <td>
-              <input type="text" id="badge-${p.id}" value="${p.badge || ''}" style="width: 70px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
-              <input type="text" id="keywords-${p.id}" value="${p.keywords || ''}" placeholder="Keywords" style="width: 100px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; margin-top:5px; font-size: 0.8rem;">
+              <input type="text" id="badge-${p.id}" value="${p.badge || ''}" ${isDisabled} style="width: 70px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
+              <input type="text" id="keywords-${p.id}" value="${p.keywords || ''}" ${isDisabled} placeholder="Keywords" style="width: 100px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; margin-top:5px; font-size: 0.8rem;">
             </td>
             <td>
-              ₹<input type="number" id="price-${p.id}" value="${p.price}" style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
+              ₹<input type="number" id="price-${p.id}" value="${p.price}" ${isDisabled} style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
             </td>
             <td>
               <input type="number" id="stock-${p.id}" value="${p.stockQuantity !== undefined ? p.stockQuantity : 0}" style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
@@ -703,12 +710,19 @@
     // Update Product
     async function updateProduct(id) {
       if (!adminToken) return;
-      const name = document.getElementById(`name-${id}`).value;
-      const category = document.getElementById(`cat-${id}`).value;
-      const price = parseInt(document.getElementById(`price-${id}`).value);
+      
+      const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
       const stockQuantity = parseInt(document.getElementById(`stock-${id}`).value);
-      const badge = document.getElementById(`badge-${id}`).value;
-      const keywords = document.getElementById(`keywords-${id}`) ? document.getElementById(`keywords-${id}`).value : '';
+      
+      const payload = { stockQuantity };
+      
+      if (role === 'superadmin') {
+        payload.name = document.getElementById(`name-${id}`).value;
+        payload.category = document.getElementById(`cat-${id}`).value;
+        payload.price = parseInt(document.getElementById(`price-${id}`).value);
+        payload.badge = document.getElementById(`badge-${id}`).value;
+        payload.keywords = document.getElementById(`keywords-${id}`) ? document.getElementById(`keywords-${id}`).value : '';
+      }
       
       try {
         const res = await fetch(`${API_BASE}/products/${id}`, {
@@ -717,7 +731,7 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${adminToken}`
           },
-          body: JSON.stringify({ name, category, price, badge, stockQuantity, keywords })
+          body: JSON.stringify(payload)
         });
         handleApiError(res);
         if(!res.ok) throw new Error('Failed to update product');

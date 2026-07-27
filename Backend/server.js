@@ -12,7 +12,8 @@ const Razorpay = require('razorpay');
 const multer = require('multer');
 
 const app = express();
-let activeAdminToken = null; // Store token in memory for simple auth
+let activeAdminToken = null; // Legacy single token
+const activeAdminTokens = new Map(); // Store tokens and roles in memory
 const port = process.env.PORT || 5500;
 
 app.use(cors());
@@ -601,8 +602,10 @@ app.post('/api/admin/login', async (req, res) => {
     
     if (adminData.passwordHash === inputHash) {
       // Generate a simple session token
-      activeAdminToken = crypto.randomBytes(16).toString('hex');
-      res.json({ success: true, token: activeAdminToken });
+      const token = crypto.randomBytes(16).toString('hex');
+      const role = adminData.role || 'superadmin';
+      activeAdminTokens.set(token, { username, role });
+      res.json({ success: true, token, role });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -615,8 +618,27 @@ app.post('/api/admin/login', async (req, res) => {
 // Middleware for admin routes
 const requireAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader.split(' ')[1] !== activeAdminToken) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized. Please login again.' });
+  }
+  const token = authHeader.split(' ')[1];
+  const session = activeAdminTokens.get(token);
+  
+  if (!session) {
+    if (activeAdminToken && token === activeAdminToken) {
+      req.adminSession = { username: 'legacy', role: 'superadmin' };
+      return next();
+    }
+    return res.status(401).json({ error: 'Unauthorized. Please login again.' });
+  }
+  
+  req.adminSession = session;
+  next();
+};
+
+const requireSuperAdmin = (req, res, next) => {
+  if (req.adminSession.role !== 'superadmin') {
+    return res.status(403).json({ error: 'Forbidden. Super admin access required.' });
   }
   next();
 };
@@ -644,6 +666,15 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
 app.patch('/api/products/:id', requireAdmin, async (req, res) => {
   try {
     const { name, price, badge, stockQuantity, category, keywords } = req.body;
+    
+    // Role based enforcement
+    if (req.adminSession.role === 'stocker') {
+       // Stocker can only update stockQuantity
+       if (name !== undefined || price !== undefined || badge !== undefined || category !== undefined || keywords !== undefined) {
+          return res.status(403).json({ error: 'Stocker can only modify inventory quantity.' });
+       }
+    }
+    
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (price !== undefined) updateData.price = Number(price);
@@ -727,7 +758,7 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
 });
 
 // Update order status
-app.patch('/api/orders/:orderId/status', requireAdmin, async (req, res) => {
+app.patch('/api/orders/:orderId/status', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     const docRef = ordersRef.doc(req.params.orderId);
