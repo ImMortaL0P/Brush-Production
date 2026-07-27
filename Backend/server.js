@@ -785,6 +785,34 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// Delete product
+app.delete('/api/products/:id', requireAdmin, async (req, res) => {
+  try {
+    if (req.adminSession.role !== 'superadmin') {
+      return res.status(403).json({ error: 'Only superadmin can delete products.' });
+    }
+    
+    // First try by doc ID (for newer products)
+    let docRef = productsRef.doc(req.params.id.toString());
+    let doc = await docRef.get();
+    
+    // If not found, try querying by the numeric 'id' field (for older products)
+    if (!doc.exists) {
+      const productId = parseInt(req.params.id);
+      const snapshot = await productsRef.where('id', '==', productId).limit(1).get();
+      if (snapshot.empty) return res.status(404).json({ error: 'Product not found' });
+      docRef = snapshot.docs[0].ref;
+    }
+    
+    await docRef.delete();
+    logAdminActivity(req.adminSession.username, 'Delete Product', `Deleted product ID: ${req.params.id}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
 app.post('/api/products', requireAdmin, upload.single('image'), async (req, res) => {
   try {
     const { name, category, price, originalPrice, badge, description, stockQuantity, keywords } = req.body;

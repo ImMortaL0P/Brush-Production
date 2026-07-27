@@ -747,8 +747,9 @@
             <td>
               <input type="number" id="stock-${p.id}" value="${p.stockQuantity !== undefined ? p.stockQuantity : 0}" style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
             </td>
-            <td>
+            <td style="display: flex; gap: 5px; flex-direction: column;">
               <button class="action-btn" onclick="updateProduct(${p.id})">Save</button>
+              <button class="action-btn" ${role !== 'superadmin' ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="background:var(--sale-red); color:white; border-color:var(--sale-red);"'} onclick="deleteProduct(${p.id})">Delete</button>
             </td>
           </tr>
         `).join('');
@@ -786,6 +787,39 @@
         handleApiError(res);
         if(!res.ok) throw new Error('Failed to update product');
         showToast('Product updated successfully!');
+      } catch (e) {
+        showToast(e.message);
+      }
+    }
+
+    // Delete Product
+    async function deleteProduct(id) {
+      if (!adminToken) return;
+      
+      const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
+      if (role !== 'superadmin') {
+        showToast('You do not have permission to delete products.');
+        return;
+      }
+      
+      if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}/products/${id}`, {
+          method: 'DELETE',
+          headers: { 
+            'Authorization': `Bearer ${adminToken}`
+          }
+        });
+        handleApiError(res);
+        if(!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to delete product');
+        }
+        showToast('Product deleted successfully!');
+        loadInventory(); // Refresh the list
       } catch (e) {
         showToast(e.message);
       }
