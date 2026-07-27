@@ -147,6 +147,26 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { id, newPassword } = req.body;
+    if (!id || !newPassword) return res.status(400).json({ error: 'ID and new password required' });
+    
+    const userDoc = await usersRef.doc(id).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const hash = crypto.createHash('sha256').update(newPassword).digest('hex');
+    await usersRef.doc(id).update({ passwordHash: hash });
+    
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
 app.get('/api/auth/profile/:id', async (req, res) => {
   try {
     const userDoc = await usersRef.doc(req.params.id).get();

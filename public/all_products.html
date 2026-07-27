@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
   
   <style>
     body {
@@ -88,6 +88,7 @@
       border-radius: 12px;
       overflow: hidden;
       transition: all 0.2s;
+      cursor: pointer;
     }
     .list-item:hover {
       border-color: var(--accent);
@@ -260,10 +261,16 @@
     </div>
 
     <div class="nav-actions">
+      <a href="javascript:void(0)" class="nav-action-btn" aria-label="Account">
+        <i class="fa-regular fa-user"></i>
+      </a>
       <a href="#" class="nav-action-btn" aria-label="Cart" onclick="document.getElementById('cart-drawer').classList.add('open')">
         <i class="fa-solid fa-bag-shopping"></i>
         <span class="cart-count">0</span>
       </a>
+      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
 
@@ -307,8 +314,242 @@
   </div>
 
   <!-- Shared Cart Drawer -->
-  <div class="cart-overlay" id="cart-overlay"></div>
-  <div class="cart-drawer" id="cart-drawer">
+  
+<!-- Auth Modal -->
+  <div class="auth-modal-overlay" id="auth-modal-overlay"></div>
+  <div class="auth-modal" id="auth-modal">
+    <button class="auth-close-btn" id="auth-close-btn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-target="login">Log In</button>
+      <button class="auth-tab" data-target="signup">Sign Up</button>
+    </div>
+    
+    <!-- Login Form -->
+    <form class="auth-form active" id="login-form">
+      <h3>Welcome Back</h3>
+      <div class="form-group">
+        <label for="login-id">Email or Phone</label>
+        <input type="text" id="login-id" required>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required>
+      </div>
+      <div style="text-align: right; margin-bottom: 15px;">
+        <a href="javascript:void(0)" id="forgot-password-link" style="color: var(--accent); font-size: 0.9rem; text-decoration: none;">Forgot Password?</a>
+      </div>
+      <button type="submit" class="auth-submit-btn">Log In</button>
+      <div class="auth-error" id="login-error"></div>
+    </form>
+    
+    <!-- Reset Password Form -->
+    <form class="auth-form" id="reset-form">
+      <h3>Reset Password</h3>
+      <div class="form-group">
+        <label for="reset-id">Email or Phone</label>
+        <input type="text" id="reset-id" required>
+      </div>
+      <div class="form-group">
+        <label for="reset-password">New Password</label>
+        <input type="password" id="reset-password" required>
+      </div>
+      <button type="submit" class="auth-submit-btn">Update Password</button>
+      <div class="auth-error" id="reset-error"></div>
+      <div style="text-align: center; margin-top: 15px;">
+        <a href="javascript:void(0)" id="back-to-login-link" style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;">Back to Log In</a>
+      </div>
+    </form>
+    
+    <!-- Signup Form -->
+    <form class="auth-form" id="signup-form">
+      <h3>Create an Account</h3>
+      <div class="form-group">
+        <label for="signup-id">Email or Phone</label>
+        <input type="text" id="signup-id" required>
+      </div>
+      <div class="form-group">
+        <label for="signup-name">Full Name</label>
+        <input type="text" id="signup-name" required>
+      </div>
+      <div class="form-group">
+        <label for="signup-phone">Phone Number (if email used as ID)</label>
+        <input type="text" id="signup-phone">
+      </div>
+      <div class="form-group">
+        <label for="signup-address">Address</label>
+        <textarea id="signup-address" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" required>
+      </div>
+      <button type="submit" class="auth-submit-btn">Sign Up</button>
+      <div class="auth-error" id="signup-error"></div>
+    </form>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="profile-modal-overlay" id="profile-modal-overlay"></div>
+  <div class="profile-modal" id="profile-modal">
+    <button class="profile-close-btn" id="profile-close-btn" aria-label="Close profile"><i class="fa-solid fa-xmark"></i></button>
+    <h2>My Account</h2>
+    <div class="profile-content">
+      <form id="profile-form">
+        <h4>Personal Details</h4>
+        <div class="form-group">
+          <label>ID (Email/Phone)</label>
+          <input type="text" id="profile-id" readonly disabled>
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="profile-name">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" id="profile-phone">
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <textarea id="profile-address" rows="3"></textarea>
+        </div>
+        <button type="submit" class="auth-submit-btn">Update Profile</button>
+        <div class="auth-error" id="profile-msg" style="color: green;"></div>
+      </form>
+      
+      <form id="change-password-form" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+        <h4>Change Password</h4>
+        <div class="form-group">
+          <label for="new-profile-password">New Password</label>
+          <input type="password" id="new-profile-password" required>
+        </div>
+        <button type="submit" class="auth-submit-btn" style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">Update Password</button>
+        <div class="auth-error" id="change-password-msg"></div>
+      </form>
+      
+      <div class="order-history-section">
+        <h4>Order History</h4>
+        <div id="order-history-list">
+          <!-- Orders injected here -->
+        </div>
+      </div>
+      <button id="logout-btn" class="logout-btn">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="profile-modal-overlay" id="profile-modal-overlay"></div>
+  <div class="profile-modal" id="profile-modal">
+    <button class="profile-close-btn" id="profile-close-btn" aria-label="Close profile"><i class="fa-solid fa-xmark"></i></button>
+    <h2>My Account</h2>
+    <div class="profile-content">
+      <form id="profile-form">
+        <h4>Personal Details</h4>
+        <div class="form-group">
+          <label>ID (Email/Phone)</label>
+          <input type="text" id="profile-id" readonly disabled>
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="profile-name">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" id="profile-phone">
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <textarea id="profile-address" rows="3"></textarea>
+        </div>
+        <button type="submit" class="auth-submit-btn">Update Profile</button>
+        <div class="auth-error" id="profile-msg" style="color: green;"></div>
+      </form>
+      
+      <form id="change-password-form" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+        <h4>Change Password</h4>
+        <div class="form-group">
+          <label for="new-profile-password">New Password</label>
+          <input type="password" id="new-profile-password" required>
+        </div>
+        <button type="submit" class="auth-submit-btn" style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">Update Password</button>
+        <div class="auth-error" id="change-password-msg"></div>
+      </form>
+      
+      <div class="order-history-section">
+        <h4>Order History</h4>
+        <div id="order-history-list">
+          <!-- Orders injected here -->
+        </div>
+      </div>
+      <button id="logout-btn" class="logout-btn">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Product Detail Modal -->
+  <div class="product-modal-overlay" id="product-modal-overlay"></div>
+  <div class="product-modal" id="product-modal">
+    <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-content-wrapper">
+      <div class="modal-image-col">
+        <img id="modal-image" src="" alt="Product Image">
+      </div>
+      <div class="modal-info-col">
+        <h2 id="modal-title">Product Title</h2>
+        <div class="modal-price-wrap">
+          <span class="modal-price" id="modal-price">₹0</span>
+          <span class="modal-original-price" id="modal-original-price"></span>
+        </div>
+        <p id="modal-stock-status" style="margin-top: 5px; font-weight: 600; font-size: 0.9rem;"></p>
+        <p class="modal-description" id="modal-description">Product description goes here.</p>
+        
+        <div class="variant-selectors">
+          <div class="selector-group">
+            <label for="size-selector">Size</label>
+            <select id="size-selector">
+              <option value="A4" data-price="0">A4 (Base)</option>
+              <option value="A5" data-price="-20">A5 (-₹20)</option>
+              <option value="A3" data-price="50">A3 (+₹50)</option>
+            </select>
+          </div>
+          <div class="selector-group">
+            <label for="gsm-selector">Paper Quality</label>
+            <select id="gsm-selector">
+              <option value="80" data-price="0">80 GSM (Standard)</option>
+              <option value="140" data-price="40">140 GSM Premium (+₹40)</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="modal-add-to-cart" id="modal-add-to-cart">Add to Cart - <span id="modal-btn-price">₹0</span></button>
+        
+        <div class="reviews-section">
+          <h3>Customer Reviews (<span id="review-count">0</span>)</h3>
+          <div class="reviews-list" id="reviews-list">
+            <!-- Reviews injected here -->
+          </div>
+          
+          <form class="review-form" id="review-form">
+            <h4>Write a Review</h4>
+            <input type="text" id="review-name" placeholder="Your Name" required>
+            <select id="review-rating" required>
+              <option value="5">★★★★★ (5 Stars)</option>
+              <option value="4">★★★★☆ (4 Stars)</option>
+              <option value="3">★★★☆☆ (3 Stars)</option>
+              <option value="2">★★☆☆☆ (2 Stars)</option>
+              <option value="1">★☆☆☆☆ (1 Star)</option>
+            </select>
+            <textarea id="review-comment" placeholder="What did you think?" required></textarea>
+            <button type="submit">Submit Review</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cart-overlay" id="cart-overlay"></div>
+  
+
+
+
+<div class="cart-drawer" id="cart-drawer">
     <div class="cart-drawer-header">
       <h3><i class="fa-solid fa-bag-shopping"></i> Your Cart <span class="cart-drawer-count" id="cart-drawer-count">(0)</span></h3>
       <button class="cart-close-btn" id="cart-close-btn" aria-label="Close cart"><i class="fa-solid fa-xmark"></i></button>
@@ -425,7 +666,7 @@
         const isOut = stockQty <= 0;
         
         return `
-          <div class="list-item" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
+          <div class="list-item product-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
             <div class="list-item-img-wrapper">
               ${p.badge ? `<span class="list-item-badge">${p.badge}</span>` : ''}
               <img src="${p.image}" alt="${p.name}">
@@ -444,7 +685,7 @@
                 <span class="list-item-price">₹${p.price}</span>
                 ${p.originalPrice > p.price ? `<span class="list-item-original">₹${p.originalPrice}</span> <span class="list-item-discount">${discountPercentage}% OFF</span>` : ''}
               </div>
-              <button class="list-add-btn" onclick="addFromList(this)" ${isOut ? 'disabled' : ''}>
+              <button class="list-add-btn quick-add-btn"  ${isOut ? 'disabled' : ''}>
                 ${isOut ? 'Out of Stock' : 'Add to Cart'}
               </button>
             </div>
@@ -452,86 +693,9 @@
         `;
       }).join('');
     }
-    
-    function addFromList(btn) {
-      const item = btn.closest('.list-item');
-      if (!item) return;
-      
-      const product = {
-        id: parseInt(item.dataset.id),
-        name: item.dataset.name,
-        price: parseInt(item.dataset.price),
-        originalPrice: parseInt(item.dataset.original),
-        image: item.dataset.image,
-        stockQuantity: parseInt(item.dataset.stock) || 0
-      };
-      
-      Cart.addItem(product, 1);
-      
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '✓ Added!';
-      setTimeout(() => { btn.innerHTML = originalText; }, 1500);
-      
-      // Setup toast if exists
-      const toast = document.getElementById('toast');
-      document.getElementById('toast-text').textContent = `${product.name} added to cart!`;
-      toast.classList.add('visible');
-      setTimeout(() => toast.classList.remove('visible'), 3000);
-      
-      document.getElementById('cart-drawer').classList.add('open');
-    }
-
     loadAllProducts();
 
-    // Re-hook up cart integration for drawer UI
-    if (typeof Cart !== 'undefined') {
-      const cartCloseBtn = document.getElementById('cart-close-btn');
-      const cartContinueBtn = document.getElementById('cart-continue-btn');
-      const cartDrawer = document.getElementById('cart-drawer');
-      
-      if(cartCloseBtn) cartCloseBtn.addEventListener('click', () => cartDrawer.classList.remove('open'));
-      if(cartContinueBtn) cartContinueBtn.addEventListener('click', () => cartDrawer.classList.remove('open'));
-      
-      // Note: renderCartDrawer is missing here, we should copy it or just let cart.js handle it if cart.js is refactored.
-      // But cart.js is just a class. We'll implement a simple renderCartDrawer here specifically for this page.
-      function renderCartDrawer() {
-        const state = Cart.getState();
-        const body = document.getElementById('cart-drawer-body');
-        document.getElementById('cart-drawer-count').textContent = `(${state.items.length})`;
-        document.querySelectorAll('.cart-count').forEach(el => el.textContent = state.items.length);
-        
-        if (state.items.length === 0) {
-          body.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-secondary);">Your cart is empty.</div>';
-          document.getElementById('cart-subtotal').textContent = '₹0';
-          document.getElementById('cart-total').textContent = '₹0';
-          document.getElementById('cart-shipping').textContent = '₹0';
-          return;
-        }
-        
-        body.innerHTML = state.items.map(item => `
-          <div class="cart-item">
-            <img src="${item.image}" alt="${item.name}" class="cart-item-img">
-            <div class="cart-item-details">
-              <h4>${item.name}</h4>
-              <p class="cart-item-price">₹${item.price}</p>
-              <div class="cart-item-qty">
-                <button onclick="Cart.updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
-                <span>${item.quantity}</span>
-                <button onclick="Cart.updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
-              </div>
-            </div>
-            <button class="cart-item-remove" onclick="Cart.removeItem(${item.id})"><i class="fa-solid fa-trash"></i></button>
-          </div>
-        `).join('');
-        
-        document.getElementById('cart-subtotal').textContent = `₹${state.subtotal}`;
-        document.getElementById('cart-shipping').textContent = state.shipping === 0 ? 'FREE' : `₹${state.shipping}`;
-        document.getElementById('cart-total').textContent = `₹${state.total}`;
-      }
-      
-      Cart.onChange(renderCartDrawer);
-      renderCartDrawer();
-    }
-  </script>
+    </script>
+  <script src="script.js?v=3"></script>
 </body>
 </html>

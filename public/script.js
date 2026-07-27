@@ -643,9 +643,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileModal = document.getElementById('profile-modal');
   const profileModalOverlay = document.getElementById('profile-modal-overlay');
   
-  const accountBtn = document.querySelector('a[aria-label="Account"]');
-  if (accountBtn) {
-    accountBtn.addEventListener('click', (e) => {
+  document.addEventListener('click', (e) => {
+    const accountBtn = e.target.closest('a[aria-label="Account"]');
+    if (accountBtn) {
       e.preventDefault();
       const currentUser = localStorage.getItem('brushUser');
       if (currentUser) {
@@ -653,8 +653,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         openAuthModal();
       }
-    });
-  }
+    }
+  });
 
   function openAuthModal() {
     if(authModal) authModal.classList.add('open');
@@ -736,6 +736,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (err) {
         signupError.textContent = 'Network error';
+      }
+    });
+  }
+
+  // Forgot Password / Reset Logic
+  const forgotPasswordLink = document.getElementById('forgot-password-link');
+  const backToLoginLink = document.getElementById('back-to-login-link');
+  const resetForm = document.getElementById('reset-form');
+
+  if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', () => {
+      authTabs.forEach(t => t.classList.remove('active'));
+      authForms.forEach(f => f.classList.remove('active'));
+      resetForm.classList.add('active');
+    });
+  }
+
+  if (backToLoginLink) {
+    backToLoginLink.addEventListener('click', () => {
+      authForms.forEach(f => f.classList.remove('active'));
+      document.getElementById('login-form').classList.add('active');
+      const loginTab = document.querySelector('.auth-tab[data-target="login"]');
+      if (loginTab) loginTab.classList.add('active');
+    });
+  }
+
+  if (resetForm) {
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('reset-id').value;
+      const newPassword = document.getElementById('reset-password').value;
+      const err = document.getElementById('reset-error');
+      const btn = resetForm.querySelector('button');
+      
+      btn.textContent = 'Updating...';
+      btn.disabled = true;
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, newPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+        
+        err.style.color = 'var(--success)';
+        err.textContent = 'Password updated successfully! Please log in.';
+        setTimeout(() => {
+          backToLoginLink.click();
+          err.textContent = '';
+          err.style.color = 'var(--sale-red)';
+          resetForm.reset();
+        }, 2000);
+      } catch (error) {
+        err.style.color = 'var(--sale-red)';
+        err.textContent = error.message;
+      } finally {
+        btn.textContent = 'Update Password';
+        btn.disabled = false;
       }
     });
   }
@@ -833,6 +893,43 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (err) {
         document.getElementById('profile-msg').textContent = 'Network error';
         document.getElementById('profile-msg').style.color = 'red';
+      }
+    });
+  }
+
+  const changePasswordForm = document.getElementById('change-password-form');
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentUser = JSON.parse(localStorage.getItem('brushUser'));
+      if (!currentUser) return;
+      
+      const newPassword = document.getElementById('new-profile-password').value;
+      const msg = document.getElementById('change-password-msg');
+      const btn = changePasswordForm.querySelector('button');
+      
+      btn.textContent = 'Updating...';
+      btn.disabled = true;
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentUser.userId, newPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to update password');
+        
+        msg.style.color = 'var(--success)';
+        msg.textContent = 'Password updated successfully!';
+        changePasswordForm.reset();
+        setTimeout(() => { msg.textContent = ''; }, 3000);
+      } catch (error) {
+        msg.style.color = 'var(--sale-red)';
+        msg.textContent = error.message;
+      } finally {
+        btn.textContent = 'Update Password';
+        btn.disabled = false;
       }
     });
   }
