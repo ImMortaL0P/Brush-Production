@@ -50,6 +50,97 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  // ---- Global Search ----
+  const searchBtn = document.getElementById('search-btn');
+  const searchOverlay = document.getElementById('search-overlay');
+  const searchCloseBtn = document.getElementById('search-close-btn');
+  const globalSearchForm = document.getElementById('global-search-form');
+  const globalSearchInput = document.getElementById('global-search-input');
+
+  if (searchBtn && searchOverlay) {
+    searchBtn.addEventListener('click', () => {
+      searchOverlay.classList.add('open');
+      if (globalSearchInput) {
+        setTimeout(() => globalSearchInput.focus(), 100);
+      }
+    });
+  }
+
+  if (searchCloseBtn && searchOverlay) {
+    searchCloseBtn.addEventListener('click', () => {
+      searchOverlay.classList.remove('open');
+    });
+  }
+
+  if (globalSearchForm) {
+    globalSearchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const query = globalSearchInput.value.trim();
+      if (query) {
+        window.location.href = 'all_products.html?search=' + encodeURIComponent(query);
+      }
+    });
+  }
+  
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (globalSearchInput && suggestionsBox) {
+    globalSearchInput.addEventListener('input', async (e) => {
+      const query = e.target.value.trim().toLowerCase();
+      if (query.length < 2) {
+        suggestionsBox.classList.remove('active');
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}/products`);
+        const products = await res.json();
+        
+        const matched = products.filter(p => {
+          const name = (p.name || '').toLowerCase();
+          const cat = (p.category || '').toLowerCase();
+          const keys = (p.keywords || '').toLowerCase();
+          return name.includes(query) || cat.includes(query) || keys.includes(query);
+        }).slice(0, 5);
+        
+        if (matched.length > 0) {
+          suggestionsBox.innerHTML = matched.map(p => `
+            <a href="all_products.html?search=${encodeURIComponent(p.name)}" class="suggestion-item">
+              <img src="${p.image}" alt="${p.name}">
+              <div class="suggestion-item-details">
+                <span class="suggestion-title">${p.name}</span>
+                <span class="suggestion-cat">${p.category}</span>
+              </div>
+            </a>
+          `).join('');
+          suggestionsBox.classList.add('active');
+        } else {
+          suggestionsBox.innerHTML = '<div style="padding:10px 15px; color:var(--text-secondary);">No matches found</div>';
+          suggestionsBox.classList.add('active');
+        }
+      } catch (err) {
+        console.error('Search error', err);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      // Close suggestions
+      if (!suggestionsBox.contains(e.target) && e.target !== globalSearchInput) {
+        suggestionsBox.classList.remove('active');
+      }
+      
+      // Close search overlay entirely (either click on the overlay backdrop, or outside completely)
+      if (searchOverlay.classList.contains('open')) {
+        const clickedInsideContainer = searchOverlay.querySelector('.search-container').contains(e.target);
+        const clickedSearchBtn = searchBtn && searchBtn.contains(e.target);
+        
+        if (!clickedInsideContainer && !clickedSearchBtn) {
+          searchOverlay.classList.remove('open');
+        }
+      }
+    });
+  }
+
+
   // ---- Hero Slider ----
   const slides = document.querySelectorAll('.hero-slide');
   const dots = document.querySelectorAll('.hero-dot');

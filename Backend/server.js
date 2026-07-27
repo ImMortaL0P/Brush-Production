@@ -643,13 +643,14 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
 // Update product
 app.patch('/api/products/:id', requireAdmin, async (req, res) => {
   try {
-    const { name, price, badge, stockQuantity, category } = req.body;
+    const { name, price, badge, stockQuantity, category, keywords } = req.body;
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (price !== undefined) updateData.price = Number(price);
     if (badge !== undefined) updateData.badge = badge;
     if (stockQuantity !== undefined) updateData.stockQuantity = Number(stockQuantity);
     if (category !== undefined) updateData.category = category;
+    if (keywords !== undefined) updateData.keywords = keywords;
     
     // First try by doc ID (for newer products)
     let docRef = productsRef.doc(req.params.id.toString());
@@ -673,7 +674,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
 
 app.post('/api/products', requireAdmin, upload.single('image'), async (req, res) => {
   try {
-    const { name, category, price, originalPrice, badge, description, stockQuantity } = req.body;
+    const { name, category, price, originalPrice, badge, description, stockQuantity, keywords } = req.body;
     
     if (!name || !price) {
       return res.status(400).json({ error: 'Name and price are required' });
@@ -712,6 +713,7 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       badge: badge || '',
       description: description || '',
       stockQuantity: Number(stockQuantity || 0),
+      keywords: keywords || '',
       image: imageUrl,
       createdAt: FieldValue.serverTimestamp()
     };

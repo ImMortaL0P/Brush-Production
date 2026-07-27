@@ -16,7 +16,7 @@
   <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
 
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=6">
   <link rel="icon" type="image/png" href="favicon.png">
 </head>
 
@@ -392,6 +392,17 @@
     </div>
   </footer>
 
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-container">
+      <button class="search-close-btn" id="search-close-btn" aria-label="Close search"><i class="fa-solid fa-xmark"></i></button>
+      <form id="global-search-form" class="global-search-form">
+        <input type="text" id="global-search-input" placeholder="Search posters, categories, themes..." autocomplete="off">
+        <button type="submit" aria-label="Submit search"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </form>
+      <div class="search-suggestions" id="search-suggestions"></div>
+    </div>
+  </div>
 
   <!-- Auth Modal -->
   <div class="auth-modal-overlay" id="auth-modal-overlay"></div>
@@ -617,7 +628,7 @@
 
   <!-- Scripts -->
   <script src="cart.js"></script>
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=6"></script>
 </body>
 
 </html>

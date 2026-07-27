@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=6">
   
   <style>
     body {
@@ -261,6 +261,9 @@
     </div>
 
     <div class="nav-actions">
+      <button class="nav-action-btn" id="search-btn" aria-label="Search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
       <a href="javascript:void(0)" class="nav-action-btn" aria-label="Account">
         <i class="fa-regular fa-user"></i>
       </a>
@@ -544,10 +547,19 @@
       </div>
     </div>
   </div>
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-container">
+      <button class="search-close-btn" id="search-close-btn" aria-label="Close search"><i class="fa-solid fa-xmark"></i></button>
+      <form id="global-search-form" class="global-search-form">
+        <input type="text" id="global-search-input" placeholder="Search posters, categories, themes..." autocomplete="off">
+        <button type="submit" aria-label="Submit search"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </form>
+      <div class="search-suggestions" id="search-suggestions"></div>
+    </div>
+  </div>
+
 <div class="cart-overlay" id="cart-overlay"></div>
-  
-
-
 
 <div class="cart-drawer" id="cart-drawer">
     <div class="cart-drawer-header">
@@ -593,12 +605,14 @@
           const cat = p.category ? p.category.toLowerCase() : '';
           const name = p.name ? p.name.toLowerCase() : '';
           const desc = p.description ? p.description.toLowerCase() : '';
+          const keywordsStr = p.keywords ? p.keywords.toLowerCase() : '';
           
           // Keyword match
           const matchesKeyword = !keyword || (
             name.includes(keyword) || 
             cat.includes(keyword) || 
-            desc.includes(keyword)
+            desc.includes(keyword) ||
+            keywordsStr.includes(keyword)
           );
           
           // Category match - check name and desc too because the DB currently has all categories set to 'Posters'
@@ -632,6 +646,7 @@
         
         const urlParams = new URLSearchParams(window.location.search);
         const categoryParam = urlParams.get('category');
+        const searchParam = urlParams.get('search');
         
         if (categoryParam) {
           // Uncheck all except the one from URL
@@ -642,6 +657,13 @@
               cb.checked = false;
             }
           });
+        }
+
+        if (searchParam) {
+          const searchInput = document.getElementById('search-input');
+          if (searchInput) {
+            searchInput.value = searchParam;
+          }
         }
         
         applyFilters();
@@ -696,6 +718,6 @@
     loadAllProducts();
 
     </script>
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=6"></script>
 </body>
 </html>
