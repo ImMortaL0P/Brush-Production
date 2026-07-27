@@ -362,6 +362,7 @@
             <option value="Minimalist">Minimalist</option>
             <option value="Cyberpunk">Cyberpunk</option>
             <option value="Space & Sci-Fi">Space & Sci-Fi</option>
+            <option value="Board Finish">Board Finish</option>
             <option value="General">General / Other</option>
           </select>
           <button class="refresh-btn" onclick="loadInventory()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
@@ -404,6 +405,7 @@
             <option value="Minimalist">Minimalist</option>
             <option value="Cyberpunk">Cyberpunk</option>
             <option value="Space & Sci-Fi">Space & Sci-Fi</option>
+            <option value="Board Finish">Board Finish</option>
             <option value="General">General / Other</option>
           </select>
           <input type="number" id="new-prod-price" placeholder="Price (₹) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
@@ -730,8 +732,9 @@
                     <option value="Minimalist" ${p.category === 'Minimalist' ? 'selected' : ''}>Minimalist</option>
                     <option value="Cyberpunk" ${p.category === 'Cyberpunk' ? 'selected' : ''}>Cyberpunk</option>
                     <option value="Space & Sci-Fi" ${p.category === 'Space & Sci-Fi' ? 'selected' : ''}>Space & Sci-Fi</option>
+                    <option value="Board Finish" ${p.category === 'Board Finish' ? 'selected' : ''}>Board Finish</option>
                     <option value="General" ${p.category === 'General' ? 'selected' : ''}>General / Other</option>
-                    ${!['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'General'].includes(p.category) ? `<option value="${p.category}" selected>${p.category}</option>` : ''}
+                    ${!['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'Board Finish', 'General'].includes(p.category) ? `<option value="${p.category}" selected>${p.category}</option>` : ''}
                   </select>
                 </div>
               </div>
