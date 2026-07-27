@@ -394,6 +394,96 @@
   </footer>
 
 
+  <!-- Auth Modal -->
+  <div class="auth-modal-overlay" id="auth-modal-overlay"></div>
+  <div class="auth-modal" id="auth-modal">
+    <button class="auth-close-btn" id="auth-close-btn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-target="login">Log In</button>
+      <button class="auth-tab" data-target="signup">Sign Up</button>
+    </div>
+    
+    <!-- Login Form -->
+    <form class="auth-form active" id="login-form">
+      <h3>Welcome Back</h3>
+      <div class="form-group">
+        <label for="login-id">Email or Phone</label>
+        <input type="text" id="login-id" required>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required>
+      </div>
+      <button type="submit" class="auth-submit-btn">Log In</button>
+      <div class="auth-error" id="login-error"></div>
+    </form>
+    
+    <!-- Signup Form -->
+    <form class="auth-form" id="signup-form">
+      <h3>Create an Account</h3>
+      <div class="form-group">
+        <label for="signup-id">Email or Phone</label>
+        <input type="text" id="signup-id" required>
+      </div>
+      <div class="form-group">
+        <label for="signup-name">Full Name</label>
+        <input type="text" id="signup-name" required>
+      </div>
+      <div class="form-group">
+        <label for="signup-phone">Phone Number (if email used as ID)</label>
+        <input type="text" id="signup-phone">
+      </div>
+      <div class="form-group">
+        <label for="signup-address">Address</label>
+        <textarea id="signup-address" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" required>
+      </div>
+      <button type="submit" class="auth-submit-btn">Sign Up</button>
+      <div class="auth-error" id="signup-error"></div>
+    </form>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="profile-modal-overlay" id="profile-modal-overlay"></div>
+  <div class="profile-modal" id="profile-modal">
+    <button class="profile-close-btn" id="profile-close-btn" aria-label="Close profile"><i class="fa-solid fa-xmark"></i></button>
+    <h2>My Account</h2>
+    <div class="profile-content">
+      <form id="profile-form">
+        <h4>Personal Details</h4>
+        <div class="form-group">
+          <label>ID (Email/Phone)</label>
+          <input type="text" id="profile-id" readonly disabled>
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="profile-name">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" id="profile-phone">
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <textarea id="profile-address" rows="3"></textarea>
+        </div>
+        <button type="submit" class="auth-submit-btn">Update Profile</button>
+        <div class="auth-error" id="profile-msg" style="color: green;"></div>
+      </form>
+      
+      <div class="order-history-section">
+        <h4>Order History</h4>
+        <div id="order-history-list">
+          <!-- Orders injected here -->
+        </div>
+      </div>
+      <button id="logout-btn" class="logout-btn">Log Out</button>
+    </div>
+  </div>
+
   <!-- Product Detail Modal -->
   <div class="product-modal-overlay" id="product-modal-overlay"></div>
   <div class="product-modal" id="product-modal">

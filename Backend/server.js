@@ -89,6 +89,107 @@ const ordersRef = db.collection('orders');
 // API ENDPOINTS
 // ==========================================
 
+// ==========================================
+// AUTH & USER ENDPOINTS
+// ==========================================
+const usersRef = db.collection('users');
+
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { id, password, name, phone, address } = req.body;
+    if (!id || !password) return res.status(400).json({ error: 'ID and password required' });
+    
+    const userDoc = await usersRef.doc(id).get();
+    if (userDoc.exists) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+    
+    const hash = crypto.createHash('sha256').update(password).digest('hex');
+    
+    const newUser = {
+      id,
+      passwordHash: hash,
+      name: name || '',
+      phone: phone || '',
+      address: address || '',
+      createdAt: FieldValue.serverTimestamp()
+    };
+    
+    await usersRef.doc(id).set(newUser);
+    res.json({ success: true, userId: id, name, phone, address });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Signup failed' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { id, password } = req.body;
+    if (!id || !password) return res.status(400).json({ error: 'ID and password required' });
+    
+    const userDoc = await usersRef.doc(id).get();
+    if (!userDoc.exists) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    const user = userDoc.data();
+    const hash = crypto.createHash('sha256').update(password).digest('hex');
+    
+    if (user.passwordHash !== hash) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    res.json({ success: true, userId: id, name: user.name, phone: user.phone, address: user.address });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.get('/api/auth/profile/:id', async (req, res) => {
+  try {
+    const userDoc = await usersRef.doc(req.params.id).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+    
+    const user = userDoc.data();
+    delete user.passwordHash;
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+app.put('/api/auth/profile/:id', async (req, res) => {
+  try {
+    const { name, phone, address } = req.body;
+    await usersRef.doc(req.params.id).update({
+      name: name || '',
+      phone: phone || '',
+      address: address || '',
+      updatedAt: FieldValue.serverTimestamp()
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+app.get('/api/orders/user/:id', async (req, res) => {
+  try {
+    // Requires composite index in Firestore for userId and date, or we just fetch by userId and sort in node
+    const snapshot = await ordersRef.where('userId', '==', req.params.id).get();
+    const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
+    res.json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
 app.get('/api/products', async (req, res) => {
   try {
     const snapshot = await productsRef.orderBy('id', 'asc').get();
@@ -165,7 +266,7 @@ app.post('/api/payment/create-order', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { customer, items, paymentMethod, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { customer, items, paymentMethod, razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
 
     // Verify Payment Signature if online payment
     if ((paymentMethod === 'upi' || paymentMethod === 'card') && razorpay_payment_id && !razorpay_order_id.startsWith('order_mock_')) {
@@ -249,6 +350,7 @@ app.post('/api/orders', async (req, res) => {
     const order = {
       id: orderId,
       orderId: orderId,
+      userId: userId || null,
       customer,
       items: enrichedItems,
       paymentMethod,

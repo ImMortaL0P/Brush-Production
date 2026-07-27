@@ -112,8 +112,15 @@ const Cart = (() => {
     const cart = getCart();
     if (cart.length === 0) throw new Error('Cart is empty');
 
+    let userId = null;
+    try {
+      const u = JSON.parse(localStorage.getItem('brushUser'));
+      if(u) userId = u.userId;
+    } catch(e) {}
+
     const orderPayload = {
       customer: customerData,
+      userId: userId,
       items: cart.map(item => ({ 
         productId: item.id, 
         quantity: item.quantity,

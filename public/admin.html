@@ -540,9 +540,16 @@
                 <span class="status-badge status-${o.status}" style="margin-left: 10px;">${o.status}</span>
               </td>
               <td>
-                <a href="${API_BASE}/orders/${o.orderId}/invoice" target="_blank" class="action-btn">
-                  <i class="fa-solid fa-file-pdf"></i> Invoice
-                </a>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <a href="${API_BASE}/orders/${o.orderId}/invoice" target="_blank" class="action-btn">
+                    <i class="fa-solid fa-file-pdf"></i> Invoice
+                  </a>
+                  ${o.status !== 'cancelled' ? `
+                    <button class="action-btn" style="background:var(--sale-red);color:white;border:none;" onclick="cancelOrderFromAdmin('${o.orderId}')">
+                      <i class="fa-solid fa-ban"></i> Cancel
+                    </button>
+                  ` : ''}
+                </div>
               </td>
             </tr>
           `;
@@ -570,6 +577,13 @@
         loadOrders();
       } catch (e) {
         showToast(e.message);
+      }
+    }
+
+    // Cancel Order specific function
+    async function cancelOrderFromAdmin(orderId) {
+      if(confirm(`Are you sure you want to cancel order ${orderId}? This cannot be undone.`)) {
+        await updateOrderStatus(orderId, 'cancelled');
       }
     }
 

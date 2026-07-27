@@ -637,4 +637,204 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ===== AUTHENTICATION & PROFILE =====
+  const authModal = document.getElementById('auth-modal');
+  const authModalOverlay = document.getElementById('auth-modal-overlay');
+  const profileModal = document.getElementById('profile-modal');
+  const profileModalOverlay = document.getElementById('profile-modal-overlay');
+  
+  const accountBtn = document.querySelector('a[aria-label="Account"]');
+  if (accountBtn) {
+    accountBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const currentUser = localStorage.getItem('brushUser');
+      if (currentUser) {
+        openProfileModal(JSON.parse(currentUser));
+      } else {
+        openAuthModal();
+      }
+    });
+  }
+
+  function openAuthModal() {
+    if(authModal) authModal.classList.add('open');
+    if(authModalOverlay) authModalOverlay.classList.add('open');
+  }
+  function closeAuthModal() {
+    if(authModal) authModal.classList.remove('open');
+    if(authModalOverlay) authModalOverlay.classList.remove('open');
+  }
+  
+  const authCloseBtn = document.getElementById('auth-close-btn');
+  if (authCloseBtn) authCloseBtn.addEventListener('click', closeAuthModal);
+  if (authModalOverlay) authModalOverlay.addEventListener('click', closeAuthModal);
+
+  const authTabs = document.querySelectorAll('.auth-tab');
+  const authForms = document.querySelectorAll('.auth-form');
+  authTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      authTabs.forEach(t => t.classList.remove('active'));
+      authForms.forEach(f => f.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`${tab.dataset.target}-form`).classList.add('active');
+    });
+  });
+
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const loginError = document.getElementById('login-error');
+  const signupError = document.getElementById('signup-error');
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('login-id').value;
+      const password = document.getElementById('login-password').value;
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({id, password})
+        });
+        const data = await res.json();
+        if(res.ok) {
+          localStorage.setItem('brushUser', JSON.stringify(data));
+          closeAuthModal();
+          showToast('Logged in successfully!');
+        } else {
+          loginError.textContent = data.error || 'Login failed';
+        }
+      } catch (err) {
+        loginError.textContent = 'Network error';
+      }
+    });
+  }
+
+  if (signupForm) {
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('signup-id').value;
+      const name = document.getElementById('signup-name').value;
+      const phone = document.getElementById('signup-phone').value;
+      const address = document.getElementById('signup-address').value;
+      const password = document.getElementById('signup-password').value;
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/signup`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({id, name, phone, address, password})
+        });
+        const data = await res.json();
+        if(res.ok) {
+          localStorage.setItem('brushUser', JSON.stringify(data));
+          closeAuthModal();
+          showToast('Account created successfully!');
+        } else {
+          signupError.textContent = data.error || 'Signup failed';
+        }
+      } catch (err) {
+        signupError.textContent = 'Network error';
+      }
+    });
+  }
+
+  // Profile Modal
+  function closeProfileModal() {
+    if(profileModal) profileModal.classList.remove('open');
+    if(profileModalOverlay) profileModalOverlay.classList.remove('open');
+  }
+  
+  const profileCloseBtn = document.getElementById('profile-close-btn');
+  if(profileCloseBtn) profileCloseBtn.addEventListener('click', closeProfileModal);
+  if(profileModalOverlay) profileModalOverlay.addEventListener('click', closeProfileModal);
+  
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('brushUser');
+      closeProfileModal();
+      showToast('Logged out');
+    });
+  }
+
+  async function openProfileModal(user) {
+    if(profileModal) profileModal.classList.add('open');
+    if(profileModalOverlay) profileModalOverlay.classList.add('open');
+    
+    document.getElementById('profile-id').value = user.userId;
+    document.getElementById('profile-name').value = user.name || '';
+    document.getElementById('profile-phone').value = user.phone || '';
+    document.getElementById('profile-address').value = user.address || '';
+    document.getElementById('profile-msg').textContent = '';
+    
+    // Fetch orders
+    const orderList = document.getElementById('order-history-list');
+    orderList.innerHTML = '<p>Loading orders...</p>';
+    try {
+      const res = await fetch(`${API_BASE}/orders/user/${user.userId}`);
+      if(res.ok) {
+        const orders = await res.json();
+        if(orders.length === 0) {
+          orderList.innerHTML = '<p>No orders found.</p>';
+        } else {
+          orderList.innerHTML = orders.map(o => `
+            <div class="order-item">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <strong>${o.orderId}</strong>
+                <span>₹${o.total}</span>
+              </div>
+              <div style="font-size:0.85rem;color:var(--text-secondary);">
+                Date: ${new Date(o.createdAt?._seconds ? o.createdAt._seconds*1000 : (o.createdAt || new Date())).toLocaleDateString()} | Status: ${o.status}
+              </div>
+              <div style="font-size:0.85rem;margin-top:5px;">
+                ${o.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+              </div>
+            </div>
+          `).join('');
+        }
+      } else {
+        orderList.innerHTML = '<p>Failed to load orders.</p>';
+      }
+    } catch(err) {
+      orderList.innerHTML = '<p>Error loading orders.</p>';
+    }
+  }
+
+  const profileForm = document.getElementById('profile-form');
+  if (profileForm) {
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = JSON.parse(localStorage.getItem('brushUser'));
+      if(!user) return;
+      
+      const name = document.getElementById('profile-name').value;
+      const phone = document.getElementById('profile-phone').value;
+      const address = document.getElementById('profile-address').value;
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/profile/${user.userId}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({name, phone, address})
+        });
+        if(res.ok) {
+          user.name = name;
+          user.phone = phone;
+          user.address = address;
+          localStorage.setItem('brushUser', JSON.stringify(user));
+          document.getElementById('profile-msg').textContent = 'Profile updated!';
+          document.getElementById('profile-msg').style.color = 'green';
+        } else {
+          document.getElementById('profile-msg').textContent = 'Update failed';
+          document.getElementById('profile-msg').style.color = 'red';
+        }
+      } catch (err) {
+        document.getElementById('profile-msg').textContent = 'Network error';
+        document.getElementById('profile-msg').style.color = 'red';
+      }
+    });
+  }
+
 });
