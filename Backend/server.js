@@ -605,7 +605,7 @@ app.post('/api/admin/login', async (req, res) => {
       const token = crypto.randomBytes(16).toString('hex');
       const role = adminData.role || 'superadmin';
       activeAdminTokens.set(token, { username, role });
-      res.json({ success: true, token, role });
+      res.json({ success: true, token, role, username });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -642,6 +642,76 @@ const requireSuperAdmin = (req, res, next) => {
   }
   next();
 };
+
+// Admin Logging
+const logAdminActivity = async (username, action, details) => {
+  try {
+    await db.collection('admin_logs').add({
+      username,
+      action,
+      details,
+      keep: false,
+      timestamp: FieldValue.serverTimestamp()
+    });
+    cleanOldLogs(); // Fire and forget
+  } catch (error) {
+    console.error('Failed to log admin activity:', error);
+  }
+};
+
+const cleanOldLogs = async () => {
+  try {
+    const timeLimit = new Date(Date.now() - 72 * 60 * 60 * 1000); // 72 hours ago
+    const snapshot = await db.collection('admin_logs').get();
+    const toDelete = [];
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.keep === false && data.timestamp && data.timestamp.toDate() < timeLimit) {
+        toDelete.push(doc.ref);
+      }
+    });
+      
+    if (toDelete.length > 0) {
+      const batch = db.batch();
+      toDelete.forEach(ref => batch.delete(ref));
+      await batch.commit();
+    }
+  } catch (error) {
+    console.error('Failed to clean old logs:', error);
+  }
+};
+
+// Get Admin Logs
+app.get('/api/admin/logs', requireAdmin, requireSuperAdmin, async (req, res) => {
+  try {
+    const snapshot = await db.collection('admin_logs').orderBy('timestamp', 'desc').limit(200).get();
+    const logs = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.timestamp && data.timestamp.toDate) {
+        data.timestamp = data.timestamp.toDate().toISOString();
+      }
+      logs.push({ id: doc.id, ...data });
+    });
+    res.json(logs);
+  } catch (error) {
+    console.error('Fetch logs error:', error);
+    res.status(500).json({ error: 'Failed to fetch logs' });
+  }
+});
+
+// Toggle Keep Log
+app.patch('/api/admin/logs/:id/keep', requireAdmin, requireSuperAdmin, async (req, res) => {
+  try {
+    const docRef = db.collection('admin_logs').doc(req.params.id);
+    const { keep } = req.body;
+    await docRef.update({ keep: Boolean(keep) });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update log' });
+  }
+});
 
 // Get all orders
 app.get('/api/orders', requireAdmin, async (req, res) => {
@@ -685,7 +755,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     
     // First try by doc ID (for newer products)
     let docRef = productsRef.doc(req.params.id.toString());
-    const doc = await docRef.get();
+    let doc = await docRef.get();
     
     // If not found, try querying by the numeric 'id' field (for older products)
     if (!doc.exists) {
@@ -693,9 +763,21 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
       const snapshot = await productsRef.where('id', '==', productId).limit(1).get();
       if (snapshot.empty) return res.status(404).json({ error: 'Product not found' });
       docRef = snapshot.docs[0].ref;
+      doc = snapshot.docs[0];
     }
     
+    const oldData = doc.data() || {};
+    const changes = [];
+    if (name !== undefined && oldData.name !== name) changes.push(`name to "${name}"`);
+    if (price !== undefined && oldData.price !== Number(price)) changes.push(`price to ${price}`);
+    if (stockQuantity !== undefined && oldData.stockQuantity !== Number(stockQuantity)) changes.push(`stock to ${stockQuantity}`);
+    if (badge !== undefined && oldData.badge !== badge) changes.push(`badge to "${badge}"`);
+    if (category !== undefined && oldData.category !== category) changes.push(`cat to "${category}"`);
+    if (keywords !== undefined && oldData.keywords !== keywords) changes.push(`keywords to "${keywords}"`);
+    const changesStr = changes.length > 0 ? changes.join(', ') : 'no changes';
+    
     await docRef.update(updateData);
+    logAdminActivity(req.adminSession.username, 'Update Product', `Updated product ID: ${req.params.id} (${changesStr})`);
     res.json({ success: true });
   } catch (error) {
     console.error('Update product error:', error);
@@ -749,8 +831,12 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       createdAt: FieldValue.serverTimestamp()
     };
 
-    await productsRef.doc(newId.toString()).set(newProduct);
-    res.status(201).json(newProduct);
+    const productRef = productsRef.doc(newId.toString());
+    await productRef.set(newProduct);
+    
+    logAdminActivity(req.adminSession.username, 'Add Product', `Added product ID: ${newId} (${name})`);
+
+    res.json({ success: true, product: newProduct });
   } catch (error) {
     console.error('Create product error:', error);
     res.status(500).json({ error: 'Failed to create product' });
@@ -764,8 +850,9 @@ app.patch('/api/orders/:orderId/status', requireAdmin, requireSuperAdmin, async 
     const docRef = ordersRef.doc(req.params.orderId);
     const doc = await docRef.get();
     if (!doc.exists) return res.status(404).json({ error: 'Order not found' });
-    
+    const oldStatus = doc.data().status;
     await docRef.update({ status });
+    logAdminActivity(req.adminSession.username, 'Update Order Status', `Changed order ${req.params.orderId} status from ${oldStatus} to ${status}`);
     res.json({ message: 'Order status updated successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update order status' });
