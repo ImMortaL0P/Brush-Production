@@ -747,6 +747,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  function updateAuthUI() {
+    const btn = document.querySelector('a[aria-label="Account"]');
+    if (!btn) return;
+    const currentUser = localStorage.getItem('brushUser');
+    if (currentUser) {
+      const user = JSON.parse(currentUser);
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span style="font-size: 0.8rem; margin-left: 5px;">Hi, ${user.name || user.userId}</span>`;
+    } else {
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+    }
+  }
+
+  // Initial call on page load
+  updateAuthUI();
+
   function openAuthModal() {
     if(authModal) authModal.classList.add('open');
     if(authModalOverlay) authModalOverlay.classList.add('open');
@@ -792,6 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(res.ok) {
           localStorage.setItem('brushUser', JSON.stringify(data));
           closeAuthModal();
+          updateAuthUI();
           showToast('Logged in successfully!');
         } else {
           loginError.textContent = data.error || 'Login failed';
