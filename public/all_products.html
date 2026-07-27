@@ -289,6 +289,7 @@
       </div>
       <div class="filter-group" id="category-filters">
         <h4>Categories</h4>
+        <label class="filter-label"><input type="checkbox" value="New" class="cat-cb"> New Arrivals</label>
         <label class="filter-label"><input type="checkbox" value="Anime" checked class="cat-cb"> Anime</label>
         <label class="filter-label"><input type="checkbox" value="Movies" checked class="cat-cb"> Movies & TV</label>
         <label class="filter-label"><input type="checkbox" value="Minimalist" checked class="cat-cb"> Minimalist</label>
@@ -617,7 +618,7 @@
           
           // Category match - check name and desc too because the DB currently has all categories set to 'Posters'
           const matchesCat = checkedCats.length === 0 || checkedCats.some(c => 
-            cat.includes(c) || name.includes(c) || desc.includes(c)
+            cat.includes(c) || name.includes(c) || desc.includes(c) || keywordsStr.includes(c)
           );
           
           return matchesKeyword && matchesCat;
