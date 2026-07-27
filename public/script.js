@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow = 'hidden';
     
     try {
-      const res = await fetch(`http://localhost:5500/api/products/${productId}`);
+      const res = await fetch(`${API_BASE}/products/${productId}`);
       if (!res.ok) throw new Error('Product not found');
       currentProduct = await res.json();
       
@@ -704,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       
       try {
-        const res = await fetch(`http://localhost:5500/api/products/${currentProduct.id}/reviews`, {
+        const res = await fetch(`${API_BASE}/products/${currentProduct.id}/reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
