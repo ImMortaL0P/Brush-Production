@@ -5,6 +5,63 @@
 document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
 
+  // ---- Preloader ----
+  const preloader = document.getElementById('preloader');
+  if (preloader) {
+    const percentEl = document.getElementById('preloader-percent');
+    const fillEl = document.getElementById('preloader-fill');
+    // Critical, above-the-fold assets — the "first half" of the site the preloader waits on.
+    const criticalImages = Array.from(document.querySelectorAll('.hero-slide img, .nav-brand img, .preloader-logo'));
+    const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+
+    const total = criticalImages.length + 1; // +1 for web fonts
+    let loaded = 0;
+    let finished = false;
+
+    function updateProgress() {
+      const pct = Math.min(100, Math.round((loaded / total) * 100));
+      if (percentEl) percentEl.textContent = pct + '%';
+      if (fillEl) fillEl.style.width = pct + '%';
+      if (pct >= 100) hidePreloader();
+    }
+
+    function markLoaded() {
+      loaded++;
+      updateProgress();
+    }
+
+    function hidePreloader() {
+      if (finished) return;
+      finished = true;
+      setTimeout(() => {
+        preloader.classList.add('preloader-hidden');
+        document.body.classList.remove('preloader-active');
+        setTimeout(() => preloader.remove(), 500);
+      }, 200);
+    }
+
+    criticalImages.forEach(img => {
+      if (img.complete && img.naturalWidth > 0) {
+        markLoaded();
+      } else {
+        img.addEventListener('load', markLoaded, { once: true });
+        img.addEventListener('error', markLoaded, { once: true });
+      }
+    });
+
+    fontsReady.then(markLoaded).catch(markLoaded);
+
+    // Safety net so a stalled resource never traps the user on the preloader.
+    setTimeout(() => {
+      if (!finished) {
+        loaded = total;
+        updateProgress();
+      }
+    }, 5000);
+
+    updateProgress();
+  }
+
   // ---- Navbar scroll effect ----
   const navbar = document.getElementById('navbar');
   const announcementBar = document.getElementById('announcement-bar');
@@ -180,22 +237,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  // ---- Horizontal scroll (New Arrivals) ----
-  const scrollTrack = document.getElementById('scroll-track');
-  const scrollPrev = document.getElementById('scroll-prev');
-  const scrollNext = document.getElementById('scroll-next');
+  // ---- Product carousels (Bestsellers & New Arrivals) ----
+  function setupCarousel(trackId, prevId, nextId, counterId) {
+    const track = document.getElementById(trackId);
+    const prevBtn = document.getElementById(prevId);
+    const nextBtn = document.getElementById(nextId);
+    const counterEl = counterId ? document.getElementById(counterId) : null;
 
-  if (scrollTrack && scrollPrev && scrollNext) {
-    const scrollAmount = 310;
+    if (!track || !prevBtn || !nextBtn) return () => {};
 
-    scrollNext.addEventListener('click', () => {
-      scrollTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    function update() {
+      const pageWidth = track.clientWidth;
+      const totalPages = Math.max(1, Math.ceil(track.scrollWidth / pageWidth));
+      const currentPage = Math.min(totalPages, Math.round(track.scrollLeft / pageWidth) + 1);
+
+      if (counterEl) {
+        counterEl.textContent = totalPages > 1 ? `${currentPage} / ${totalPages}` : '';
+      }
+      prevBtn.disabled = track.scrollLeft <= 4;
+      nextBtn.disabled = track.scrollLeft >= track.scrollWidth - pageWidth - 4;
+    }
+
+    nextBtn.addEventListener('click', () => {
+      track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
     });
-
-    scrollPrev.addEventListener('click', () => {
-      scrollTrack.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    prevBtn.addEventListener('click', () => {
+      track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' });
     });
+    track.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+    window.addEventListener('resize', update);
+
+    update();
+    return update;
   }
+
+  const updateBestsellersCarousel = setupCarousel('product-list', 'bestsellers-prev', 'bestsellers-next', 'bestsellers-counter');
+  const updateNewArrivalsCarousel = setupCarousel('scroll-track', 'scroll-prev', 'scroll-next', 'newarrival-counter');
 
 
   // ---- Scroll to Top button ----
@@ -284,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <div class="product-card fade-in ${delayClass} visible" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
             <div class="product-card-image">
-              <img src="${p.image}" alt="${p.name}">
+              <img src="${p.image}" alt="${p.name}" loading="lazy">
               <span class="product-badge" ${badgeStyle}>${p.badge || badge}</span>
               <div class="product-quick-actions">
                 <button class="quick-add-btn" ${isOut ? 'disabled style="background: rgba(0,0,0,0.8); color: var(--text-muted); cursor: not-allowed;"' : ''}>
@@ -307,11 +384,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (productList) {
         productList.innerHTML = bestSellers.map((p, i) => createProductCard(p, i % 4, 'Trending')).join('');
       }
-      
+
       if (scrollTrack) {
         scrollTrack.innerHTML = newArrivals.map(p => createProductCard(p, 0, 'New', 'var(--accent)')).join('');
       }
-      
+
+      updateBestsellersCarousel();
+      updateNewArrivalsCarousel();
+
     } catch (err) {
       console.error('Error loading products:', err);
       if (productList) productList.innerHTML = '<p>Failed to load products. Please try again later.</p>';
@@ -745,6 +825,18 @@ document.addEventListener('DOMContentLoaded', () => {
         openAuthModal();
       }
     }
+    
+    const ordersBtn = e.target.closest('a[aria-label="Orders"]');
+    if (ordersBtn) {
+      e.preventDefault();
+      const currentUser = localStorage.getItem('brushUser');
+      if (currentUser) {
+        openOrdersModal(JSON.parse(currentUser));
+      } else {
+        openAuthModal();
+        showToast('Please login to check order details.');
+      }
+    }
   });
 
   function updateAuthUI() {
@@ -935,9 +1027,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profile-phone').value = user.phone || '';
     document.getElementById('profile-address').value = user.address || '';
     document.getElementById('profile-msg').textContent = '';
+  }
+
+  // Orders Modal
+  const ordersModal = document.getElementById('orders-modal');
+  const ordersModalOverlay = document.getElementById('orders-modal-overlay');
+
+  function closeOrdersModal() {
+    if(ordersModal) ordersModal.classList.remove('open');
+    if(ordersModalOverlay) ordersModalOverlay.classList.remove('open');
+  }
+
+  const ordersCloseBtn = document.getElementById('orders-close-btn');
+  if(ordersCloseBtn) ordersCloseBtn.addEventListener('click', closeOrdersModal);
+  if(ordersModalOverlay) ordersModalOverlay.addEventListener('click', closeOrdersModal);
+
+  async function openOrdersModal(user) {
+    if(ordersModal) ordersModal.classList.add('open');
+    if(ordersModalOverlay) ordersModalOverlay.classList.add('open');
     
     // Fetch orders
-    const orderList = document.getElementById('order-history-list');
+    const orderList = document.getElementById('orders-history-list');
+    if (!orderList) return;
+    
     orderList.innerHTML = '<p>Loading orders...</p>';
     try {
       const res = await fetch(`${API_BASE}/orders/user/${user.userId}`);
@@ -947,15 +1059,15 @@ document.addEventListener('DOMContentLoaded', () => {
           orderList.innerHTML = '<p>No orders found.</p>';
         } else {
           orderList.innerHTML = orders.map(o => `
-            <div class="order-item">
+            <div class="order-item" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px;">
               <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
                 <strong>${o.orderId}</strong>
-                <span>₹${o.total}</span>
+                <span style="color:var(--accent); font-weight: 600;">₹${o.total}</span>
               </div>
               <div style="font-size:0.85rem;color:var(--text-secondary);">
-                Date: ${new Date(o.createdAt?._seconds ? o.createdAt._seconds*1000 : (o.createdAt || new Date())).toLocaleDateString()} | Status: <span style="color: ${o.status === 'Cancelled' ? 'var(--sale-red)' : 'inherit'}">${o.status}</span>
+                Date: ${new Date(o.createdAt?._seconds ? o.createdAt._seconds*1000 : (o.createdAt || new Date())).toLocaleDateString()} | Status: <span style="font-weight: 500; color: ${o.status === 'Cancelled' ? 'var(--sale-red)' : 'var(--text-primary)'}">${o.status}</span>
               </div>
-              <div style="font-size:0.85rem;margin-top:5px;">
+              <div style="font-size:0.85rem;margin-top:5px; color:var(--text-primary);">
                 ${o.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
               </div>
             </div>
@@ -1040,5 +1152,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // FAQ Accordion
+  const faqQuestions = document.querySelectorAll('.faq-question');
+  faqQuestions.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const faqItem = btn.parentElement;
+      const isActive = faqItem.classList.contains('active');
+      
+      // Close all other FAQs
+      document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Toggle current FAQ
+      if (!isActive) {
+        faqItem.classList.add('active');
+      }
+    });
+  });
 
 });

@@ -20,7 +20,14 @@
   <link rel="icon" type="image/png" href="favicon.png">
 </head>
 
-<body>
+<body class="preloader-active">
+
+  <!-- Preloader -->
+  <div class="preloader" id="preloader">
+    <img src="Brush%20Text%20Arial.png" alt="Brush" class="preloader-logo">
+    <div class="preloader-bar"><div class="preloader-fill" id="preloader-fill"></div></div>
+    <span class="preloader-percent" id="preloader-percent">0%</span>
+  </div>
 
   <!-- Announcement Bar -->
   <div class="announcement-bar" id="announcement-bar">
@@ -46,6 +53,9 @@
       <button class="nav-action-btn" id="search-btn" aria-label="Search">
         <i class="fa-solid fa-magnifying-glass"></i>
       </button>
+      <a href="javascript:void(0)" class="nav-action-btn" aria-label="Orders">
+        <i class="fa-solid fa-box-open"></i>
+      </a>
       <a href="javascript:void(0)" class="nav-action-btn" aria-label="Account">
         <i class="fa-regular fa-user"></i>
       </a>
@@ -82,6 +92,11 @@
         Shop Now
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </a>
+      <div class="hero-trust-badges">
+        <span class="hero-trust-badge">Cash on Delivery</span>
+        <span class="hero-trust-badge">Free Shipping Above ₹500</span>
+        <span class="hero-trust-badge">Easy Returns</span>
+      </div>
     </div>
     <div class="hero-dots" id="hero-dots">
       <button class="hero-dot active" data-index="0" aria-label="Slide 1"></button>
@@ -120,22 +135,22 @@
     <div class="container">
       <div class="features-grid">
         <div class="feature-item fade-in">
-          <span class="feature-icon">🚚</span>
+          <span class="feature-icon"><i class="fa-solid fa-truck-fast"></i></span>
           <h4>Free Shipping</h4>
           <p>On all orders above ₹500</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-1">
-          <span class="feature-icon">🔄</span>
+          <span class="feature-icon"><i class="fa-solid fa-rotate-left"></i></span>
           <h4>Easy Returns</h4>
           <p>Hassle-free exchange & refund</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-2">
-          <span class="feature-icon">✨</span>
+          <span class="feature-icon"><i class="fa-solid fa-award"></i></span>
           <h4>Premium Quality</h4>
           <p>300 GSM matte-finish prints</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-3">
-          <span class="feature-icon">🎨</span>
+          <span class="feature-icon"><i class="fa-solid fa-palette"></i></span>
           <h4>Wide Variety</h4>
           <p>500+ designs across collections</p>
         </div>
@@ -153,9 +168,20 @@
         <p class="section-subtitle">Get yourself the most trending selection</p>
       </div>
 
-      <div class="products-grid" id="product-list">
-        <!-- Products will be injected dynamically via JS -->
+      <div class="scroll-wrapper">
+        <button class="scroll-nav prev" id="bestsellers-prev" aria-label="Previous">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <div class="scroll-track" id="product-list">
+          <!-- Products will be injected dynamically via JS -->
+        </div>
+
+        <button class="scroll-nav next" id="bestsellers-next" aria-label="Next">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
       </div>
+      <div class="carousel-counter" id="bestsellers-counter"></div>
 
       <div class="view-all-wrap">
         <a href="all_products.html" class="view-all-btn">View All Products →</a>
@@ -175,7 +201,7 @@
 
       <div class="categories-grid">
         <a href="all_products.html?category=New" class="category-card fade-in">
-          <img src="Landing Slideshow 3x f.jpg" alt="New posters category">
+          <img src="Landing Slideshow 3x f.jpg" alt="New posters category" loading="lazy">
           <div class="category-card-overlay">
             <h3>New Arrivals</h3>
             <p>Fresh drops</p>
@@ -183,7 +209,7 @@
           </div>
         </a>
         <a href="all_products.html?category=Anime" class="category-card fade-in fade-in-delay-1">
-          <img src="Testimonials 1.jpg" alt="Anime poster category">
+          <img src="Testimonials 1.jpg" alt="Anime poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Anime</h3>
             <p>130+ designs</p>
@@ -191,7 +217,7 @@
           </div>
         </a>
         <a href="all_products.html?category=Movies" class="category-card fade-in fade-in-delay-1">
-          <img src="Testimonials 2.jpg" alt="Cyberpunk poster category">
+          <img src="Testimonials 2.jpg" alt="Cyberpunk poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Movies & TV</h3>
             <p>200+ designs</p>
@@ -199,15 +225,23 @@
           </div>
         </a>
         <a href="all_products.html?category=Minimalist" class="category-card fade-in fade-in-delay-2">
-          <img src="Testimonials 3.jpg" alt="Minimalist poster category">
+          <img src="Testimonials 3.jpg" alt="Minimalist poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Minimalist</h3>
             <p>80+ designs</p>
             <span class="cat-arrow">Explore →</span>
           </div>
         </a>
+        <a href="all_products.html?category=Floral" class="category-card fade-in fade-in-delay-2">
+          <img src="posters/Dahlia_004_Petal_OS.jpg" alt="Floral poster category" loading="lazy">
+          <div class="category-card-overlay">
+            <h3>Floral</h3>
+            <p>Petal OS series</p>
+            <span class="cat-arrow">Explore →</span>
+          </div>
+        </a>
         <a href="all_products.html?category=Space" class="category-card fade-in fade-in-delay-3">
-          <img src="Landing Slideshow 2x f.jpg" alt="Space and Sci-Fi poster category">
+          <img src="Landing Slideshow 2x f.jpg" alt="Space and Sci-Fi poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Space & Sci-Fi</h3>
             <p>90+ designs</p>
@@ -215,7 +249,7 @@
           </div>
         </a>
         <a href="all_products.html?category=Board Finish" class="category-card fade-in fade-in-delay-3">
-          <img src="uploads/prod-1785174052487-87176096.jpg" alt="Board Finish poster category">
+          <img src="uploads/prod-1785174052487-87176096.jpg" alt="Board Finish poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Board Finish</h3>
             <p>Premium finish</p>
@@ -249,6 +283,11 @@
           <i class="fa-solid fa-chevron-right"></i>
         </button>
       </div>
+      <div class="carousel-counter" id="newarrival-counter"></div>
+
+      <div class="view-all-wrap">
+        <a href="all_products.html?category=New" class="view-all-btn">View All New Arrivals →</a>
+      </div>
     </div>
   </section>
 
@@ -256,7 +295,7 @@
   <!-- Trending / Grossing CTA Banner -->
   <section class="cta-banner" id="grossing">
     <div class="cta-banner-bg">
-      <img src="Landing Slideshow 3x room f.jpg" alt="Trending wall art setup in a modern room">
+      <img src="Landing Slideshow 3x room f.jpg" alt="Trending wall art setup in a modern room" loading="lazy">
     </div>
     <div class="cta-banner-content fade-in">
       <span class="section-tag">🔥 Trending Now</span>
@@ -319,6 +358,67 @@
   </section>
 
 
+  <!-- Custom Prints Section (Coming Soon) -->
+  <section class="custom-prints-section" id="custom-prints">
+    <div class="container-fluid" style="position: relative; padding: 0 2rem;">
+      <div class="custom-prints-header">
+        <span class="section-tag coming-soon-tag">Coming Soon</span>
+        <h2 class="custom-prints-title">DESIGN YOUR OWN<br><span class="custom-prints-subtitle">P R I N T S</span></h2>
+      </div>
+      
+      <div class="custom-prints-grid">
+        <div class="custom-print-card fade-in">
+          <img src="custom_poster_1785232129819.jpg" alt="Custom Poster" loading="lazy">
+          <div class="custom-print-overlay">
+            <h3 class="cursive-text">Custom</h3>
+            <h2>POSTER</h2>
+            <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
+          </div>
+        </div>
+        <div class="custom-print-card fade-in fade-in-delay-1">
+          <img src="custom_split_poster_1785232142561.jpg" alt="Custom Split Poster" loading="lazy">
+          <div class="custom-print-overlay">
+            <h3 class="cursive-text">Custom</h3>
+            <h2>SPLIT POSTER</h2>
+            <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
+          </div>
+        </div>
+        <div class="custom-print-card fade-in fade-in-delay-2">
+          <img src="custom_split_poster_2x2_1785232154860.jpg" alt="Custom Split Poster 2x2" loading="lazy">
+          <div class="custom-print-overlay">
+            <h3 class="cursive-text">Custom</h3>
+            <h2>SPLIT POSTER</h2>
+            <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
+          </div>
+        </div>
+        <div class="custom-print-card fade-in fade-in-delay-3">
+          <img src="custom_retro_prints_1785232166511.jpg" alt="Custom Retro Prints" loading="lazy">
+          <div class="custom-print-overlay">
+            <h3 class="cursive-text">Custom</h3>
+            <h2>RETRO PRINTS</h2>
+            <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
+          </div>
+        </div>
+        <div class="custom-print-card fade-in fade-in-delay-4">
+          <img src="custom_pocket_photo_1785232177692.jpg" alt="Mini Pocket Photo" loading="lazy">
+          <div class="custom-print-overlay">
+            <h3 class="cursive-text">Custom</h3>
+            <h2>MINI POCKET PHOTO</h2>
+            <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
+          </div>
+        </div>
+        <div class="custom-print-card fade-in fade-in-delay-5">
+          <img src="custom_photobooth_strip_1785232188937.jpg" alt="Photobooth Strip" loading="lazy">
+          <div class="custom-print-overlay">
+            <h3 class="cursive-text">Custom</h3>
+            <h2>PHOTOBOOTH STRIP</h2>
+            <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- App Download / Secondary CTA -->
   <section class="app-section" id="cta">
     <div class="container">
@@ -339,12 +439,67 @@
           </div>
         </div>
         <div class="app-image fade-in fade-in-delay-2">
-          <img src="app-preview.png" alt="Brush mobile app preview showing poster browsing interface">
+          <img src="app-preview.png" alt="Brush mobile app preview showing poster browsing interface" loading="lazy">
         </div>
       </div>
     </div>
   </section>
 
+
+  <!-- FAQ Section -->
+  <section class="faq-section" id="faq">
+    <div class="container">
+      <h2 class="faq-title">FAQ<span class="faq-qmark">?</span></h2>
+      <div class="faq-grid">
+        <div class="faq-accordion-col fade-in">
+          
+          <div class="faq-item">
+            <button class="faq-question">
+              <span class="faq-q-text"><i class="fa-solid fa-box"></i> Is it possible to order posters in bulk for my outlet or any other setting?</span>
+              <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>Yes! We cater to bulk orders, especially for businesses. Simply drop us a message on WhatsApp for special rates and assistance.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span class="faq-q-text"><i class="fa-regular fa-user"></i> How can I order my own design as a print?</span>
+              <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>Absolutely! We offer a custom print option, conveniently located in the menu tab. Simply upload your artwork for a poster and leave the rest to us. We'll ensure your design is beautifully printed and delivered to your doorstep.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span class="faq-q-text"><i class="fa-regular fa-clock"></i> How many days taken for delivery?</span>
+              <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>Delivery typically takes 5-7 days, depending on your location.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span class="faq-q-text"><i class="fa-solid fa-truck"></i> How can I check the status of my order?</span>
+              <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
+            </button>
+            <div class="faq-answer">
+              <p>Tracking your order is easy! Once your order is placed, you'll receive both a WhatsApp notification and an email confirming your purchase, complete with a tracking ID. Additionally, you'll get another WhatsApp message when your order is picked up by our courier partner. Keep an eye on your WhatsApp and email for regular updates on your order's progress!</p>
+            </div>
+          </div>
+
+        </div>
+        <div class="faq-image-col fade-in fade-in-delay-2">
+          <img src="faq-illustration.jpg" alt="FAQ Illustration" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Footer -->
   <footer class="site-footer" id="footer">
@@ -438,7 +593,7 @@
       </div>
       <div class="form-group">
         <label for="login-password">Password</label>
-        <input type="password" id="login-password" required>
+        <input type="password" id="login-password" autocomplete="current-password" required>
       </div>
       <div style="text-align: right; margin-bottom: 15px;">
         <a href="javascript:void(0)" id="forgot-password-link" style="color: var(--accent); font-size: 0.9rem; text-decoration: none;">Forgot Password?</a>
@@ -456,7 +611,7 @@
       </div>
       <div class="form-group">
         <label for="reset-password">New Password</label>
-        <input type="password" id="reset-password" required>
+        <input type="password" id="reset-password" autocomplete="new-password" required>
       </div>
       <button type="submit" class="auth-submit-btn">Update Password</button>
       <div class="auth-error" id="reset-error"></div>
@@ -486,7 +641,7 @@
       </div>
       <div class="form-group">
         <label for="signup-password">Password</label>
-        <input type="password" id="signup-password" required>
+        <input type="password" id="signup-password" autocomplete="new-password" required>
       </div>
       <button type="submit" class="auth-submit-btn">Sign Up</button>
       <div class="auth-error" id="signup-error"></div>
@@ -525,19 +680,27 @@
         <h4>Change Password</h4>
         <div class="form-group">
           <label for="new-profile-password">New Password</label>
-          <input type="password" id="new-profile-password" required>
+          <input type="password" id="new-profile-password" autocomplete="new-password" required>
         </div>
         <button type="submit" class="auth-submit-btn" style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">Update Password</button>
         <div class="auth-error" id="change-password-msg"></div>
       </form>
       
-      <div class="order-history-section">
-        <h4>Order History</h4>
-        <div id="order-history-list">
+      <button id="logout-btn" class="logout-btn" style="margin-top: 2rem;">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Orders Modal -->
+  <div class="profile-modal-overlay" id="orders-modal-overlay"></div>
+  <div class="profile-modal" id="orders-modal">
+    <button class="modal-close-btn" id="orders-close-btn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+    <div class="auth-box">
+      <h2 style="font-family: 'Outfit', sans-serif; margin-top:0;">Your Orders</h2>
+      <div class="order-history-section" style="margin-top: 1.5rem;">
+        <div id="orders-history-list">
           <!-- Orders injected here -->
         </div>
       </div>
-      <button id="logout-btn" class="logout-btn">Log Out</button>
     </div>
   </div>
 
