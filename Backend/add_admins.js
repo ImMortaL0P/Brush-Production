@@ -15,6 +15,7 @@ const db = getFirestore();
 async function main() {
   const stockerHash = crypto.createHash('sha256').update('stocker#7').digest('hex');
   const mangalamHash = crypto.createHash('sha256').update('Kukku404#').digest('hex');
+  const wajihaHash = crypto.createHash('sha256').update('Wajiha@24').digest('hex');
 
   await db.collection('admins').doc('stocker').set({
     username: 'stocker',
@@ -25,6 +26,12 @@ async function main() {
   await db.collection('admins').doc('mangalam').set({
     username: 'mangalam',
     passwordHash: mangalamHash,
+    role: 'superadmin'
+  });
+
+  await db.collection('admins').doc('wajiha').set({
+    username: 'wajiha',
+    passwordHash: wajihaHash,
     role: 'superadmin'
   });
 
