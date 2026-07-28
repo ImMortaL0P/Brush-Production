@@ -288,6 +288,16 @@
     </div>
   </div>
 
+  <datalist id="category-list">
+    <option value="Anime"></option>
+    <option value="Movies & TV"></option>
+    <option value="Minimalist"></option>
+    <option value="Cyberpunk"></option>
+    <option value="Space & Sci-Fi"></option>
+    <option value="Board Finish"></option>
+    <option value="General"></option>
+  </datalist>
+
   <div class="sidebar">
     <a href="index.html" class="brand">
       <img src="Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 32px; width: auto;">
@@ -365,6 +375,7 @@
             <option value="Board Finish">Board Finish</option>
             <option value="General">General / Other</option>
           </select>
+          <button class="refresh-btn" onclick="saveAllProducts()" style="background: var(--success); color: var(--bg-primary);"><i class="fa-solid fa-save"></i> Save All</button>
           <button class="refresh-btn" onclick="loadInventory()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
         </div>
       </div>
@@ -398,18 +409,10 @@
       <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
         <form id="add-product-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
           <input type="text" id="new-prod-name" placeholder="Product Name *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
-          <select id="new-prod-cat" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; appearance: auto;">
-            <option value="" disabled selected>Select Category *</option>
-            <option value="Anime">Anime</option>
-            <option value="Movies & TV">Movies & TV</option>
-            <option value="Minimalist">Minimalist</option>
-            <option value="Cyberpunk">Cyberpunk</option>
-            <option value="Space & Sci-Fi">Space & Sci-Fi</option>
-            <option value="Board Finish">Board Finish</option>
-            <option value="General">General / Other</option>
-          </select>
+          <input list="category-list" id="new-prod-cat" placeholder="Category *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="number" id="new-prod-price" placeholder="Price (₹) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="number" id="new-prod-original-price" placeholder="Original Price (₹)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+          <input type="text" id="new-prod-sku" placeholder="SKU / Custom ID (optional)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="text" id="new-prod-badge" placeholder="Badge (e.g. New, Sale)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="number" id="new-prod-stock" placeholder="Stock Quantity *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="text" id="new-prod-keywords" placeholder="Keywords (comma separated)" style="grid-column: 1 / -1; background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
@@ -726,20 +729,13 @@
                 <img src="${p.image}" class="prod-thumb">
                 <div>
                   <input type="text" id="name-${p.id}" value="${p.name}" ${isDisabled} style="width: 200px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; font-weight:600; font-family:inherit;"><br>
-                  <select id="cat-${p.id}" ${isDisabled} style="width: 150px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:2px; border-radius:4px; font-size: 0.85rem; appearance: auto; margin-top: 5px;">
-                    <option value="Anime" ${p.category === 'Anime' ? 'selected' : ''}>Anime</option>
-                    <option value="Movies & TV" ${p.category === 'Movies & TV' ? 'selected' : ''}>Movies & TV</option>
-                    <option value="Minimalist" ${p.category === 'Minimalist' ? 'selected' : ''}>Minimalist</option>
-                    <option value="Cyberpunk" ${p.category === 'Cyberpunk' ? 'selected' : ''}>Cyberpunk</option>
-                    <option value="Space & Sci-Fi" ${p.category === 'Space & Sci-Fi' ? 'selected' : ''}>Space & Sci-Fi</option>
-                    <option value="Board Finish" ${p.category === 'Board Finish' ? 'selected' : ''}>Board Finish</option>
-                    <option value="General" ${p.category === 'General' ? 'selected' : ''}>General / Other</option>
-                    ${!['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'Board Finish', 'General'].includes(p.category) ? `<option value="${p.category}" selected>${p.category}</option>` : ''}
-                  </select>
+                  <input list="category-list" id="cat-${p.id}" value="${p.category}" ${isDisabled} style="width: 150px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-size: 0.85rem; margin-top: 5px;">
                 </div>
               </div>
             </td>
-            <td style="font-family:monospace; color:var(--text-secondary);">${p.sku || p.id}</td>
+            <td>
+              <input type="text" id="sku-${p.id}" value="${p.sku || p.id}" ${isDisabled} style="width: 100px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-family:monospace;">
+            </td>
             <td>
               <input type="text" id="badge-${p.id}" value="${p.badge || ''}" ${isDisabled} style="width: 70px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
               <input type="text" id="keywords-${p.id}" value="${p.keywords || ''}" ${isDisabled} placeholder="Keywords" style="width: 100px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; margin-top:5px; font-size: 0.8rem;">
@@ -776,6 +772,7 @@
         payload.price = parseInt(document.getElementById(`price-${id}`).value);
         payload.badge = document.getElementById(`badge-${id}`).value;
         payload.keywords = document.getElementById(`keywords-${id}`) ? document.getElementById(`keywords-${id}`).value : '';
+        payload.sku = document.getElementById(`sku-${id}`).value;
       }
       
       try {
@@ -792,6 +789,61 @@
         showToast('Product updated successfully!');
       } catch (e) {
         showToast(e.message);
+      }
+    }
+
+    // Save All Products
+    async function saveAllProducts() {
+      if (!adminToken) return;
+      const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
+      
+      const updateBtns = document.querySelectorAll('#inventory-table-body .action-btn[onclick^="updateProduct"]');
+      if(updateBtns.length === 0) {
+         showToast('No products to save.');
+         return;
+      }
+      
+      showToast('Saving all products...');
+      
+      let successCount = 0;
+      let failCount = 0;
+      
+      for(let btn of updateBtns) {
+         // Extract ID from onclick="updateProduct(123)"
+         const match = btn.getAttribute('onclick').match(/updateProduct\((\d+)\)/);
+         if(match && match[1]) {
+            const id = match[1];
+            try {
+               const stockQuantity = parseInt(document.getElementById(`stock-${id}`).value);
+               const payload = { stockQuantity };
+               if (role === 'superadmin') {
+                 payload.name = document.getElementById(`name-${id}`).value;
+                 payload.category = document.getElementById(`cat-${id}`).value;
+                 payload.price = parseInt(document.getElementById(`price-${id}`).value);
+                 payload.badge = document.getElementById(`badge-${id}`).value;
+                 payload.keywords = document.getElementById(`keywords-${id}`) ? document.getElementById(`keywords-${id}`).value : '';
+                 payload.sku = document.getElementById(`sku-${id}`).value;
+               }
+               const res = await fetch(`${API_BASE}/products/${id}`, {
+                 method: 'PATCH',
+                 headers: { 
+                   'Content-Type': 'application/json',
+                   'Authorization': `Bearer ${adminToken}`
+                 },
+                 body: JSON.stringify(payload)
+               });
+               if(res.ok) successCount++;
+               else failCount++;
+            } catch(e) {
+               failCount++;
+            }
+         }
+      }
+      
+      if (failCount > 0) {
+         showToast(`Saved ${successCount} products, failed ${failCount}.`);
+      } else {
+         showToast(`Successfully saved all ${successCount} products!`);
       }
     }
 
@@ -880,6 +932,7 @@
       formData.append('stockQuantity', document.getElementById('new-prod-stock').value);
       formData.append('description', document.getElementById('new-prod-desc').value);
       formData.append('keywords', document.getElementById('new-prod-keywords').value);
+      formData.append('sku', document.getElementById('new-prod-sku').value);
       formData.append('image', finalImageFile);
       
       try {

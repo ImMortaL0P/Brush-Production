@@ -735,7 +735,7 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
 // Update product
 app.patch('/api/products/:id', requireAdmin, async (req, res) => {
   try {
-    const { name, price, badge, stockQuantity, category, keywords } = req.body;
+    const { name, price, badge, stockQuantity, category, keywords, sku } = req.body;
     
     // Role based enforcement
     if (req.adminSession.role === 'stocker') {
@@ -752,6 +752,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     if (stockQuantity !== undefined) updateData.stockQuantity = Number(stockQuantity);
     if (category !== undefined) updateData.category = category;
     if (keywords !== undefined) updateData.keywords = keywords;
+    if (sku !== undefined) updateData.sku = sku;
     
     // First try by doc ID (for newer products)
     let docRef = productsRef.doc(req.params.id.toString());
@@ -774,6 +775,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     if (badge !== undefined && oldData.badge !== badge) changes.push(`badge to "${badge}"`);
     if (category !== undefined && oldData.category !== category) changes.push(`cat to "${category}"`);
     if (keywords !== undefined && oldData.keywords !== keywords) changes.push(`keywords to "${keywords}"`);
+    if (sku !== undefined && oldData.sku !== sku) changes.push(`sku to "${sku}"`);
     const changesStr = changes.length > 0 ? changes.join(', ') : 'no changes';
     
     await docRef.update(updateData);
@@ -815,7 +817,7 @@ app.delete('/api/products/:id', requireAdmin, async (req, res) => {
 
 app.post('/api/products', requireAdmin, upload.single('image'), async (req, res) => {
   try {
-    const { name, category, price, originalPrice, badge, description, stockQuantity, keywords } = req.body;
+    const { name, category, price, originalPrice, badge, description, stockQuantity, keywords, sku } = req.body;
     
     if (!name || !price) {
       return res.status(400).json({ error: 'Name and price are required' });
@@ -855,6 +857,7 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       description: description || '',
       stockQuantity: Number(stockQuantity || 0),
       keywords: keywords || '',
+      sku: sku || newId.toString(),
       image: imageUrl,
       createdAt: FieldValue.serverTimestamp()
     };
