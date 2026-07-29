@@ -735,16 +735,23 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
 // Update product
 app.patch('/api/products/:id', requireAdmin, async (req, res) => {
   try {
-    const { name, price, badge, stockQuantity, category, keywords, sku } = req.body;
-    
+    const { name, price, badge, stockQuantity, category, keywords, sku, showInBestsellers, showInNewArrivals, showInGrossing } = req.body;
+
     // Role based enforcement
     if (req.adminSession.role === 'stocker') {
        // Stocker can only update stockQuantity
-       if (name !== undefined || price !== undefined || badge !== undefined || category !== undefined || keywords !== undefined) {
+       if (name !== undefined || price !== undefined || badge !== undefined || category !== undefined || keywords !== undefined ||
+           showInBestsellers !== undefined || showInNewArrivals !== undefined || showInGrossing !== undefined) {
           return res.status(403).json({ error: 'Stocker can only modify inventory quantity.' });
        }
     }
-    
+
+    // Homepage placement flags are superadmin-only
+    if (req.adminSession.role !== 'superadmin' &&
+        (showInBestsellers !== undefined || showInNewArrivals !== undefined || showInGrossing !== undefined)) {
+      return res.status(403).json({ error: 'Only superadmin can control homepage placement.' });
+    }
+
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (price !== undefined) updateData.price = Number(price);
@@ -753,11 +760,14 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     if (category !== undefined) updateData.category = category;
     if (keywords !== undefined) updateData.keywords = keywords;
     if (sku !== undefined) updateData.sku = sku;
-    
+    if (showInBestsellers !== undefined) updateData.showInBestsellers = Boolean(showInBestsellers);
+    if (showInNewArrivals !== undefined) updateData.showInNewArrivals = Boolean(showInNewArrivals);
+    if (showInGrossing !== undefined) updateData.showInGrossing = Boolean(showInGrossing);
+
     // First try by doc ID (for newer products)
     let docRef = productsRef.doc(req.params.id.toString());
     let doc = await docRef.get();
-    
+
     // If not found, try querying by the numeric 'id' field (for older products)
     if (!doc.exists) {
       const productId = parseInt(req.params.id);
@@ -766,7 +776,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
       docRef = snapshot.docs[0].ref;
       doc = snapshot.docs[0];
     }
-    
+
     const oldData = doc.data() || {};
     const changes = [];
     if (name !== undefined && oldData.name !== name) changes.push(`name to "${name}"`);
@@ -776,8 +786,15 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     if (category !== undefined && oldData.category !== category) changes.push(`cat to "${category}"`);
     if (keywords !== undefined && oldData.keywords !== keywords) changes.push(`keywords to "${keywords}"`);
     if (sku !== undefined && oldData.sku !== sku) changes.push(`sku to "${sku}"`);
+    if (showInBestsellers !== undefined && oldData.showInBestsellers !== Boolean(showInBestsellers)) changes.push(`bestsellers to ${showInBestsellers}`);
+    if (showInNewArrivals !== undefined && oldData.showInNewArrivals !== Boolean(showInNewArrivals)) changes.push(`new arrivals to ${showInNewArrivals}`);
+    if (showInGrossing !== undefined && oldData.showInGrossing !== Boolean(showInGrossing)) changes.push(`grossing to ${showInGrossing}`);
     const changesStr = changes.length > 0 ? changes.join(', ') : 'no changes';
-    
+
+    if (Object.keys(updateData).length === 0) {
+      return res.json({ success: true, message: 'No changes provided' });
+    }
+
     await docRef.update(updateData);
     logAdminActivity(req.adminSession.username, 'Update Product', `Updated product ID: ${req.params.id} (${changesStr})`);
     res.json({ success: true });
@@ -859,6 +876,9 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       keywords: keywords || '',
       sku: sku || newId.toString(),
       image: imageUrl,
+      showInBestsellers: false,
+      showInNewArrivals: false,
+      showInGrossing: false,
       createdAt: FieldValue.serverTimestamp()
     };
 

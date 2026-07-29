@@ -2586,3 +2586,146 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* Content Protection Styles */
+body {
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input, textarea {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Wall Setup Packs */
+.wall-setup-section {
+  padding: 5rem 0;
+  background-color: var(--bg-primary);
+  border-top: 1px solid var(--border);
+}
+
+.ws-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.ws-title-main {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.ws-subtitle {
+  font-size: 0.75rem;
+  letter-spacing: 8px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.ws-track .wall-setup-card {
+  flex-shrink: 0;
+  width: 280px;
+  scroll-snap-align: start;
+}
+
+.wall-setup-card {
+  text-align: center;
+  transition: transform var(--transition-med);
+  cursor: pointer;
+}
+
+.wall-setup-card:hover {
+  transform: translateY(-5px);
+}
+
+.ws-img-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.ws-img-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.wall-setup-card:hover .ws-img-container img {
+  transform: scale(1.05);
+}
+
+.ws-sale-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: var(--sale-bg);
+  color: #fff;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+.ws-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 5px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ws-brand {
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.ws-pricing {
+  font-size: 0.9rem;
+}
+
+.ws-old-price {
+  text-decoration: line-through;
+  color: var(--text-muted);
+  margin-right: 8px;
+  font-size: 0.8rem;
+}
+
+.ws-new-price {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .ws-track .wall-setup-card {
+    width: 240px;
+  }
+}

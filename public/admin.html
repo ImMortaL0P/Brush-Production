@@ -391,11 +391,12 @@
               <th>Badge</th>
               <th>Base Price</th>
               <th>Stock Qty</th>
+              <th>Homepage Placement</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="inventory-table-body">
-            <tr><td colspan="6" style="text-align: center;">Loading inventory...</td></tr>
+            <tr><td colspan="7" style="text-align: center;">Loading inventory...</td></tr>
           </tbody>
         </table>
       </div>
@@ -718,10 +719,12 @@
         }
         
         if (products.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No products found in this category.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No products found in this category.</td></tr>';
           return;
         }
-        
+
+        const placementDisabled = role === 'superadmin' ? '' : 'disabled style="opacity:0.4; cursor:not-allowed;"';
+
         tbody.innerHTML = products.map(p => `
           <tr>
             <td>
@@ -746,6 +749,17 @@
             <td>
               <input type="number" id="stock-${p.id}" value="${p.stockQuantity !== undefined ? p.stockQuantity : 0}" style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
             </td>
+            <td>
+              <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; cursor:pointer;">
+                <input type="checkbox" id="bestsellers-${p.id}" ${p.showInBestsellers ? 'checked' : ''} ${placementDisabled}> Bestsellers
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; cursor:pointer;">
+                <input type="checkbox" id="newarrivals-${p.id}" ${p.showInNewArrivals ? 'checked' : ''} ${placementDisabled}> New Arrivals
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--text-secondary); cursor:pointer;">
+                <input type="checkbox" id="grossing-${p.id}" ${p.showInGrossing ? 'checked' : ''} ${placementDisabled}> Grossing
+              </label>
+            </td>
             <td style="display: flex; gap: 5px; flex-direction: column;">
               <button class="action-btn" onclick="updateProduct(${p.id})">Save</button>
               <button class="action-btn" ${role !== 'superadmin' ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="background:var(--sale-red); color:white; border-color:var(--sale-red);"'} onclick="deleteProduct(${p.id})">Delete</button>
@@ -753,19 +767,19 @@
           </tr>
         `).join('');
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--sale-red);">Failed to load inventory.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--sale-red);">Failed to load inventory.</td></tr>';
       }
     }
-    
+
     // Update Product
     async function updateProduct(id) {
       if (!adminToken) return;
-      
+
       const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
       const stockQuantity = parseInt(document.getElementById(`stock-${id}`).value);
-      
+
       const payload = { stockQuantity };
-      
+
       if (role === 'superadmin') {
         payload.name = document.getElementById(`name-${id}`).value;
         payload.category = document.getElementById(`cat-${id}`).value;
@@ -773,6 +787,9 @@
         payload.badge = document.getElementById(`badge-${id}`).value;
         payload.keywords = document.getElementById(`keywords-${id}`) ? document.getElementById(`keywords-${id}`).value : '';
         payload.sku = document.getElementById(`sku-${id}`).value;
+        payload.showInBestsellers = document.getElementById(`bestsellers-${id}`).checked;
+        payload.showInNewArrivals = document.getElementById(`newarrivals-${id}`).checked;
+        payload.showInGrossing = document.getElementById(`grossing-${id}`).checked;
       }
       
       try {
@@ -823,6 +840,9 @@
                  payload.badge = document.getElementById(`badge-${id}`).value;
                  payload.keywords = document.getElementById(`keywords-${id}`) ? document.getElementById(`keywords-${id}`).value : '';
                  payload.sku = document.getElementById(`sku-${id}`).value;
+                 payload.showInBestsellers = document.getElementById(`bestsellers-${id}`).checked;
+                 payload.showInNewArrivals = document.getElementById(`newarrivals-${id}`).checked;
+                 payload.showInGrossing = document.getElementById(`grossing-${id}`).checked;
                }
                const res = await fetch(`${API_BASE}/products/${id}`, {
                  method: 'PATCH',

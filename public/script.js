@@ -249,13 +249,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function update() {
       const pageWidth = track.clientWidth;
       const totalPages = Math.max(1, Math.ceil(track.scrollWidth / pageWidth));
-      const currentPage = Math.min(totalPages, Math.round(track.scrollLeft / pageWidth) + 1);
+      const maxScroll = track.scrollWidth - pageWidth;
+      // Use progress toward the max scrollable distance rather than a flat division —
+      // the last page is often narrower than a full page, which would otherwise under-count it.
+      const progress = maxScroll > 0 ? track.scrollLeft / maxScroll : 0;
+      const currentPage = Math.min(totalPages, Math.round(progress * (totalPages - 1)) + 1);
 
       if (counterEl) {
         counterEl.textContent = totalPages > 1 ? `${currentPage} / ${totalPages}` : '';
       }
       prevBtn.disabled = track.scrollLeft <= 4;
-      nextBtn.disabled = track.scrollLeft >= track.scrollWidth - pageWidth - 4;
+      nextBtn.disabled = track.scrollLeft >= maxScroll - 4;
     }
 
     nextBtn.addEventListener('click', () => {
@@ -273,6 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateBestsellersCarousel = setupCarousel('product-list', 'bestsellers-prev', 'bestsellers-next', 'bestsellers-counter');
   const updateNewArrivalsCarousel = setupCarousel('scroll-track', 'scroll-prev', 'scroll-next', 'newarrival-counter');
+  const updateGrossingCarousel = setupCarousel('grossing-track', 'grossing-prev', 'grossing-next', 'grossing-counter');
+  setupCarousel('ws-track', 'ws-prev', 'ws-next', 'ws-counter');
 
 
   // ---- Scroll to Top button ----
@@ -335,21 +341,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // PRODUCT FETCHING & RENDERING
   // ========================================
   
+  function toggleSection(sectionId, visible) {
+    const section = document.getElementById(sectionId);
+    if (section) section.style.display = visible ? '' : 'none';
+  }
+
   async function loadProducts() {
     const productList = document.getElementById('product-list');
     const scrollTrack = document.getElementById('scroll-track');
-    
-    if (!productList && !scrollTrack) return;
-    
+    const grossingTrack = document.getElementById('grossing-track');
+
+    if (!productList && !scrollTrack && !grossingTrack) return;
+
     try {
       const res = await fetch(API_BASE + '/products');
       if (!res.ok) throw new Error('Failed to fetch products');
       const products = await res.json();
-      
-      // Limit best sellers to 12
-      const bestSellers = products.slice(0, 12);
-      const newArrivals = products.slice(Math.ceil(products.length / 2));
-      
+
+      // Homepage placement is admin-curated via checkboxes in the admin panel
+      const bestSellers = products.filter(p => p.showInBestsellers);
+      const newArrivals = products.filter(p => p.showInNewArrivals);
+      const grossingPicks = products.filter(p => p.showInGrossing);
+
       const createProductCard = (p, delayIndex = 0, badge = 'Sale', badgeBg = '') => {
         const delayClass = delayIndex > 0 ? `fade-in-delay-${delayIndex}` : '';
         const badgeStyle = badgeBg ? `style="background: ${badgeBg}; color: var(--bg-primary);"` : '';
@@ -381,16 +394,24 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       };
 
+      toggleSection('bestsellers', bestSellers.length > 0);
       if (productList) {
         productList.innerHTML = bestSellers.map((p, i) => createProductCard(p, i % 4, 'Trending')).join('');
       }
 
+      toggleSection('newarrival', newArrivals.length > 0);
       if (scrollTrack) {
         scrollTrack.innerHTML = newArrivals.map(p => createProductCard(p, 0, 'New', 'var(--accent)')).join('');
       }
 
+      toggleSection('grossing-picks', grossingPicks.length > 0);
+      if (grossingTrack) {
+        grossingTrack.innerHTML = grossingPicks.map((p, i) => createProductCard(p, i % 4, 'Trending')).join('');
+      }
+
       updateBestsellersCarousel();
       updateNewArrivalsCarousel();
+      updateGrossingCarousel();
 
     } catch (err) {
       console.error('Error loading products:', err);
@@ -1172,4 +1193,52 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+});
+
+// --- Content Protection ---
+
+// Prevent Right Click
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+});
+
+// Prevent Dragging of Images
+document.addEventListener('dragstart', function(e) {
+  if (e.target.tagName.toLowerCase() === 'img') {
+    e.preventDefault();
+  }
+});
+
+// Prevent common save/print/screenshot shortcuts
+document.addEventListener('keydown', function(e) {
+  // Prevent Ctrl+S / Cmd+S (Save)
+  if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault();
+  }
+  
+  // Prevent Ctrl+P / Cmd+P (Print)
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+    e.preventDefault();
+  }
+
+  // Prevent PrintScreen (Windows)
+  if (e.key === 'PrintScreen') {
+    navigator.clipboard.writeText('');
+    e.preventDefault();
+  }
+  
+  // Prevent Cmd+Shift+3, Cmd+Shift+4, Cmd+Shift+5 (Mac Screenshots)
+  if (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4' || e.key === '5')) {
+    // Blank the screen briefly to disrupt the screenshot
+    const originalDisplay = document.body.style.display;
+    document.body.style.display = 'none';
+    setTimeout(() => { document.body.style.display = originalDisplay; }, 1500);
+  }
+});
+
+// Extra precaution for PrintScreen
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'PrintScreen') {
+    navigator.clipboard.writeText('');
+  }
 });
