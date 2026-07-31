@@ -2,8 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { MongoClient, ObjectId } = require('mongodb');
 const { initializeApp, cert } = require('firebase-admin/app');
-const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getStorage } = require('firebase-admin/storage');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
@@ -30,7 +30,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // ==========================================
-// FIREBASE INITIALIZATION
+// FIREBASE STORAGE (images only — the DB itself lives in MongoDB now)
 // ==========================================
 let serviceAccount;
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -55,7 +55,7 @@ if (!serviceAccount) {
     path.join(__dirname, 'serviceAccountKey.json'),
     '/etc/secrets/serviceAccountKey.json'
   ];
-  
+
   for (const p of pathsToTry) {
     if (fs.existsSync(p)) {
       serviceAccount = require(p);
@@ -64,26 +64,39 @@ if (!serviceAccount) {
   }
 }
 
-if (!serviceAccount) {
-  console.error("❌ FATAL ERROR: No Firebase credentials found. Provide FIREBASE_SERVICE_ACCOUNT env var or serviceAccountKey.json");
+let bucket = null;
+if (serviceAccount) {
+  const projectId = serviceAccount.project_id || 'brush-db-6a308';
+  const storageBucket = `${projectId}.appspot.com`;
+  initializeApp({
+    credential: cert(serviceAccount),
+    storageBucket: storageBucket
+  });
+  bucket = getStorage().bucket();
+  console.log('✅ Connected to Firebase Storage (image uploads)');
+} else {
+  console.warn('⚠️  No Firebase credentials found — product image uploads will be disabled.');
+}
+
+// ==========================================
+// MONGODB INITIALIZATION
+// ==========================================
+if (!process.env.MONGODB_URI) {
+  console.error("❌ FATAL ERROR: MONGODB_URI environment variable is not set.");
   process.exit(1);
 }
 
-// Ensure you replace this with your actual Firebase Project ID if different
-const projectId = serviceAccount.project_id || 'brush-db-6a308';
-const storageBucket = `${projectId}.appspot.com`;
+const mongoClient = new MongoClient(process.env.MONGODB_URI);
 
-initializeApp({
-  credential: cert(serviceAccount),
-  storageBucket: storageBucket
-});
+let db, productsRef, ordersRef, usersRef, adminsRef, adminLogsRef;
 
-console.log('✅ Connected to Firebase Firestore and Storage!');
-
-const db = getFirestore();
-const bucket = getStorage().bucket();
-const productsRef = db.collection('products');
-const ordersRef = db.collection('orders');
+// Strips Mongo's internal _id before a document goes out over the API,
+// so response shapes stay identical to what the frontend already expects.
+function stripId(doc) {
+  if (!doc) return doc;
+  const { _id, ...rest } = doc;
+  return rest;
+}
 
 
 // ==========================================
@@ -93,30 +106,30 @@ const ordersRef = db.collection('orders');
 // ==========================================
 // AUTH & USER ENDPOINTS
 // ==========================================
-const usersRef = db.collection('users');
 
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { id, password, name, phone, address } = req.body;
     if (!id || !password) return res.status(400).json({ error: 'ID and password required' });
-    
-    const userDoc = await usersRef.doc(id).get();
-    if (userDoc.exists) {
+
+    const existing = await usersRef.findOne({ _id: id });
+    if (existing) {
       return res.status(400).json({ error: 'User already exists' });
     }
-    
+
     const hash = crypto.createHash('sha256').update(password).digest('hex');
-    
+
     const newUser = {
+      _id: id,
       id,
       passwordHash: hash,
       name: name || '',
       phone: phone || '',
       address: address || '',
-      createdAt: FieldValue.serverTimestamp()
+      createdAt: new Date()
     };
-    
-    await usersRef.doc(id).set(newUser);
+
+    await usersRef.insertOne(newUser);
     res.json({ success: true, userId: id, name, phone, address });
   } catch (error) {
     console.error(error);
@@ -128,19 +141,18 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { id, password } = req.body;
     if (!id || !password) return res.status(400).json({ error: 'ID and password required' });
-    
-    const userDoc = await usersRef.doc(id).get();
-    if (!userDoc.exists) {
+
+    const user = await usersRef.findOne({ _id: id });
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
-    const user = userDoc.data();
+
     const hash = crypto.createHash('sha256').update(password).digest('hex');
-    
+
     if (user.passwordHash !== hash) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
+
     res.json({ success: true, userId: id, name: user.name, phone: user.phone, address: user.address });
   } catch (error) {
     console.error(error);
@@ -152,15 +164,15 @@ app.post('/api/auth/reset-password', async (req, res) => {
   try {
     const { id, newPassword } = req.body;
     if (!id || !newPassword) return res.status(400).json({ error: 'ID and new password required' });
-    
-    const userDoc = await usersRef.doc(id).get();
-    if (!userDoc.exists) {
+
+    const user = await usersRef.findOne({ _id: id });
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     const hash = crypto.createHash('sha256').update(newPassword).digest('hex');
-    await usersRef.doc(id).update({ passwordHash: hash });
-    
+    await usersRef.updateOne({ _id: id }, { $set: { passwordHash: hash } });
+
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     console.error(error);
@@ -170,12 +182,11 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 app.get('/api/auth/profile/:id', async (req, res) => {
   try {
-    const userDoc = await usersRef.doc(req.params.id).get();
-    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
-    
-    const user = userDoc.data();
-    delete user.passwordHash;
-    res.json(user);
+    const user = await usersRef.findOne({ _id: req.params.id });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const { passwordHash, ...safeUser } = stripId(user);
+    res.json(safeUser);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch profile' });
@@ -185,11 +196,13 @@ app.get('/api/auth/profile/:id', async (req, res) => {
 app.put('/api/auth/profile/:id', async (req, res) => {
   try {
     const { name, phone, address } = req.body;
-    await usersRef.doc(req.params.id).update({
-      name: name || '',
-      phone: phone || '',
-      address: address || '',
-      updatedAt: FieldValue.serverTimestamp()
+    await usersRef.updateOne({ _id: req.params.id }, {
+      $set: {
+        name: name || '',
+        phone: phone || '',
+        address: address || '',
+        updatedAt: new Date()
+      }
     });
     res.json({ success: true });
   } catch (error) {
@@ -200,9 +213,8 @@ app.put('/api/auth/profile/:id', async (req, res) => {
 
 app.get('/api/orders/user/:id', async (req, res) => {
   try {
-    // Requires composite index in Firestore for userId and date, or we just fetch by userId and sort in node
-    const snapshot = await ordersRef.where('userId', '==', req.params.id).get();
-    const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const docs = await ordersRef.find({ userId: req.params.id }).toArray();
+    const orders = docs.map(d => ({ id: d._id, ...stripId(d) }));
     orders.sort((a, b) => new Date(b.date) - new Date(a.date));
     res.json(orders);
   } catch (error) {
@@ -213,9 +225,8 @@ app.get('/api/orders/user/:id', async (req, res) => {
 
 app.get('/api/products', async (req, res) => {
   try {
-    const snapshot = await productsRef.orderBy('id', 'asc').get();
-    const products = snapshot.docs.map(doc => doc.data());
-    res.json(products);
+    const docs = await productsRef.find().sort({ id: 1 }).toArray();
+    res.json(docs.map(stripId));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -224,11 +235,11 @@ app.get('/api/products', async (req, res) => {
 
 app.get('/api/products/:id', async (req, res) => {
   try {
-    const snapshot = await productsRef.where('id', '==', parseInt(req.params.id)).limit(1).get();
-    if (snapshot.empty) return res.status(404).json({ error: 'Product not found' });
-    const product = snapshot.docs[0].data();
-    product.reviews = product.reviews || [];
-    res.json(product);
+    const product = await productsRef.findOne({ id: parseInt(req.params.id) });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    const safeProduct = stripId(product);
+    safeProduct.reviews = safeProduct.reviews || [];
+    res.json(safeProduct);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch product' });
   }
@@ -240,23 +251,18 @@ app.post('/api/products/:id/reviews', async (req, res) => {
     if (!user || !rating || !comment) return res.status(400).json({ error: 'Missing review fields' });
 
     const productId = parseInt(req.params.id);
-    const snapshot = await productsRef.where('id', '==', productId).limit(1).get();
-    if (snapshot.empty) return res.status(404).json({ error: 'Product not found' });
+    const product = await productsRef.findOne({ id: productId });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
 
-    const docRef = snapshot.docs[0].ref;
-    const product = snapshot.docs[0].data();
-    const reviews = product.reviews || [];
-    
     const newReview = {
       user,
       rating: parseInt(rating),
       comment,
       date: new Date().toISOString()
     };
-    
-    reviews.push(newReview);
-    await docRef.update({ reviews });
-    
+
+    await productsRef.updateOne({ id: productId }, { $push: { reviews: newReview } });
+
     res.status(201).json(newReview);
   } catch (error) {
     console.error('Review error:', error);
@@ -286,6 +292,7 @@ app.post('/api/payment/create-order', async (req, res) => {
 });
 
 app.post('/api/orders', async (req, res) => {
+  const session = mongoClient.startSession();
   try {
     const { customer, items, paymentMethod, razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
 
@@ -312,31 +319,30 @@ app.post('/api/orders', async (req, res) => {
 
     let subtotal = 0;
     const enrichedItems = [];
-    
-    // Process items against Firestore products
+
+    // Process items against MongoDB products
     for (const item of items) {
-      const productSnap = await productsRef.where('id', '==', item.productId).limit(1).get();
-      if (productSnap.empty) {
+      const product = await productsRef.findOne({ id: item.productId });
+      if (!product) {
         return res.status(400).json({ error: `Product with ID ${item.productId} not found` });
       }
-      const product = productSnap.docs[0].data();
-      
+
       if (!item.quantity || item.quantity < 1) {
         return res.status(400).json({ error: `Invalid quantity for product ${item.productId}` });
       }
-      
+
       const currentStock = product.stockQuantity !== undefined ? product.stockQuantity : 0;
       if (currentStock < item.quantity) {
         return res.status(400).json({ error: `Insufficient stock for product ${product.name}. Only ${currentStock} left.` });
       }
-      
+
       // Calculate dynamic price based on variants
       let finalPrice = product.price;
-      
+
       // Size pricing logic
       if (item.size === 'A3') finalPrice += 50;
       if (item.size === 'A5') finalPrice -= 20; // A4 is base
-      
+
       // GSM pricing logic
       if (item.gsm === '140') finalPrice += 40; // 80 is base
 
@@ -345,7 +351,7 @@ app.post('/api/orders', async (req, res) => {
 
       const itemSubtotal = finalPrice * item.quantity;
       subtotal += itemSubtotal;
-      
+
       enrichedItems.push({
         productId: product.id,
         name: product.name,
@@ -369,6 +375,7 @@ app.post('/api/orders', async (req, res) => {
     const estimatedDelivery = new Date(now.setDate(now.getDate() + 5 + Math.floor(Math.random() * 3))); // 5-7 days
 
     const order = {
+      _id: orderId,
       id: orderId,
       orderId: orderId,
       userId: userId || null,
@@ -381,46 +388,45 @@ app.post('/api/orders', async (req, res) => {
       total,
       status: 'confirmed',
       estimatedDelivery: estimatedDelivery.toISOString(),
-      createdAt: FieldValue.serverTimestamp()
+      createdAt: new Date()
     };
 
-    // Save to Firestore
-    const batch = db.batch();
-    batch.set(ordersRef.doc(orderId), order);
-    
-    // Deduct stock
-    for (const item of enrichedItems) {
-      const productSnap = await productsRef.where('id', '==', item.productId).limit(1).get();
-      if (!productSnap.empty) {
-        const docRef = productSnap.docs[0].ref;
-        batch.update(docRef, { stockQuantity: FieldValue.increment(-item.quantity) });
+    // Save order + deduct stock atomically
+    await session.withTransaction(async () => {
+      await ordersRef.insertOne(order, { session });
+      for (const item of enrichedItems) {
+        await productsRef.updateOne(
+          { id: item.productId },
+          { $inc: { stockQuantity: -item.quantity } },
+          { session }
+        );
       }
-    }
-    
-    await batch.commit();
-    
-    // Convert timestamp back for the immediate JSON response
-    order.createdAt = new Date().toISOString();
+    });
 
-    res.status(201).json({ order });
+    // Convert timestamp back for the immediate JSON response
+    const responseOrder = stripId(order);
+    responseOrder.createdAt = order.createdAt.toISOString();
+
+    res.status(201).json({ order: responseOrder });
   } catch (error) {
     console.error('Order creation error:', error);
     res.status(500).json({ error: 'Failed to create order' });
+  } finally {
+    await session.endSession();
   }
 });
 
 app.get('/api/orders/:orderId', async (req, res) => {
   try {
-    const doc = await ordersRef.doc(req.params.orderId).get();
-    if (!doc.exists) return res.status(404).json({ error: 'Order not found' });
-    
-    const order = doc.data();
-    // Convert Firestore Timestamp to ISO string
-    if (order.createdAt && order.createdAt.toDate) {
-      order.createdAt = order.createdAt.toDate().toISOString();
+    const order = await ordersRef.findOne({ _id: req.params.orderId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const safeOrder = stripId(order);
+    if (safeOrder.createdAt instanceof Date) {
+      safeOrder.createdAt = safeOrder.createdAt.toISOString();
     }
-    
-    res.json({ order });
+
+    res.json({ order: safeOrder });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch order' });
   }
@@ -428,24 +434,22 @@ app.get('/api/orders/:orderId', async (req, res) => {
 
 app.post('/api/orders/:orderId/cancel', async (req, res) => {
   try {
-    const docRef = ordersRef.doc(req.params.orderId);
-    const doc = await docRef.get();
-    if (!doc.exists) return res.status(404).json({ error: 'Order not found' });
-    
-    const order = doc.data();
+    const order = await ordersRef.findOne({ _id: req.params.orderId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
     if (order.status !== 'confirmed') {
       return res.status(400).json({ error: 'Order cannot be cancelled' });
     }
-    
-    await docRef.update({ status: 'cancelled' });
-    order.status = 'cancelled';
-    
-    // Convert Firestore Timestamp to ISO string
-    if (order.createdAt && order.createdAt.toDate) {
-      order.createdAt = order.createdAt.toDate().toISOString();
+
+    await ordersRef.updateOne({ _id: req.params.orderId }, { $set: { status: 'cancelled' } });
+
+    const safeOrder = stripId(order);
+    safeOrder.status = 'cancelled';
+    if (safeOrder.createdAt instanceof Date) {
+      safeOrder.createdAt = safeOrder.createdAt.toISOString();
     }
-    
-    res.json({ message: 'Order cancelled successfully', order });
+
+    res.json({ message: 'Order cancelled successfully', order: safeOrder });
   } catch (error) {
     res.status(500).json({ error: 'Failed to cancel order' });
   }
@@ -453,23 +457,21 @@ app.post('/api/orders/:orderId/cancel', async (req, res) => {
 
 app.get('/api/orders/:orderId/invoice', async (req, res) => {
   try {
-    const doc = await ordersRef.doc(req.params.orderId).get();
-    if (!doc.exists) return res.status(404).json({ error: 'Order not found' });
-    
-    const order = doc.data();
-    
+    const order = await ordersRef.findOne({ _id: req.params.orderId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
     const pdfDoc = new PDFDocument({ size: 'A4', margin: 50 });
-    
+
     const filename = `invoice-${order.orderId}.pdf`;
     res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
     res.setHeader('Content-type', 'application/pdf');
-    
+
     pdfDoc.pipe(res);
-    
+
     // Header
     pdfDoc.fontSize(36).font('Helvetica-Bold').fillColor('#2d3748').text('Brush', 50, 50, { continued: true }).fillColor('#dcff80').text('.', { continued: false });
     pdfDoc.fontSize(24).fillColor('#1a202c').text('Invoice', 400, 55, { align: 'right' });
-    
+
     // From & Invoice Meta
     pdfDoc.fontSize(10).fillColor('#4a5568');
     pdfDoc.text('From:', 50, 110, { continued: true }).font('Helvetica-Bold').text('\nBrush.', { continued: false }).font('Helvetica');
@@ -477,43 +479,43 @@ app.get('/api/orders/:orderId/invoice', async (req, res) => {
     pdfDoc.text('123 Creative Street');
     pdfDoc.text('Patna, Bihar 800001');
     pdfDoc.text('admin@brush.ind.in');
-    
+
     const metaTop = 110;
     const rightCol = 350;
-    
+
     pdfDoc.rect(rightCol, metaTop, 200, 100).strokeColor('#cbd5e0').stroke();
     pdfDoc.moveTo(rightCol, metaTop + 20).lineTo(rightCol + 200, metaTop + 20).stroke();
     pdfDoc.moveTo(rightCol, metaTop + 40).lineTo(rightCol + 200, metaTop + 40).stroke();
     pdfDoc.moveTo(rightCol, metaTop + 60).lineTo(rightCol + 200, metaTop + 60).stroke();
     pdfDoc.moveTo(rightCol, metaTop + 80).lineTo(rightCol + 200, metaTop + 80).stroke();
     pdfDoc.moveTo(rightCol + 85, metaTop).lineTo(rightCol + 85, metaTop + 100).stroke();
-    
+
     pdfDoc.fillColor('#2d3748').font('Helvetica-Bold').text('Invoice Number', rightCol + 5, metaTop + 6);
     pdfDoc.font('Helvetica').text(order.orderId, rightCol + 90, metaTop + 6);
-    
+
     pdfDoc.font('Helvetica-Bold').text('Order Number', rightCol + 5, metaTop + 26);
     pdfDoc.font('Helvetica').text(order.orderId, rightCol + 90, metaTop + 26);
-    
-    const invoiceDate = new Date(order.createdAt && order.createdAt.toDate ? order.createdAt.toDate() : order.createdAt || Date.now());
+
+    const invoiceDate = new Date(order.createdAt instanceof Date ? order.createdAt : (order.createdAt || Date.now()));
     pdfDoc.font('Helvetica-Bold').text('Invoice Date', rightCol + 5, metaTop + 46);
     pdfDoc.font('Helvetica').text(invoiceDate.toLocaleDateString(), rightCol + 90, metaTop + 46);
-    
+
     pdfDoc.font('Helvetica-Bold').text('Due Date', rightCol + 5, metaTop + 66);
     pdfDoc.font('Helvetica').text(invoiceDate.toLocaleDateString(), rightCol + 90, metaTop + 66);
-    
+
     pdfDoc.font('Helvetica-Bold').text('Total Due', rightCol + 5, metaTop + 86);
     pdfDoc.font('Helvetica-Bold').text('Rs. ' + order.total.toFixed(2), rightCol + 90, metaTop + 86);
-    
+
     // To
     pdfDoc.font('Helvetica-Bold').text('To:', 50, 210);
     pdfDoc.font('Helvetica').text(order.customer.name);
     pdfDoc.text(order.customer.address);
     pdfDoc.text(`${order.customer.city}, ${order.customer.state} ${order.customer.pincode}`);
     pdfDoc.text(order.customer.email);
-    
+
     // Items Table
     const tableTop = 290;
-    
+
     pdfDoc.rect(50, tableTop, 500, 20).fillAndStroke('#f7fafc', '#cbd5e0');
     pdfDoc.fillColor('#2d3748').font('Helvetica-Bold');
     pdfDoc.text('Qty', 60, tableTop + 5);
@@ -521,10 +523,10 @@ app.get('/api/orders/:orderId/invoice', async (req, res) => {
     pdfDoc.text('Rate/Price', 330, tableTop + 5, { width: 70, align: 'right' });
     pdfDoc.text('Adjust', 410, tableTop + 5, { width: 50, align: 'right' });
     pdfDoc.text('Sub Total', 470, tableTop + 5, { width: 70, align: 'right' });
-    
+
     let y = tableTop + 25;
     pdfDoc.font('Helvetica');
-    
+
     order.items.forEach(item => {
       pdfDoc.text(item.quantity.toString(), 60, y + 5);
       pdfDoc.font('Helvetica-Bold').text(item.name, 100, y + 5);
@@ -532,11 +534,11 @@ app.get('/api/orders/:orderId/invoice', async (req, res) => {
       pdfDoc.fillColor('#2d3748').text('Rs. ' + item.price.toFixed(2), 330, y + 5, { width: 70, align: 'right' });
       pdfDoc.text('0.00%', 410, y + 5, { width: 50, align: 'right' });
       pdfDoc.text('Rs. ' + item.subtotal.toFixed(2), 470, y + 5, { width: 70, align: 'right' });
-      
+
       pdfDoc.moveTo(50, y + 35).lineTo(550, y + 35).strokeColor('#e2e8f0').stroke();
       y += 35;
     });
-    
+
     // Totals Table (right aligned, underneath items table)
     const summaryTop = y + 10;
     pdfDoc.rect(330, summaryTop - 5, 220, 65).strokeColor('#cbd5e0').stroke();
@@ -546,13 +548,13 @@ app.get('/api/orders/:orderId/invoice', async (req, res) => {
 
     pdfDoc.font('Helvetica').text('Sub Total', 340, summaryTop, { width: 80 });
     pdfDoc.font('Helvetica').text('Rs. ' + order.subtotal.toFixed(2), 440, summaryTop, { width: 100, align: 'right' });
-    
+
     pdfDoc.font('Helvetica').text('Shipping', 340, summaryTop + 20, { width: 80 });
     pdfDoc.font('Helvetica').text('Rs. ' + order.shipping.toFixed(2), 440, summaryTop + 20, { width: 100, align: 'right' });
-    
+
     pdfDoc.font('Helvetica-Bold').text('Total', 340, summaryTop + 40, { width: 80 });
     pdfDoc.font('Helvetica-Bold').text('Rs. ' + order.total.toFixed(2), 440, summaryTop + 40, { width: 100, align: 'right' });
-    
+
     // Watermark "PAID"
     if (order.paymentMethod !== 'cod') {
       pdfDoc.save()
@@ -564,19 +566,19 @@ app.get('/api/orders/:orderId/invoice', async (req, res) => {
             .text('PAID', 0, 0, { align: 'center' })
             .restore();
     }
-    
+
     // Bottom bank details
     pdfDoc.fontSize(10).fillColor('#4a5568').font('Helvetica');
     pdfDoc.text('Brush Bank', 50, summaryTop);
     pdfDoc.text('ACC # 1234 1234');
     pdfDoc.text('IFSC # HDFC0001234');
-    
+
     // Footer
     pdfDoc.fontSize(9).fillColor('#718096');
     pdfDoc.text('Payment is due within 30 days from date of invoice. Late payment is subject to fees of 5% per month.', 50, 715);
     pdfDoc.text('Thanks for choosing Brush | admin@brush.ind.in', 50, 730);
     pdfDoc.text('Page 1/1', 50, 745);
-    
+
     pdfDoc.end();
   } catch (error) {
     console.error('Invoice generation error:', error);
@@ -593,13 +595,12 @@ app.post('/api/admin/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
-    
-    const doc = await db.collection('admins').doc(username).get();
-    if (!doc.exists) return res.status(401).json({ error: 'Invalid credentials' });
-    
-    const adminData = doc.data();
+
+    const adminData = await adminsRef.findOne({ _id: username });
+    if (!adminData) return res.status(401).json({ error: 'Invalid credentials' });
+
     const inputHash = crypto.createHash('sha256').update(password).digest('hex');
-    
+
     if (adminData.passwordHash === inputHash) {
       // Generate a simple session token
       const token = crypto.randomBytes(16).toString('hex');
@@ -623,7 +624,7 @@ const requireAdmin = (req, res, next) => {
   }
   const token = authHeader.split(' ')[1];
   const session = activeAdminTokens.get(token);
-  
+
   if (!session) {
     if (activeAdminToken && token === activeAdminToken) {
       req.adminSession = { username: 'legacy', role: 'superadmin' };
@@ -631,7 +632,7 @@ const requireAdmin = (req, res, next) => {
     }
     return res.status(401).json({ error: 'Unauthorized. Please login again.' });
   }
-  
+
   req.adminSession = session;
   next();
 };
@@ -646,12 +647,12 @@ const requireSuperAdmin = (req, res, next) => {
 // Admin Logging
 const logAdminActivity = async (username, action, details) => {
   try {
-    await db.collection('admin_logs').add({
+    await adminLogsRef.insertOne({
       username,
       action,
       details,
       keep: false,
-      timestamp: FieldValue.serverTimestamp()
+      timestamp: new Date()
     });
     cleanOldLogs(); // Fire and forget
   } catch (error) {
@@ -662,21 +663,7 @@ const logAdminActivity = async (username, action, details) => {
 const cleanOldLogs = async () => {
   try {
     const timeLimit = new Date(Date.now() - 72 * 60 * 60 * 1000); // 72 hours ago
-    const snapshot = await db.collection('admin_logs').get();
-    const toDelete = [];
-    
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.keep === false && data.timestamp && data.timestamp.toDate() < timeLimit) {
-        toDelete.push(doc.ref);
-      }
-    });
-      
-    if (toDelete.length > 0) {
-      const batch = db.batch();
-      toDelete.forEach(ref => batch.delete(ref));
-      await batch.commit();
-    }
+    await adminLogsRef.deleteMany({ keep: false, timestamp: { $lt: timeLimit } });
   } catch (error) {
     console.error('Failed to clean old logs:', error);
   }
@@ -685,14 +672,13 @@ const cleanOldLogs = async () => {
 // Get Admin Logs
 app.get('/api/admin/logs', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
-    const snapshot = await db.collection('admin_logs').orderBy('timestamp', 'desc').limit(200).get();
-    const logs = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.timestamp && data.timestamp.toDate) {
-        data.timestamp = data.timestamp.toDate().toISOString();
+    const docs = await adminLogsRef.find().sort({ timestamp: -1 }).limit(200).toArray();
+    const logs = docs.map(doc => {
+      const data = stripId(doc);
+      if (data.timestamp instanceof Date) {
+        data.timestamp = data.timestamp.toISOString();
       }
-      logs.push({ id: doc.id, ...data });
+      return { id: doc._id.toString(), ...data };
     });
     res.json(logs);
   } catch (error) {
@@ -704,9 +690,8 @@ app.get('/api/admin/logs', requireAdmin, requireSuperAdmin, async (req, res) => 
 // Toggle Keep Log
 app.patch('/api/admin/logs/:id/keep', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
-    const docRef = db.collection('admin_logs').doc(req.params.id);
     const { keep } = req.body;
-    await docRef.update({ keep: Boolean(keep) });
+    await adminLogsRef.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { keep: Boolean(keep) } });
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update log' });
@@ -716,14 +701,13 @@ app.patch('/api/admin/logs/:id/keep', requireAdmin, requireSuperAdmin, async (re
 // Get all orders
 app.get('/api/orders', requireAdmin, async (req, res) => {
   try {
-    const snapshot = await ordersRef.orderBy('createdAt', 'desc').get();
-    const orders = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.createdAt && data.createdAt.toDate) {
-        data.createdAt = data.createdAt.toDate().toISOString();
+    const docs = await ordersRef.find().sort({ createdAt: -1 }).toArray();
+    const orders = docs.map(doc => {
+      const data = stripId(doc);
+      if (data.createdAt instanceof Date) {
+        data.createdAt = data.createdAt.toISOString();
       }
-      orders.push(data);
+      return data;
     });
     res.json(orders);
   } catch (error) {
@@ -738,6 +722,10 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     const { name, price, badge, stockQuantity, category, keywords, sku, showInBestsellers, showInNewArrivals, showInGrossing } = req.body;
 
     // Role based enforcement
+    if (req.adminSession.role === 'watcher') {
+      return res.status(403).json({ error: 'Watcher accounts have view-only access.' });
+    }
+
     if (req.adminSession.role === 'stocker') {
        // Stocker can only update stockQuantity
        if (name !== undefined || price !== undefined || badge !== undefined || category !== undefined || keywords !== undefined ||
@@ -764,20 +752,10 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     if (showInNewArrivals !== undefined) updateData.showInNewArrivals = Boolean(showInNewArrivals);
     if (showInGrossing !== undefined) updateData.showInGrossing = Boolean(showInGrossing);
 
-    // First try by doc ID (for newer products)
-    let docRef = productsRef.doc(req.params.id.toString());
-    let doc = await docRef.get();
+    const productId = parseInt(req.params.id);
+    const oldData = await productsRef.findOne({ id: productId });
+    if (!oldData) return res.status(404).json({ error: 'Product not found' });
 
-    // If not found, try querying by the numeric 'id' field (for older products)
-    if (!doc.exists) {
-      const productId = parseInt(req.params.id);
-      const snapshot = await productsRef.where('id', '==', productId).limit(1).get();
-      if (snapshot.empty) return res.status(404).json({ error: 'Product not found' });
-      docRef = snapshot.docs[0].ref;
-      doc = snapshot.docs[0];
-    }
-
-    const oldData = doc.data() || {};
     const changes = [];
     if (name !== undefined && oldData.name !== name) changes.push(`name to "${name}"`);
     if (price !== undefined && oldData.price !== Number(price)) changes.push(`price to ${price}`);
@@ -795,7 +773,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
       return res.json({ success: true, message: 'No changes provided' });
     }
 
-    await docRef.update(updateData);
+    await productsRef.updateOne({ id: productId }, { $set: updateData });
     logAdminActivity(req.adminSession.username, 'Update Product', `Updated product ID: ${req.params.id} (${changesStr})`);
     res.json({ success: true });
   } catch (error) {
@@ -810,20 +788,11 @@ app.delete('/api/products/:id', requireAdmin, async (req, res) => {
     if (req.adminSession.role !== 'superadmin') {
       return res.status(403).json({ error: 'Only superadmin can delete products.' });
     }
-    
-    // First try by doc ID (for newer products)
-    let docRef = productsRef.doc(req.params.id.toString());
-    let doc = await docRef.get();
-    
-    // If not found, try querying by the numeric 'id' field (for older products)
-    if (!doc.exists) {
-      const productId = parseInt(req.params.id);
-      const snapshot = await productsRef.where('id', '==', productId).limit(1).get();
-      if (snapshot.empty) return res.status(404).json({ error: 'Product not found' });
-      docRef = snapshot.docs[0].ref;
-    }
-    
-    await docRef.delete();
+
+    const productId = parseInt(req.params.id);
+    const result = await productsRef.deleteOne({ id: productId });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Product not found' });
+
     logAdminActivity(req.adminSession.username, 'Delete Product', `Deleted product ID: ${req.params.id}`);
     res.json({ success: true });
   } catch (error) {
@@ -834,27 +803,29 @@ app.delete('/api/products/:id', requireAdmin, async (req, res) => {
 
 app.post('/api/products', requireAdmin, upload.single('image'), async (req, res) => {
   try {
+    if (req.adminSession.role === 'watcher') {
+      return res.status(403).json({ error: 'Watcher accounts have view-only access.' });
+    }
+
     const { name, category, price, originalPrice, badge, description, stockQuantity, keywords, sku } = req.body;
-    
+
     if (!name || !price) {
       return res.status(400).json({ error: 'Name and price are required' });
     }
 
     // Auto-generate numeric ID based on highest existing ID
-    const snapshot = await productsRef.get();
-    let maxId = 0;
-    snapshot.forEach(doc => {
-      const docId = parseInt(doc.id, 10);
-      if (!isNaN(docId) && docId > maxId) maxId = docId;
-    });
-    const newId = maxId + 1;
+    const [top] = await productsRef.find().sort({ id: -1 }).limit(1).toArray();
+    const newId = (top ? top.id : 0) + 1;
 
     let imageUrl = '';
     if (req.file) {
+      if (!bucket) {
+        return res.status(503).json({ error: 'Image uploads are unavailable — Firebase Storage is not configured.' });
+      }
       const ext = path.extname(req.file.originalname) || '.jpg';
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       const filename = `products/prod-${uniqueSuffix}${ext}`;
-      
+
       const fileUpload = bucket.file(filename);
       await fileUpload.save(req.file.buffer, {
         metadata: { contentType: req.file.mimetype }
@@ -865,6 +836,7 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
     }
 
     const newProduct = {
+      _id: newId,
       id: newId,
       name,
       category: category || 'Miscellaneous',
@@ -879,15 +851,14 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       showInBestsellers: false,
       showInNewArrivals: false,
       showInGrossing: false,
-      createdAt: FieldValue.serverTimestamp()
+      createdAt: new Date()
     };
 
-    const productRef = productsRef.doc(newId.toString());
-    await productRef.set(newProduct);
-    
+    await productsRef.insertOne(newProduct);
+
     logAdminActivity(req.adminSession.username, 'Add Product', `Added product ID: ${newId} (${name})`);
 
-    res.json({ success: true, product: newProduct });
+    res.json({ success: true, product: stripId(newProduct) });
   } catch (error) {
     console.error('Create product error:', error);
     res.status(500).json({ error: 'Failed to create product' });
@@ -898,11 +869,10 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
 app.patch('/api/orders/:orderId/status', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     const { status } = req.body;
-    const docRef = ordersRef.doc(req.params.orderId);
-    const doc = await docRef.get();
-    if (!doc.exists) return res.status(404).json({ error: 'Order not found' });
-    const oldStatus = doc.data().status;
-    await docRef.update({ status });
+    const order = await ordersRef.findOne({ _id: req.params.orderId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    const oldStatus = order.status;
+    await ordersRef.updateOne({ _id: req.params.orderId }, { $set: { status } });
     logAdminActivity(req.adminSession.username, 'Update Order Status', `Changed order ${req.params.orderId} status from ${oldStatus} to ${status}`);
     res.json({ message: 'Order status updated successfully' });
   } catch (error) {
@@ -917,6 +887,22 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something broke!' });
 });
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+async function start() {
+  await mongoClient.connect();
+  db = mongoClient.db();
+  productsRef = db.collection('products');
+  ordersRef = db.collection('orders');
+  usersRef = db.collection('users');
+  adminsRef = db.collection('admins');
+  adminLogsRef = db.collection('admin_logs');
+  console.log('✅ Connected to MongoDB');
+
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+}
+
+start().catch(err => {
+  console.error('❌ Failed to start server:', err);
+  process.exit(1);
 });

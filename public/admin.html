@@ -379,7 +379,7 @@
     <div class="nav-item" data-target="inventory-view">
       <i class="fa-solid fa-warehouse"></i> <span class="sidebar-text">Inventory</span>
     </div>
-    <div class="nav-item" data-target="add-product-view">
+    <div class="nav-item" data-target="add-product-view" id="nav-add-product">
       <i class="fa-solid fa-plus-circle"></i> <span class="sidebar-text">Add Product</span>
     </div>
     <div class="nav-item" data-target="logs-view" id="nav-logs" style="display:none;">
@@ -554,12 +554,9 @@
         const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
         document.getElementById('logged-in-user').textContent = username;
         
-        if (role === 'superadmin') {
-          document.getElementById('nav-logs').style.display = 'flex';
-        } else {
-          document.getElementById('nav-logs').style.display = 'none';
-        }
-        
+        document.getElementById('nav-logs').style.display = role === 'superadmin' ? 'flex' : 'none';
+        document.getElementById('nav-add-product').style.display = role === 'watcher' ? 'none' : 'flex';
+
         loadOrders();
       } else {
         document.getElementById('login-overlay').style.display = 'flex';
@@ -806,7 +803,9 @@
       const skuSearch = document.getElementById('inventory-sku-search')?.value.toLowerCase() || '';
       const stockSort = document.getElementById('inventory-stock-sort')?.value || 'none';
       const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
-      const isDisabled = role === 'stocker' ? 'disabled style="opacity:0.7"' : '';
+      const isDisabled = (role === 'stocker' || role === 'watcher') ? 'disabled style="opacity:0.7"' : '';
+      const stockDisabled = role === 'watcher' ? 'disabled style="opacity:0.7"' : '';
+      const saveDisabled = role === 'watcher' ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
       
       try {
         const res = await fetch(`${API_BASE}/products`);
@@ -857,7 +856,7 @@
               ₹<input type="number" id="price-${p.id}" value="${p.price}" ${isDisabled} style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
             </td>
             <td>
-              <input type="number" id="stock-${p.id}" value="${p.stockQuantity !== undefined ? p.stockQuantity : 0}" style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
+              <input type="number" id="stock-${p.id}" value="${p.stockQuantity !== undefined ? p.stockQuantity : 0}" ${stockDisabled} style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
             </td>
             <td>
               <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; cursor:pointer;">
@@ -871,7 +870,7 @@
               </label>
             </td>
             <td style="display: flex; gap: 5px; flex-direction: column;">
-              <button class="action-btn" onclick="updateProduct(${p.id})">Save</button>
+              <button class="action-btn" ${saveDisabled} onclick="updateProduct(${p.id})">Save</button>
               <button class="action-btn" ${role !== 'superadmin' ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="background:var(--sale-red); color:white; border-color:var(--sale-red);"'} onclick="deleteProduct(${p.id})">Delete</button>
             </td>
           </tr>
