@@ -237,6 +237,52 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  // ---- Hero Poster Counter ----
+  // Counts up to the live product total, but never sits frozen at 0 —
+  // if the backend (Render free tier) is cold-starting or unreachable,
+  // it settles on a realistic fallback instead of stalling indefinitely.
+  const posterCountEl = document.getElementById('poster-count-number');
+  let posterCountResolved = false;
+
+  function animateCounterTo(el, target) {
+    const duration = 1400;
+    const startTime = performance.now();
+    const startValue = parseInt(el.textContent, 10) || 0;
+    if (startValue === target) return;
+
+    function tick(now) {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
+      const value = Math.round(startValue + (target - startValue) * eased);
+      el.textContent = value;
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function reportPosterCount(count) {
+    if (posterCountResolved || !posterCountEl || !count) return;
+    posterCountResolved = true;
+    animateCounterTo(posterCountEl, count);
+  }
+
+  if (posterCountEl) {
+    const FALLBACK_POSTER_COUNT = 150;
+    const fallbackTimer = setTimeout(() => reportPosterCount(FALLBACK_POSTER_COUNT), 4000);
+
+    fetch(API_BASE + '/products')
+      .then(res => (res.ok ? res.json() : Promise.reject(new Error('bad status'))))
+      .then(products => {
+        clearTimeout(fallbackTimer);
+        reportPosterCount(products.length);
+      })
+      .catch(() => {
+        clearTimeout(fallbackTimer);
+        reportPosterCount(FALLBACK_POSTER_COUNT);
+      });
+  }
+
+
   // ---- Product carousels (Bestsellers & New Arrivals) ----
   function setupCarousel(trackId, prevId, nextId, counterId) {
     const track = document.getElementById(trackId);
@@ -357,6 +403,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(API_BASE + '/products');
       if (!res.ok) throw new Error('Failed to fetch products');
       const products = await res.json();
+
+      reportPosterCount(products.length);
 
       // Homepage placement is admin-curated via checkboxes in the admin panel
       const bestSellers = products.filter(p => p.showInBestsellers);

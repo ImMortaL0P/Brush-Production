@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Brush — Premium Posters, Stickers & Wall Art</title>
   <meta name="description" content="Elevate your space with premium print art. Shop curated posters, stickers, and wall art from Brush. Anime, Movies, Minimalist, Cyberpunk collections and more.">
-  <link rel="icon" href="Brush%20Text%20Arial.png" type="image/png">
+  <link rel="icon" href="assets/misc/Brush%20Text%20Arial.png" type="image/png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,15 +16,15 @@
   <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
 
-  <link rel="stylesheet" href="styles.css?v=6">
-  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="icon" type="image/png" href="assets/misc/favicon.png">
 </head>
 
 <body class="preloader-active">
 
   <!-- Preloader -->
   <div class="preloader" id="preloader">
-    <img src="Brush%20Text%20Arial.png" alt="Brush" class="preloader-logo">
+    <img src="assets/misc/Brush%20Text%20Arial.png" alt="Brush" class="preloader-logo">
     <div class="preloader-bar"><div class="preloader-fill" id="preloader-fill"></div></div>
     <span class="preloader-percent" id="preloader-percent">0%</span>
   </div>
@@ -37,7 +37,7 @@
   <!-- Navbar -->
   <nav class="navbar" id="navbar">
     <a href="#" class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
-      <img src="Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 32px; width: auto;">
+      <img src="assets/misc/Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 32px; width: auto;">
     </a>
 
     <div class="nav-links" id="nav-links">
@@ -74,24 +74,35 @@
   <section class="hero" id="hero">
     <div class="hero-slider" id="hero-slider">
       <div class="hero-slide active">
-        <img src="Landing Slideshow 2x f.jpg" alt="Space frontier poster collection in a stylish room">
+        <img src="assets/hero/Landing Slideshow 2x f.jpg" alt="Space frontier poster collection in a stylish room">
       </div>
       <div class="hero-slide">
-        <img src="Landing Slideshow 3x f.jpg" alt="Modern art poster collection displayed on wall">
+        <img src="assets/hero/Landing Slideshow 3x f.jpg" alt="Modern art poster collection displayed on wall">
       </div>
       <div class="hero-slide">
-        <img src="Landing Slideshow 3x room f.jpg" alt="Trippy poster collection in vibrant room setup">
+        <img src="assets/hero/Landing Slideshow 3x room f.jpg" alt="Trippy poster collection in vibrant room setup">
       </div>
     </div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
       <span class="hero-tag">Your one-stop solution for print media</span>
+
+      <!-- Animated Logo (Blur Pulse Loop) -->
+      <div class="hero-logo-container">
+        <img src="assets/misc/Brush Text Arial.png" alt="Brush" class="hero-animated-logo">
+      </div>
+
       <h1 class="hero-title">Transform Your Walls Into Art</h1>
-      <p class="hero-subtitle">Curated posters, stickers & wall art — crafted to reflect your unique style.</p>
+
       <a href="#bestsellers" class="hero-cta">
         Shop Now
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </a>
+      
+      <!-- Dynamic Counter (Will be updated via JS or CSS animation) -->
+      <div class="hero-counter">
+        <span id="poster-count-number">0</span>+ Posters Available
+      </div>
       <div class="hero-trust-badges">
         <span class="hero-trust-badge">Cash on Delivery</span>
         <span class="hero-trust-badge">Free Shipping Above ₹500</span>
@@ -201,7 +212,7 @@
 
       <div class="categories-grid">
         <a href="all_products.html?category=New" class="category-card fade-in">
-          <img src="Landing Slideshow 3x f.jpg" alt="New posters category" loading="lazy">
+          <img src="assets/hero/Landing Slideshow 3x f.jpg" alt="New posters category" loading="lazy">
           <div class="category-card-overlay">
             <h3>New Arrivals</h3>
             <p>Fresh drops</p>
@@ -209,7 +220,7 @@
           </div>
         </a>
         <a href="all_products.html?category=Anime" class="category-card fade-in fade-in-delay-1">
-          <img src="Testimonials 1.jpg" alt="Anime poster category" loading="lazy">
+          <img src="assets/categories/Testimonials 1.jpg" alt="Anime poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Anime</h3>
             <p>130+ designs</p>
@@ -217,7 +228,7 @@
           </div>
         </a>
         <a href="all_products.html?category=Movies" class="category-card fade-in fade-in-delay-1">
-          <img src="Testimonials 2.jpg" alt="Cyberpunk poster category" loading="lazy">
+          <img src="assets/categories/Testimonials 2.jpg" alt="Cyberpunk poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Movies & TV</h3>
             <p>200+ designs</p>
@@ -225,7 +236,7 @@
           </div>
         </a>
         <a href="all_products.html?category=Minimalist" class="category-card fade-in fade-in-delay-2">
-          <img src="Testimonials 3.jpg" alt="Minimalist poster category" loading="lazy">
+          <img src="assets/categories/Testimonials 3.jpg" alt="Minimalist poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Minimalist</h3>
             <p>80+ designs</p>
@@ -241,14 +252,30 @@
           </div>
         </a>
         <a href="all_products.html?category=Space" class="category-card fade-in fade-in-delay-3">
-          <img src="Landing Slideshow 2x f.jpg" alt="Space and Sci-Fi poster category" loading="lazy">
+          <img src="assets/hero/Landing Slideshow 2x f.jpg" alt="Space and Sci-Fi poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Space & Sci-Fi</h3>
             <p>90+ designs</p>
             <span class="cat-arrow">Explore →</span>
           </div>
         </a>
-        <a href="all_products.html?category=Board Finish" class="category-card fade-in fade-in-delay-3">
+      <a href="all_products.html?category=Travel" class="category-card fade-in fade-in-delay-3">
+          <img src="assets/Travel/Japan.png" alt="Travel poster category" loading="lazy">
+          <div class="category-card-overlay">
+            <h3>Travel</h3>
+            <p>Beautiful cities</p>
+            <span class="cat-arrow">Explore →</span>
+          </div>
+        </a>
+        <a href="all_products.html?category=Mythological" class="category-card fade-in fade-in-delay-4">
+          <img src="assets/Mythological/Zeus.png" alt="Mythological poster category" loading="lazy">
+          <div class="category-card-overlay">
+            <h3>Mythological</h3>
+            <p>Divine artwork</p>
+            <span class="cat-arrow">Explore →</span>
+          </div>
+        </a>
+        <a href="all_products.html?category=Board Finish" class="category-card fade-in fade-in-delay-4 extra-category" style="display: none;">
           <img src="uploads/prod-1785174052487-87176096.jpg" alt="Board Finish poster category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Board Finish</h3>
@@ -256,7 +283,7 @@
             <span class="cat-arrow">Explore →</span>
           </div>
         </a>
-        <a href="all_products.html?category=Original Movie Posters" class="category-card fade-in fade-in-delay-4">
+        <a href="all_products.html?category=Original Movie Posters" class="category-card fade-in fade-in-delay-4 extra-category" style="display: none;">
           <img src="posters/Original Movie Posters/avengers_infinity_war_ver12_xlg.jpg" alt="Original Movie Posters category" loading="lazy">
           <div class="category-card-overlay">
             <h3>Original Movie Posters</h3>
@@ -265,6 +292,19 @@
           </div>
         </a>
       </div>
+      <div class="view-all-wrap" style="text-align: center; margin-top: 2rem;">
+        <button id="toggle-categories-btn" class="view-all-btn" style="background: transparent; border: 1px solid var(--primary-color); cursor: pointer; color: var(--text-color, #fff);">
+          View More Categories <i class="fa-solid fa-chevron-down"></i>
+        </button>
+      </div>
+      <script>
+        document.getElementById('toggle-categories-btn').addEventListener('click', function() {
+          const extraCategories = document.querySelectorAll('.extra-category');
+          const isHidden = extraCategories[0].style.display === 'none';
+          extraCategories.forEach(cat => cat.style.display = isHidden ? '' : 'none');
+          this.innerHTML = isHidden ? 'View Less Categories <i class="fa-solid fa-chevron-up"></i>' : 'View More Categories <i class="fa-solid fa-chevron-down"></i>';
+        });
+      </script>
     </div>
   </section>
 
@@ -303,7 +343,7 @@
   <!-- Trending / Grossing CTA Banner -->
   <section class="cta-banner" id="grossing">
     <div class="cta-banner-bg">
-      <img src="Landing Slideshow 3x room f.jpg" alt="Trending wall art setup in a modern room" loading="lazy">
+      <img src="assets/hero/Landing Slideshow 3x room f.jpg" alt="Trending wall art setup in a modern room" loading="lazy">
     </div>
     <div class="cta-banner-content fade-in">
       <span class="section-tag">🔥 Trending Now</span>
@@ -409,7 +449,7 @@
 
           <div class="wall-setup-card" onclick="window.location.href='all_products.html'">
             <div class="ws-img-container">
-              <img src="wall_setup_bmw_1785314560712.jpg" alt="BMW Wall Setup" loading="lazy">
+              <img src="assets/wall_setups/wall_setup_bmw_1785314560712.jpg" alt="BMW Wall Setup" loading="lazy">
               <span class="ws-sale-badge">Sale</span>
             </div>
             <div class="ws-details">
@@ -424,7 +464,7 @@
 
           <div class="wall-setup-card" onclick="window.location.href='all_products.html'">
             <div class="ws-img-container">
-              <img src="wall_setup_defender_1785314572482.jpg" alt="Defender Wall Setup" loading="lazy">
+              <img src="assets/wall_setups/wall_setup_defender_1785314572482.jpg" alt="Defender Wall Setup" loading="lazy">
               <span class="ws-sale-badge">Sale</span>
             </div>
             <div class="ws-details">
@@ -439,7 +479,7 @@
 
           <div class="wall-setup-card" onclick="window.location.href='all_products.html'">
             <div class="ws-img-container">
-              <img src="wall_setup_porsche_1785314584094.jpg" alt="Porsche Wall Setup" loading="lazy">
+              <img src="assets/wall_setups/wall_setup_porsche_1785314584094.jpg" alt="Porsche Wall Setup" loading="lazy">
               <span class="ws-sale-badge">Sale</span>
             </div>
             <div class="ws-details">
@@ -454,7 +494,7 @@
 
           <div class="wall-setup-card" onclick="window.location.href='all_products.html'">
             <div class="ws-img-container">
-              <img src="wall_setup_anime_1785314599991.jpg" alt="Room Wall Setup" loading="lazy">
+              <img src="assets/wall_setups/wall_setup_anime_1785314599991.jpg" alt="Room Wall Setup" loading="lazy">
               <span class="ws-sale-badge">Sale</span>
             </div>
             <div class="ws-details">
@@ -469,7 +509,7 @@
 
           <div class="wall-setup-card" onclick="window.location.href='all_products.html'">
             <div class="ws-img-container">
-              <img src="wall_setup_samurai_1785314613353.jpg" alt="Samurai Wall Setup" loading="lazy">
+              <img src="assets/wall_setups/wall_setup_samurai_1785314613353.jpg" alt="Samurai Wall Setup" loading="lazy">
               <span class="ws-sale-badge">Sale</span>
             </div>
             <div class="ws-details">
@@ -484,7 +524,7 @@
 
           <div class="wall-setup-card" onclick="window.location.href='all_products.html'">
             <div class="ws-img-container">
-              <img src="wall_setup_girl_1785314626601.jpg" alt="Character Wall Setup" loading="lazy">
+              <img src="assets/wall_setups/wall_setup_girl_1785314626601.jpg" alt="Character Wall Setup" loading="lazy">
               <span class="ws-sale-badge">Sale</span>
             </div>
             <div class="ws-details">
@@ -517,7 +557,7 @@
       
       <div class="custom-prints-grid">
         <div class="custom-print-card fade-in">
-          <img src="custom_poster_1785232129819.jpg" alt="Custom Poster" loading="lazy">
+          <img src="assets/custom_prints/custom_poster_1785232129819.jpg" alt="Custom Poster" loading="lazy">
           <div class="custom-print-overlay">
             <h3 class="cursive-text">Custom</h3>
             <h2>POSTER</h2>
@@ -525,23 +565,16 @@
           </div>
         </div>
         <div class="custom-print-card fade-in fade-in-delay-1">
-          <img src="custom_split_poster_1785232142561.jpg" alt="Custom Split Poster" loading="lazy">
+          <img src="assets/custom_prints/custom_split_poster_1785232142561.jpg" alt="Custom Split Poster" loading="lazy">
           <div class="custom-print-overlay">
             <h3 class="cursive-text">Custom</h3>
             <h2>SPLIT POSTER</h2>
             <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
           </div>
         </div>
-        <div class="custom-print-card fade-in fade-in-delay-2">
-          <img src="custom_split_poster_2x2_1785232154860.jpg" alt="Custom Split Poster 2x2" loading="lazy">
-          <div class="custom-print-overlay">
-            <h3 class="cursive-text">Custom</h3>
-            <h2>SPLIT POSTER</h2>
-            <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
-          </div>
-        </div>
+
         <div class="custom-print-card fade-in fade-in-delay-3">
-          <img src="custom_retro_prints_1785232166511.jpg" alt="Custom Retro Prints" loading="lazy">
+          <img src="assets/custom_prints/custom_retro_prints_1785232166511.jpg" alt="Custom Retro Prints" loading="lazy">
           <div class="custom-print-overlay">
             <h3 class="cursive-text">Custom</h3>
             <h2>RETRO PRINTS</h2>
@@ -549,7 +582,7 @@
           </div>
         </div>
         <div class="custom-print-card fade-in fade-in-delay-4">
-          <img src="custom_pocket_photo_1785232177692.jpg" alt="Mini Pocket Photo" loading="lazy">
+          <img src="assets/custom_prints/custom_pocket_photo_1785232177692.jpg" alt="Mini Pocket Photo" loading="lazy">
           <div class="custom-print-overlay">
             <h3 class="cursive-text">Custom</h3>
             <h2>MINI POCKET PHOTO</h2>
@@ -557,12 +590,34 @@
           </div>
         </div>
         <div class="custom-print-card fade-in fade-in-delay-5">
-          <img src="custom_photobooth_strip_1785232188937.jpg" alt="Photobooth Strip" loading="lazy">
+          <img src="assets/custom_prints/custom_photobooth_strip_1785232188937.jpg" alt="Photobooth Strip" loading="lazy">
           <div class="custom-print-overlay">
             <h3 class="cursive-text">Custom</h3>
             <h2>PHOTOBOOTH STRIP</h2>
             <button class="custom-print-btn" disabled>Get Yours &rarr;</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Institutional Supplies CTA -->
+  <section class="app-section" style="border-top: 1px solid var(--border-color, #333);">
+    <div class="container">
+      <div class="app-grid" style="align-items: center;">
+        <div class="app-content fade-in">
+          <span class="section-tag">Coming Soon</span>
+          <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Are you an organisation/institution?</h2>
+          <p style="font-size: 1.1rem; margin-bottom: 2rem;">Click here to browse our exclusive institutional supplies.</p>
+          <div class="app-buttons">
+            <a href="#" class="hero-cta" style="display: inline-flex; align-items: center; justify-content: center;">
+              Browse Supplies
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; margin-left: 8px;"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="app-image fade-in fade-in-delay-2">
+          <img src="assets/misc/ChatGPT Image Jul 31, 2026, 12_36_13 PM.png" alt="Institutional Supplies" loading="lazy" style="border-radius: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); width: 100%; max-width: 400px; margin: 0 auto; display: block;">
         </div>
       </div>
     </div>
@@ -588,7 +643,7 @@
           </div>
         </div>
         <div class="app-image fade-in fade-in-delay-2">
-          <img src="app-preview.png" alt="Brush mobile app preview showing poster browsing interface" loading="lazy">
+          <img src="assets/misc/app-preview.png" alt="Brush mobile app preview showing poster browsing interface" loading="lazy">
         </div>
       </div>
     </div>
@@ -644,7 +699,7 @@
 
         </div>
         <div class="faq-image-col fade-in fade-in-delay-2">
-          <img src="faq-illustration.jpg" alt="FAQ Illustration" loading="lazy">
+          <img src="assets/misc/faq-illustration.jpg" alt="FAQ Illustration" loading="lazy">
         </div>
       </div>
     </div>
@@ -655,7 +710,7 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <img src="Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 36px; width: auto; margin-bottom: 1rem;">
+          <img src="assets/misc/Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 36px; width: auto; margin-bottom: 1rem;">
           <p>At Brush, we're not just selling products — we're sharing our lifelong friendship, creativity, and commitment to delivering exceptional art to your doorstep.</p>
           <div class="footer-social">
             <a href="https://twitter.com/lost_storiess" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
@@ -702,7 +757,10 @@
       </div>
 
       <div class="footer-bottom">
-        <p>© 2024 Brush. All rights reserved. Posters, Stickers, Illustrations & More!</p>
+        <p>
+          © 2024 Brush. All rights reserved. Posters, Stickers, Illustrations & More!<br>
+          <span style="font-size: 0.85em; margin-top: 8px; display: inline-block; max-width: 800px; line-height: 1.4;">All artwork posted on this website is intended as fan art and is not purported to be official merchandise unless indicated otherwise, All artworks are sourced via CC license or AI Generated/Modified, or via the original creators permission, if you have any issues regarding the artwork please write to us at admin@brush.ind.in</span>
+        </p>
         <div class="footer-bottom-links">
           <a href="#">Terms</a>
           <a href="#">Privacy</a>
@@ -956,7 +1014,7 @@
 
   <!-- Scripts -->
   <script src="cart.js"></script>
-  <script src="script.js?v=6"></script>
+  <script src="script.js?v=7"></script>
 </body>
 
 </html>
