@@ -1,4 +1,10 @@
 require('dotenv').config();
+const dns = require('dns');
+// Render's network breaks the TLS handshake to MongoDB Atlas when Node
+// resolves Atlas hostnames to IPv6 first (default since Node 18). Forcing
+// IPv4 first avoids the "tlsv1 alert internal error" / ReplicaSetNoPrimary
+// connection failures seen on Render.
+dns.setDefaultResultOrder('ipv4first');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
