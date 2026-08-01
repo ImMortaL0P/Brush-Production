@@ -27,6 +27,13 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Cache-bust local CSS/JS references
+        run: |
+          VER="${GITHUB_SHA::8}"
+          find public -maxdepth 1 -name "*.html" -print0 | while IFS= read -r -d '' f; do
+            sed -E -i "s#(href|src)=\"([^\":?]+\.(css|js))(\?[^\"]*)?\"#\1=\"\2?v=${VER}\"#g" "$f"
+          done
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
