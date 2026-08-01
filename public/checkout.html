@@ -285,18 +285,11 @@
 
     .summary-item-image {
       width: 60px;
-      height: 60px;
       border-radius: var(--radius-sm);
       overflow: hidden;
       flex-shrink: 0;
       position: relative;
       background: var(--bg-card);
-    }
-
-    .summary-item-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
     }
 
     .summary-item-image .qty-badge {
@@ -695,7 +688,11 @@
         summaryItems.innerHTML = items.map(item => `
           <div class="summary-item">
             <div class="summary-item-image">
-              <img src="${item.image}" alt="${item.name}">
+              <div class="mockup-wrapper">
+                <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
+                <img src="${item.image}" class="mockup-poster" alt="${item.name}">
+                <img src="${item.image}" class="mockup-hover" alt="${item.name}">
+              </div>
               <span class="qty-badge">${item.quantity}</span>
             </div>
             <div class="summary-item-details">

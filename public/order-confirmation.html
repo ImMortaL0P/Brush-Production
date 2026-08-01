@@ -145,17 +145,10 @@
 
     .order-item-img {
       width: 48px;
-      height: 48px;
       border-radius: var(--radius-sm);
       overflow: hidden;
       flex-shrink: 0;
       background: var(--bg-secondary);
-    }
-
-    .order-item-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
     }
 
     .order-item-info {
@@ -399,7 +392,13 @@
               <div class="order-items-list">
                 ${order.items.map(item => `
                   <div class="order-item-row">
-                    <div class="order-item-img"><img src="${item.image}" alt="${item.name}"></div>
+                    <div class="order-item-img">
+                      <div class="mockup-wrapper">
+                        <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
+                        <img src="${item.image}" class="mockup-poster" alt="${item.name}">
+                        <img src="${item.image}" class="mockup-hover" alt="${item.name}">
+                      </div>
+                    </div>
                     <div class="order-item-info">
                       <h5>${item.name}</h5>
                       <p>Qty: ${item.quantity}</p>

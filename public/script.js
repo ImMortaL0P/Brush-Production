@@ -162,7 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (matched.length > 0) {
           suggestionsBox.innerHTML = matched.map(p => `
             <a href="all_products.html?search=${encodeURIComponent(p.name)}" class="suggestion-item">
-              <img src="${p.image}" alt="${p.name}">
+              <div class="mockup-wrapper" style="flex-shrink: 0;">
+                <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
+                <img src="${p.image}" class="mockup-poster" alt="${p.name}">
+                <img src="${p.image}" class="mockup-hover" alt="${p.name}">
+              </div>
               <div class="suggestion-item-details">
                 <span class="suggestion-title">${p.name}</span>
                 <span class="suggestion-cat">${p.category}</span>
@@ -422,7 +426,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <div class="product-card fade-in ${delayClass} visible" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
             <div class="product-card-image">
-              <img src="${p.image}" alt="${p.name}" loading="lazy">
+              <div class="mockup-wrapper">
+                <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame" loading="lazy">
+                <img src="${p.image}" class="mockup-poster" alt="${p.name}" loading="lazy">
+                <img src="${p.image}" class="mockup-hover" alt="${p.name}" loading="lazy">
+              </div>
               <span class="product-badge" ${badgeStyle}>${p.badge || badge}</span>
               <div class="product-quick-actions">
                 <button class="quick-add-btn" ${isOut ? 'disabled style="background: rgba(0,0,0,0.8); color: var(--text-muted); cursor: not-allowed;"' : ''}>
@@ -574,7 +582,11 @@ document.addEventListener('DOMContentLoaded', () => {
     cartBody.innerHTML = items.map(item => `
       <div class="cart-item" data-cart-id="${item.cartId || item.id}">
         <div class="cart-item-image">
-          <img src="${item.image}" alt="${item.name}">
+          <div class="mockup-wrapper">
+            <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
+            <img src="${item.image}" class="mockup-poster" alt="${item.name}">
+            <img src="${item.image}" class="mockup-hover" alt="${item.name}">
+          </div>
         </div>
         <div class="cart-item-details">
           <h4>${item.name}</h4>
@@ -718,7 +730,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error('Product not found');
       currentProduct = await res.json();
       
-      document.getElementById('modal-image').src = currentProduct.image;
+      const modalImageCol = document.querySelector('.modal-image-col');
+      modalImageCol.innerHTML = `
+        <div class="mockup-wrapper">
+          <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
+          <img src="${currentProduct.image}" class="mockup-poster" alt="${currentProduct.name}">
+          <img src="${currentProduct.image}" class="mockup-hover" alt="${currentProduct.name}">
+        </div>
+      `;
+      
       document.getElementById('modal-title').textContent = currentProduct.name;
       document.getElementById('modal-description').textContent = currentProduct.description || 'Premium high-quality poster for your space.';
       document.getElementById('modal-original-price').textContent = currentProduct.originalPrice ? `₹${currentProduct.originalPrice}` : '';
@@ -1288,5 +1308,40 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('keyup', (e) => {
   if (e.key === 'PrintScreen') {
     navigator.clipboard.writeText('');
+  }
+});
+
+// =========================================
+// Reach Out Modals Logic
+// =========================================
+document.addEventListener('DOMContentLoaded', () => {
+  const reachoutOverlay = document.getElementById('reachout-modal-overlay');
+  const reachoutModals = document.querySelectorAll('.reachout-modal');
+
+  window.closeReachoutModals = function() {
+    if (reachoutOverlay) reachoutOverlay.classList.remove('active');
+    reachoutModals.forEach(m => m.classList.remove('active'));
+  };
+
+  if (reachoutOverlay) {
+    // Open buttons
+    document.querySelectorAll('.reachout-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-modal');
+        const targetModal = document.getElementById(targetId);
+        if (targetModal) {
+          reachoutOverlay.classList.add('active');
+          targetModal.classList.add('active');
+        }
+      });
+    });
+
+    // Close buttons inside modals
+    document.querySelectorAll('.reachout-close-btn').forEach(btn => {
+      btn.addEventListener('click', closeReachoutModals);
+    });
+
+    // Close on overlay click
+    reachoutOverlay.addEventListener('click', closeReachoutModals);
   }
 });
