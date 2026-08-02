@@ -143,6 +143,32 @@ body.preloader-active {
   --mockup-height: 46.83%;
 }
 
+/* ====================================================================
+   LIGHT MODE — same brand palette, remapped for a light surface.
+   --accent/--on-accent/--brand-* stay identical across modes on purpose
+   (brand color shouldn't change with theme); only surfaces and text
+   invert. Toggled by theme.js via <html data-theme="light">; dark is
+   the default (no attribute) and what every fresh visit opens in.
+   ==================================================================== */
+:root[data-theme="light"] {
+  --bg-primary: var(--brand-cream);
+  --bg-primary-rgb: 248, 238, 223;
+  --bg-secondary: color-mix(in srgb, var(--brand-cream) 88%, var(--brand-tan));
+  --bg-card: color-mix(in srgb, var(--brand-cream) 60%, white);
+  --bg-card-hover: color-mix(in srgb, var(--brand-cream) 45%, white);
+  --accent-hover: color-mix(in srgb, var(--brand-maroon) 85%, black);
+  --text-primary: var(--brand-black);
+  --text-secondary: color-mix(in srgb, var(--brand-black) 58%, var(--brand-tan));
+  --text-muted: color-mix(in srgb, var(--brand-black) 35%, var(--brand-tan));
+  --border: color-mix(in srgb, var(--brand-cream) 85%, var(--brand-black));
+  --border-light: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-black));
+  --sale-red: #c62828;
+  --sale-red-rgb: 198, 40, 40;
+  --success: #4c7a32;
+  --success-rgb: 76, 122, 50;
+  --overlay: rgba(0, 0, 0, 0.5);
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
@@ -307,6 +333,20 @@ button {
   transform: scale(1.1);
 }
 
+/* Theme toggle — a .nav-action-btn with a sun/moon pair; CSS shows
+   whichever icon matches the *current* mode, JS just flips the attribute. */
+.theme-toggle-icon-light {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle-icon-dark {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle-icon-light {
+  display: inline-block;
+}
+
 .cart-count {
   position: absolute;
   top: 2px;
@@ -419,7 +459,7 @@ button {
   display: inline-block;
   background: rgba(var(--accent-rgb), 0.15);
   border: 1px solid rgba(var(--accent-rgb), 0.3);
-  color: var(--text-primary);
+  color: var(--brand-cream); /* sits on the hero photo's fixed dark scrim, not the page bg — stays light in both themes */
   padding: 6px 18px;
   border-radius: 50px;
   font-size: 0.75rem;
@@ -437,11 +477,12 @@ button {
   line-height: 1.1;
   margin-bottom: 16px;
   letter-spacing: -1px;
+  color: var(--brand-cream); /* hero photo's fixed dark scrim, not the page bg — stays light in both themes */
 }
 
 .hero-subtitle {
   font-size: clamp(1rem, 2vw, 1.25rem);
-  color: var(--text-secondary);
+  color: var(--brand-tan); /* same reasoning as .hero-title */
   margin-bottom: 32px;
   max-width: 550px;
   margin-left: auto;
@@ -491,7 +532,7 @@ button {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: var(--text-primary);
+  color: var(--brand-cream); /* hero photo's fixed dark scrim, not the page bg — stays light in both themes */
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(4px);
@@ -706,7 +747,7 @@ body.preloader-active .hero-counter {
   font-family: 'Outfit', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--brand-cream); /* hero photo's fixed dark scrim, not the page bg — stays light in both themes */
   background: rgba(255,255,255,0.05);
   padding: 7px 16px;
   border-radius: 50px;
@@ -965,7 +1006,7 @@ body.preloader-active .hero-counter {
 
 .category-card-overlay p {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--brand-tan); /* sits on a fixed dark gradient over the poster photo, not the page bg — stays light in both themes */
 }
 
 .category-card-overlay .cat-arrow {
@@ -1104,11 +1145,12 @@ body.preloader-active .hero-counter {
   font-weight: 800;
   margin-bottom: 16px;
   line-height: 1.2;
+  color: var(--brand-cream); /* sits on a fixed-dark photo (brightness(0.3)), not the page bg — stays light in both themes */
 }
 
 .cta-banner-content p {
   font-size: 1.05rem;
-  color: var(--text-secondary);
+  color: var(--brand-tan); /* same reasoning as h2 above */
   margin-bottom: 32px;
 }
 
@@ -1169,7 +1211,7 @@ body.preloader-active .hero-counter {
   justify-content: center;
   font-weight: 700;
   font-size: 0.85rem;
-  color: var(--bg-primary);
+  color: var(--brand-black); /* fixed gradient (accent→tan), so keep text dark in both themes */
   flex-shrink: 0;
 }
 
@@ -1565,7 +1607,7 @@ body.preloader-active .hero-counter {
 .cart-close-btn:hover {
   border-color: var(--sale-red);
   color: var(--sale-red);
-  background: rgba(229, 57, 53, 0.1);
+  background: rgba(var(--sale-red-rgb), 0.1);
 }
 
 .cart-drawer-body {
@@ -2669,7 +2711,9 @@ body.preloader-active .hero-counter {
   padding: 1.5rem 1rem;
   z-index: 2;
   text-align: center;
-  background: linear-gradient(to bottom, rgba(var(--bg-primary-rgb),0.92) 0%, rgba(var(--bg-primary-rgb),0) 100%);
+  /* Always a dark scrim for legibility over the poster photo underneath —
+     intentionally not theme-linked, unlike --bg-primary which flips in light mode. */
+  background: linear-gradient(to bottom, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0) 100%);
   height: 150px;
 }
 
@@ -2687,7 +2731,7 @@ body.preloader-active .hero-counter {
   font-weight: 800;
   margin: 0 0 10px 0;
   letter-spacing: -0.5px;
-  color: var(--text-primary);
+  color: var(--brand-cream); /* sits on a permanent dark scrim over a photo — stays light in both themes */
 }
 
 .custom-print-btn {
