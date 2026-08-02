@@ -67,7 +67,7 @@
       height: 28px;
       border-radius: 50%;
       background: var(--accent);
-      color: var(--bg-primary);
+      color: var(--on-accent);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -119,13 +119,13 @@
     .form-group select:focus,
     .form-group textarea:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.15);
+      box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
     }
 
     .form-group input.error,
     .form-group select.error {
       border-color: var(--sale-red);
-      box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.15);
+      box-shadow: 0 0 0 3px rgba(var(--sale-red-rgb), 0.15);
     }
 
     .form-group .error-msg {
@@ -176,7 +176,7 @@
 
     .payment-option.selected {
       border-color: var(--accent);
-      background: rgba(232, 197, 71, 0.05);
+      background: rgba(var(--accent-rgb), 0.05);
     }
 
     .payment-option input[type="radio"] {
@@ -297,7 +297,7 @@
       top: -6px;
       right: -6px;
       background: var(--accent);
-      color: var(--bg-primary);
+      color: var(--on-accent);
       font-size: 0.65rem;
       font-weight: 700;
       width: 20px;
@@ -371,7 +371,7 @@
 
     .price-row.savings {
       padding: 10px 14px;
-      background: rgba(0, 230, 118, 0.08);
+      background: rgba(var(--success-rgb), 0.12);
       border-radius: var(--radius-sm);
       margin-top: 10px;
       font-size: 0.82rem;
@@ -383,7 +383,7 @@
     .place-order-btn {
       width: 100%;
       background: var(--accent);
-      color: var(--bg-primary);
+      color: var(--on-accent);
       padding: 16px;
       border-radius: var(--radius-sm);
       font-size: 1rem;
@@ -401,7 +401,7 @@
     .place-order-btn:hover {
       background: var(--accent-hover);
       transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(232, 197, 71, 0.3);
+      box-shadow: 0 6px 24px rgba(var(--accent-rgb), 0.3);
     }
 
     .place-order-btn:disabled {
@@ -415,7 +415,7 @@
       width: 18px;
       height: 18px;
       border: 2px solid transparent;
-      border-top-color: var(--bg-primary);
+      border-top-color: var(--on-accent);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
       display: none;
@@ -873,7 +873,7 @@
                 contact: customerData.phone
               },
               theme: {
-                color: "#E8C547" // Accent color
+                color: "#E25822" // Accent color — keep in sync with --accent in styles.css
               }
             };
             

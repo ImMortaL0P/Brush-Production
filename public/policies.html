@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Policies — Brush</title>
+  <link rel="icon" href="assets/misc/Brush%20Text%20Arial.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles.css?v=10">
+  <style>
+    .policies-header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      padding: 100px 0 50px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .policies-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+    .policies-nav {
+      position: sticky;
+      top: 70px;
+      background: var(--bg-primary);
+      z-index: 100;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 15px 20px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .policies-nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.3s;
+    }
+    .policies-nav a:hover, .policies-nav a.active {
+      color: var(--accent);
+    }
+    .policies-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 50px 20px;
+    }
+    .policy-section {
+      margin-bottom: 60px;
+      scroll-margin-top: 140px;
+    }
+    .policy-section h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 10px;
+      display: inline-block;
+    }
+    .policy-section h3 {
+      font-size: 1.3rem;
+      margin: 20px 0 10px;
+    }
+    .policy-section p, .policy-section ul {
+      margin-bottom: 15px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+    .policy-section ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
+      <img src="assets/misc/Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 32px; width: auto;">
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html">Home</a>
+      <a href="all_products.html">All Products</a>
+      <a href="about_us.html">About</a>
+    </div>
+    <div class="nav-actions">
+      <a href="index.html#bestsellers" class="nav-action-btn">
+        <i class="fa-solid fa-shop"></i>
+      </a>
+    </div>
+  </nav>
+
+  <header class="policies-header">
+    <div class="container">
+      <h1>Our Policies</h1>
+      <p style="color: var(--text-secondary);">Everything you need to know about our services and guidelines.</p>
+    </div>
+  </header>
+
+  <div class="policies-nav">
+    <a href="#shipping-policy">Shipping</a>
+    <a href="#cancellation-returns">Cancellation & Returns</a>
+    <a href="#refund-policy">Refund</a>
+    <a href="#privacy-policy">Privacy</a>
+    <a href="#terms-of-service">Terms of Service</a>
+  </div>
+
+  <main class="policies-container">
+    <section id="shipping-policy" class="policy-section">
+      <h2>Shipping Policy</h2>
+      <p>This policy details our procedures regarding order processing, deliveries, and delays for all purchases made at Brush.</p>
+      
+      <h3>Shipping Locations</h3>
+      <p>We provide nationwide shipping across India. For international orders, please contact us directly, as shipping rates and timelines will vary. Customers are responsible for any applicable customs duties or international taxes.</p>
+      
+      <h3>Processing & Dispatch</h3>
+      <p>As Brush operates on a print-on-demand basis, all orders are custom printed, securely packed, and dispatched within 1 to 2 business days after order confirmation. During high-volume periods or sales, processing may take slightly longer.</p>
+      
+      <h3>Estimated Delivery Timelines</h3>
+      <ul>
+        <li><strong>Metros & Tier 1 Cities:</strong> 3 to 5 business days post-dispatch.</li>
+        <li><strong>Tier 2, Tier 3 & Remote Areas:</strong> 5 to 10 business days post-dispatch.</li>
+      </ul>
+      <p>Please note that these are estimates. We are not liable for delays caused by external factors such as courier network disruptions, weather conditions, or public holidays.</p>
+      
+      <h3>Tracking & Delays</h3>
+      <p>Once your order leaves our facility, you will receive tracking details via email or SMS. If you face significant delivery delays, our support team is happy to assist in coordinating with our courier partners.</p>
+      
+      <h3>Address Accuracy</h3>
+      <p>Customers must provide complete and accurate shipping details. Brush is not responsible for failed deliveries or losses due to incorrect addresses. If an order is returned to us for this reason, reshipping charges will apply.</p>
+      
+      <h3>Lost or Damaged Shipments</h3>
+      <p>If your package appears visibly damaged upon delivery, please <strong>refuse to accept it</strong> and contact us immediately. For internal damage, refer to our Refund Policy regarding the mandatory 48-hour unboxing video requirement.</p>
+    </section>
+
+    <section id="cancellation-returns" class="policy-section">
+      <h2>Cancellation & Returns</h2>
+      
+      <h3>Cancellation Policy</h3>
+      <p><strong>Custom & Personalised Orders:</strong> Orders featuring custom artwork, personalised prints, or split sets cannot be cancelled once placed. Production begins immediately upon confirmation to ensure fast delivery.</p>
+      <p><strong>Standard Orders:</strong> Cancellations for non-customised products are only permitted before the order has been dispatched. Once shipped, the order cannot be cancelled.</p>
+      <p>To request an eligible cancellation, please contact us immediately at support@brush.com with your order number.</p>
+      
+      <h3>Return Policy</h3>
+      <p>We do not accept standard returns. Replacements are only offered in cases where an incorrect or damaged product is delivered. We do not provide replacements for:</p>
+      <ul>
+        <li>Change of mind or accidental orders.</li>
+        <li>Incorrect size, quantity, or design selected by the customer.</li>
+        <li>Slight color variations between your screen and the final print.</li>
+        <li>Low-quality images uploaded by the customer for custom orders.</li>
+      </ul>
+    </section>
+
+    <section id="refund-policy" class="policy-section">
+      <h2>Refund Policy</h2>
+      <p>Refunds and replacements are strictly governed by the conditions below to ensure fairness and quality control.</p>
+      
+      <h3>Mandatory Unboxing Video</h3>
+      <p>To be eligible for a replacement or refund for a defective, damaged, or mismatched item, you must provide a <strong>clear, continuous unboxing video</strong>. The video must start before the sealed package is opened and clearly display the shipping label, the opening process, and the defect. This video must be emailed to support@brush.com within <strong>48 hours of delivery</strong>. Claims without a valid unboxing video will be rejected.</p>
+      
+      <h3>Resolution Process</h3>
+      <p>Once we verify your unboxing video, our primary resolution is to issue a <strong>replacement</strong>. Refunds are only processed if a replacement is impossible. Approved refunds will be credited back to your original payment method within 5 business days.</p>
+      
+      <h3>RTO (Return to Origin) & Failed Deliveries</h3>
+      <p>If an order is returned to us due to customer unavailability, refusal to accept, or an incorrect address, it is treated as an RTO. For prepaid standard orders, courier and handling fees will be deducted before any refund is issued. Custom orders are strictly non-refundable even in RTO scenarios. If you request reshipping of an RTO parcel, additional shipping charges must be paid upfront.</p>
+    </section>
+
+    <section id="privacy-policy" class="policy-section">
+      <h2>Privacy Policy</h2>
+      <p>Brush operates this platform to offer a curated shopping experience. This Privacy Policy outlines how your personal information is managed when you interact with our services.</p>
+      
+      <h3>Information Collection</h3>
+      <p>We collect personal information to provide and enhance our services. This includes contact details (name, address, email), payment information, account credentials, device identifiers, and interaction data. This data is collected directly from you during checkout or account creation, automatically via cookies, and through authorized service providers.</p>
+      
+      <h3>Usage of Your Data</h3>
+      <p>Your information is primarily used to fulfill orders, process payments, and communicate regarding your purchases. We may also use it for fraud prevention, targeted marketing (if opted in), and to tailor the website experience to your preferences.</p>
+      
+      <h3>Information Sharing</h3>
+      <p>Our store is hosted on Shopify, which securely processes your data to facilitate our services. We may share information with necessary third-party vendors (such as payment gateways and courier partners) to fulfill our contract with you. We do not sell your personal data to unauthorized third parties.</p>
+      
+      <h3>Your Privacy Rights</h3>
+      <p>Depending on your jurisdiction, you may have the right to request access to, correction of, or deletion of your personal data. You may also opt out of promotional communications at any time. To exercise these rights, please contact us.</p>
+    </section>
+
+    <section id="terms-of-service" class="policy-section">
+      <h2>Terms of Service</h2>
+      <p>By browsing our site or making a purchase, you agree to be bound by the following Terms and Conditions. These terms apply to all users of the site.</p>
+      
+      <h3>General Conditions</h3>
+      <p>You must be at least the age of majority in your region to use our services. We reserve the right to refuse service to anyone for any reason. You agree not to reproduce, duplicate, or exploit any portion of the service without our express written permission.</p>
+      
+      <h3>Information Accuracy & Modifications</h3>
+      <p>While we strive for accuracy, we do not warrant that product descriptions, colors, or prices are completely error-free. Prices and product availability are subject to change without notice. We reserve the right to discontinue products or modify the service at any time.</p>
+      
+      <h3>User Conduct & Submissions</h3>
+      <p>Any comments, feedback, or ideas you submit to us may be used by Brush without restriction. You are prohibited from using the site for unlawful purposes, violating intellectual property rights, transmitting malicious code, or harassing others. Violations will result in immediate termination of access.</p>
+      
+      <h3>Limitation of Liability</h3>
+      <p>Our service is provided on an "as is" and "as available" basis. Brush, its directors, and affiliates shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the service or products procured through it. These terms are governed by the laws of India.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer" style="padding: 2rem 0; text-align: center; border-top: 1px solid var(--border-color);">
+    <div class="container">
+      <p>© 2024 Brush. All rights reserved.</p>
+      <div style="margin-top: 10px; display: flex; justify-content: center; gap: 15px;">
+        <a href="index.html" style="color: var(--text-secondary); text-decoration: none;">Home</a>
+        <a href="mailto:admin@brush.ind.in" style="color: var(--text-secondary); text-decoration: none;">Contact Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.policies-nav a').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        document.querySelector(targetId).scrollIntoView({
+          behavior: 'smooth'
+        });
+        
+        document.querySelectorAll('.policies-nav a').forEach(a => a.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+    
+    window.addEventListener('scroll', () => {
+      let current = '';
+      document.querySelectorAll('.policy-section').forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (pageYOffset >= sectionTop - 150) {
+          current = section.getAttribute('id');
+        }
+      });
+      document.querySelectorAll('.policies-nav a').forEach(a => {
+        a.classList.remove('active');
+        if (a.getAttribute('href') === `#${current}`) {
+          a.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

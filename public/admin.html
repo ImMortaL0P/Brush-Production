@@ -12,16 +12,19 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <style>
     :root {
-      --bg-primary: #0a0a0a;
-      --bg-secondary: #121212;
-      --bg-card: #1a1a1a;
-      --accent: #dcff80;
-      --accent-hover: #bce650;
-      --text-primary: #ffffff;
-      --text-secondary: #a1a1aa;
-      --border-color: #27272a;
-      --success: #4ade80;
-      --sale-red: #ff4d4d;
+      /* Mirrors the brand palette in styles.css — keep these two files in sync. */
+      --bg-primary: #000000;
+      --bg-secondary: #0b0202;
+      --bg-card: #140303;
+      --accent: #e25822;
+      --accent-hover: #e7764a;
+      --accent-rgb: 226, 88, 34;
+      --on-accent: #f8eedf;
+      --text-primary: #f8eedf;
+      --text-secondary: #e8c999;
+      --border-color: #390909;
+      --success: #7a9d54;
+      --sale-red: #e5484d;
     }
     body {
       margin: 0;
@@ -100,7 +103,7 @@
       gap: 10px;
     }
     .nav-item:hover, .nav-item.active {
-      background: rgba(220, 255, 128, 0.1);
+      background: rgba(var(--accent-rgb), 0.15);
       color: var(--accent);
     }
     
@@ -167,7 +170,7 @@
       font-weight: 600;
       text-transform: capitalize;
     }
-    .status-confirmed { background: rgba(220, 255, 128, 0.1); color: var(--accent); }
+    .status-confirmed { background: rgba(var(--accent-rgb), 0.15); color: var(--accent); }
     .status-packed { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
     .status-shipped { background: rgba(168, 85, 247, 0.1); color: #c084fc; }
     .status-delivered { background: rgba(74, 222, 128, 0.1); color: var(--success); }
@@ -197,7 +200,7 @@
     }
     .action-btn:hover {
       background: var(--accent);
-      color: var(--bg-primary);
+      color: var(--on-accent);
     }
     
     .prod-thumb {
@@ -236,7 +239,7 @@
     
     .refresh-btn {
       background: var(--accent);
-      color: var(--bg-primary);
+      color: var(--on-accent);
       border: none;
       padding: 10px 20px;
       border-radius: 8px;
@@ -290,7 +293,7 @@
       width: 100%;
       padding: 12px;
       background: var(--accent);
-      color: var(--bg-primary);
+      color: var(--on-accent);
       border: none;
       border-radius: 8px;
       font-weight: 600;
@@ -462,7 +465,7 @@
             <option value="Pop Culture">Pop Culture</option>
             <option value="General">General / Other</option>
           </select>
-          <button class="refresh-btn" onclick="saveAllProducts()" style="background: var(--success); color: var(--bg-primary);"><i class="fa-solid fa-save"></i> Save All</button>
+          <button class="refresh-btn" onclick="saveAllProducts()" style="background: var(--success); color: var(--on-accent);"><i class="fa-solid fa-save"></i> Save All</button>
           <button class="refresh-btn" onclick="loadInventory()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
         </div>
       </div>
