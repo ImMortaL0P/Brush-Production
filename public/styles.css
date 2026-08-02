@@ -85,16 +85,22 @@ body.preloader-active {
      background, border, and text token below derives from them.
      ==================================================================== */
   --brand-black: #000000;
-  --brand-maroon: #e25822;
-  --brand-tan: #e8c999;
-  --brand-cream: #f8eedf;
+  --brand-maroon: #ff9f29; /* "maroon" is just this slot's historical name — holds whatever the accent color is */
+  --brand-tan: #1a4d2e; /* likewise: holds whatever the secondary/depth color is, currently a dark green */
+  --brand-cream: #faf3e3;
 
   /* RGB triplets kept in sync with the hex values above — required
      wherever a color needs alpha transparency, e.g. rgba(var(--accent-rgb), .2) */
-  --accent-rgb: 226, 88, 34;
+  --accent-rgb: 255, 159, 41;
   --bg-primary-rgb: 0, 0, 0;
   --sale-red-rgb: 229, 72, 77;
-  --success-rgb: 122, 157, 84;
+  --success-rgb: 104, 135, 109;
+
+  /* A light, theme-INVARIANT blend of cream+tan for text that sits on a
+     fixed dark photo scrim (hero, category cards, CTA banner) — those
+     never follow the page theme, so they can't use --text-secondary,
+     which flips per theme. See the elements using it below. */
+  --on-photo-secondary: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-tan) 30%);
 
   /* ===== Semantic tokens — components reference these, never the raw
      palette above, so a re-theme never touches component CSS. ===== */
@@ -103,17 +109,17 @@ body.preloader-active {
   --bg-card: color-mix(in srgb, var(--brand-black) 86%, var(--brand-maroon));
   --bg-card-hover: color-mix(in srgb, var(--brand-black) 78%, var(--brand-maroon));
   --accent: var(--brand-maroon);
-  --accent-hover: color-mix(in srgb, var(--brand-maroon) 82%, white);
-  --on-accent: var(--brand-cream); /* text/icon color placed on top of --accent */
+  --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
+  --on-accent: var(--brand-black); /* text/icon color placed on top of --accent — this accent is bright, so dark text reads best */
   --text-primary: var(--brand-cream);
-  --text-secondary: var(--brand-tan);
-  --text-muted: color-mix(in srgb, var(--brand-tan) 55%, var(--brand-black));
+  --text-secondary: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-tan) 30%);
+  --text-muted: color-mix(in srgb, var(--brand-cream) 40%, var(--brand-tan) 60%);
   --border: color-mix(in srgb, var(--brand-black) 75%, var(--brand-maroon));
   --border-light: color-mix(in srgb, var(--brand-black) 60%, var(--brand-maroon));
   --border-color: var(--border-light); /* alias — modal/form markup references this name */
   --sale-red: #e5484d;
   --sale-bg: #d6303a;
-  --success: #7a9d54;
+  --success: color-mix(in srgb, var(--brand-tan) 65%, var(--brand-cream) 35%); /* brand-tan is a usable green now, so success reuses it directly */
   --overlay: rgba(0, 0, 0, 0.6);
 
   /* Typography */
@@ -145,10 +151,13 @@ body.preloader-active {
 
 /* ====================================================================
    LIGHT MODE — same brand palette, remapped for a light surface.
-   --accent/--on-accent/--brand-* stay identical across modes on purpose
-   (brand color shouldn't change with theme); only surfaces and text
-   invert. Toggled by theme.js via <html data-theme="light">; dark is
-   the default (no attribute) and what every fresh visit opens in.
+   --on-accent/--brand-* stay identical across modes on purpose (brand
+   color shouldn't change with theme); --accent is the one exception —
+   this particular accent is bright enough that it fails text-contrast
+   on a light background, so light mode darkens it (buttons keep using
+   --on-accent for contrast and are unaffected either way). Toggled by
+   theme.js via <html data-theme="light">; dark is the default (no
+   attribute) and what every fresh visit opens in.
    ==================================================================== */
 :root[data-theme="light"] {
   --bg-primary: var(--brand-cream);
@@ -156,21 +165,26 @@ body.preloader-active {
   --bg-secondary: color-mix(in srgb, var(--brand-cream) 88%, var(--brand-tan));
   --bg-card: color-mix(in srgb, var(--brand-cream) 60%, white);
   --bg-card-hover: color-mix(in srgb, var(--brand-cream) 45%, white);
-  --accent-hover: color-mix(in srgb, var(--brand-maroon) 85%, black);
+  --accent: color-mix(in srgb, var(--brand-maroon) 60%, black); /* darkened so accent-as-text (tags, labels, icons) stays AA-legible on the light bg */
+  --accent-rgb: 153, 95, 25;
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
   --text-primary: var(--brand-black);
-  --text-secondary: color-mix(in srgb, var(--brand-black) 58%, var(--brand-tan));
-  --text-muted: color-mix(in srgb, var(--brand-black) 35%, var(--brand-tan));
+  --text-secondary: color-mix(in srgb, var(--brand-tan) 75%, var(--brand-black) 25%);
+  --text-muted: color-mix(in srgb, var(--brand-tan) 70%, var(--brand-cream) 30%);
   --border: color-mix(in srgb, var(--brand-cream) 85%, var(--brand-black));
   --border-light: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-black));
   --sale-red: #c62828;
   --sale-red-rgb: 198, 40, 40;
-  --success: #4c7a32;
-  --success-rgb: 76, 122, 50;
+  --success: var(--brand-tan); /* dark green reads fine directly against a light bg, no lightening needed */
+  --success-rgb: 26, 77, 46;
   --overlay: rgba(0, 0, 0, 0.5);
 }
 
 html {
-  scroll-behavior: smooth;
+  /* No CSS scroll-behavior: smooth here on purpose — Lenis (scroll.js) owns
+     smooth scrolling when motion is allowed; when prefers-reduced-motion is
+     set, Lenis doesn't init at all and this should fall back to instant
+     native scroll rather than fight Lenis for control. */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -181,6 +195,23 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
+}
+
+/* Grain texture — fixed, non-interactive, sits above everything (including
+   modals) since at this opacity it reads as film grain, not a visible layer.
+   A static SVG turbulence tile blended with mix-blend-mode, so it's a single
+   cheap composited layer rather than anything that repaints per frame. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 120px 120px;
 }
 
 a {
@@ -482,7 +513,7 @@ button {
 
 .hero-subtitle {
   font-size: clamp(1rem, 2vw, 1.25rem);
-  color: var(--brand-tan); /* same reasoning as .hero-title */
+  color: var(--on-photo-secondary); /* same reasoning as .hero-title */
   margin-bottom: 32px;
   max-width: 550px;
   margin-left: auto;
@@ -564,6 +595,60 @@ button {
 .hero-dot.active {
   background: var(--accent);
   transform: scale(1.3);
+}
+
+/* Staggered on-load entrance — above the fold, so this plays automatically
+   on load rather than waiting for the .fade-in scroll-observer. Scoped to
+   .hero-content specifically because .hero-cta is reused by non-hero
+   buttons elsewhere on the page that must NOT replay this entrance. */
+.hero-content .hero-tag { animation: fadeInUp 0.7s ease both; animation-delay: 0.1s; }
+.hero-content .hero-title { animation: fadeInUp 0.7s ease both; animation-delay: 0.3s; }
+.hero-content .hero-cta { animation: fadeInUp 0.7s ease both; animation-delay: 0.5s; }
+.hero-content .hero-trust-badges { animation: fadeInUp 0.7s ease both; animation-delay: 0.7s; }
+
+/* Scroll cue — bounces to hint "more below", fades out via JS once the
+   visitor actually scrolls (see script.js's hero parallax block). */
+.scroll-cue {
+  position: absolute;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  opacity: 0.85;
+  transition: opacity 0.4s ease;
+}
+
+.scroll-cue.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scroll-cue-mouse {
+  display: block;
+  width: 24px;
+  height: 38px;
+  border: 2px solid color-mix(in srgb, var(--brand-cream) 65%, transparent);
+  border-radius: 14px;
+  position: relative;
+}
+
+.scroll-cue-wheel {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  background: var(--brand-cream);
+  border-radius: 50%;
+  animation: scrollCueBounce 1.6s ease-in-out infinite;
+}
+
+@keyframes scrollCueBounce {
+  0% { transform: translateY(0); opacity: 1; }
+  60% { transform: translateY(14px); opacity: 0; }
+  61% { transform: translateY(0); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 
@@ -707,10 +792,36 @@ button {
   margin: 0 0 1.1rem 0;
   display: block;
   line-height: 0;
+  position: relative;
+}
+
+/* Soft animated glow behind the wordmark — a local z-index of 0 vs. the
+   logo's 1 keeps this confined to the container's own stacking, so it can
+   never leak behind .hero-overlay (no negative z-index needed). */
+.hero-logo-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 280px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.55) 0%, rgba(var(--accent-rgb), 0) 70%);
+  filter: blur(30px);
+  z-index: 0;
+  animation: logoGlowPulse 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes logoGlowPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
 }
 
 .hero-animated-logo {
   display: inline-block;
+  position: relative;
+  z-index: 1;
   height: clamp(56px, 8vw, 92px);
   width: auto;
   animation: logoBlurPulse 3.6s ease-in-out infinite;
@@ -734,9 +845,15 @@ button {
 /* The preloader can take anywhere from ~200ms to a few seconds depending on
    image/font load time. Keep these paused while it's on screen so the
    counter's entrance always plays where the user can see it, and the logo's
-   loop always starts fresh from a clean frame instead of mid-cycle. */
+   loop always starts fresh from a clean frame instead of mid-cycle. Same
+   reasoning extends to every other hero entrance animation added since. */
 body.preloader-active .hero-animated-logo,
-body.preloader-active .hero-counter {
+body.preloader-active .hero-logo-container::before,
+body.preloader-active .hero-counter,
+body.preloader-active .hero-content .hero-tag,
+body.preloader-active .hero-content .hero-title,
+body.preloader-active .hero-content .hero-cta,
+body.preloader-active .hero-content .hero-trust-badges {
   animation-play-state: paused;
 }
 
@@ -802,7 +919,7 @@ body.preloader-active .hero-counter {
 .product-card:hover {
   transform: translateY(-6px);
   border-color: var(--border-light);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 40px rgba(var(--accent-rgb), 0.15);
 }
 
 .product-card-image {
@@ -818,6 +935,13 @@ body.preloader-active .hero-counter {
   width: 100%;
   aspect-ratio: 2193 / 3348; /* matches assets/mockup_2.jpg exactly so the frame is never cropped/zoomed */
   overflow: hidden;
+  transition: transform var(--transition-slow);
+}
+
+/* Scoped to .product-card specifically — .mockup-wrapper is shared markup
+   with .category-card, which has its own (unrelated) cursor-tilt hover. */
+.product-card:hover .mockup-wrapper {
+  transform: scale(1.05);
 }
 
 .mockup-frame {
@@ -1006,7 +1130,7 @@ body.preloader-active .hero-counter {
 
 .category-card-overlay p {
   font-size: 0.8rem;
-  color: var(--brand-tan); /* sits on a fixed dark gradient over the poster photo, not the page bg — stays light in both themes */
+  color: var(--on-photo-secondary); /* sits on a fixed dark gradient over the poster photo, not the page bg — stays light in both themes */
 }
 
 .category-card-overlay .cat-arrow {
@@ -1131,9 +1255,36 @@ body.preloader-active .hero-counter {
   filter: brightness(0.3);
 }
 
+/* Animated gradient "mood" wash — built entirely from the same palette
+   tokens as everything else, so it re-themes automatically with a light/dark
+   toggle or a palette swap. mix-blend-mode: screen (not overlay) is
+   deliberate: over a photo this dark, overlay would mostly darken further,
+   while screen always adds light/color regardless of how dark the base is —
+   what makes these blobs actually glow instead of just muddying the photo. */
+.cta-banner::after {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 25% 30%, rgba(var(--accent-rgb), 0.6) 0%, transparent 55%),
+    radial-gradient(circle at 75% 70%, color-mix(in srgb, var(--brand-tan) 65%, transparent) 0%, transparent 55%),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--brand-cream) 40%, transparent) 0%, transparent 60%);
+  mix-blend-mode: screen;
+  filter: blur(50px);
+  animation: ctaGradientDrift 18s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes ctaGradientDrift {
+  0% { transform: translate(0%, 0%) scale(1); }
+  50% { transform: translate(-5%, 4%) scale(1.1); }
+  100% { transform: translate(4%, -4%) scale(1.02); }
+}
+
 .cta-banner-content {
   position: relative;
-  z-index: 1;
+  z-index: 2; /* above .cta-banner::after (z-index 1) so the gradient wash never dims the text */
   max-width: 700px;
   margin: 0 auto;
   padding: 0 24px;
@@ -1150,7 +1301,7 @@ body.preloader-active .hero-counter {
 
 .cta-banner-content p {
   font-size: 1.05rem;
-  color: var(--brand-tan); /* same reasoning as h2 above */
+  color: var(--on-photo-secondary); /* same reasoning as h2 above */
   margin-bottom: 32px;
 }
 
@@ -1165,6 +1316,10 @@ body.preloader-active .hero-counter {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
+  /* Needed for the bento offset below to actually show — grid items
+     stretch to fill the row height by default, which would hide any
+     margin-top difference between cards. */
+  align-items: start;
 }
 
 .testimonial-card {
@@ -1172,12 +1327,32 @@ body.preloader-active .hero-counter {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 32px;
+  position: relative;
+  overflow: hidden; /* clips the oversized decorative quote mark below to the card's rounded corners */
   transition: border-color var(--transition-med), transform var(--transition-med);
+}
+
+/* Bento wave — desktop-only (reset at both breakpoints below, where the
+   grid drops to 2 then 1 column and a mid-row offset stops making sense). */
+.testimonial-card:nth-child(2) {
+  margin-top: 36px;
 }
 
 .testimonial-card:hover {
   border-color: var(--accent);
   transform: translateY(-4px);
+}
+
+.testimonial-card::before {
+  content: '\201C';
+  position: absolute;
+  top: -0.35em;
+  right: 0.15em;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 7rem;
+  line-height: 1;
+  color: rgba(var(--accent-rgb), 0.12);
+  pointer-events: none;
 }
 
 .testimonial-stars {
@@ -1193,6 +1368,7 @@ body.preloader-active .hero-counter {
   line-height: 1.7;
   margin-bottom: 20px;
   font-style: italic;
+  position: relative; /* sits above ::before's decorative quote mark */
 }
 
 .testimonial-author {
@@ -1205,7 +1381,7 @@ body.preloader-active .hero-counter {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--brand-tan));
+  background: linear-gradient(135deg, var(--accent), var(--on-photo-secondary)); /* brand-tan alone is too dark now — no single fixed text color would read on both gradient ends */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1449,6 +1625,43 @@ body.preloader-active .hero-counter {
   color: var(--accent);
 }
 
+/* Full-bleed poster strip along the footer's bottom edge — same
+   duplicate-the-track-and-translate-50% technique as .marquee-track up top. */
+.footer-marquee {
+  overflow: hidden;
+  margin-top: 40px;
+  border-top: 1px solid var(--border);
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+
+.footer-marquee-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  animation: footerMarquee 40s linear infinite;
+}
+
+.footer-marquee-track img {
+  width: 130px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.footer-marquee-track img:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+@keyframes footerMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 
 /* ===== VIEW ALL BUTTON ===== */
 .view-all-wrap {
@@ -1527,6 +1740,89 @@ body.preloader-active .hero-counter {
 .fade-in-delay-2 { transition-delay: 0.2s; }
 .fade-in-delay-3 { transition-delay: 0.3s; }
 .fade-in-delay-4 { transition-delay: 0.4s; }
+
+/* Two more reveal variants, same .visible-toggle contract as .fade-in above
+   (observed/added by the same IntersectionObserver in script.js) — pick
+   whichever suits the element instead of defaulting to fade-in everywhere. */
+.scale-in {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scale-in.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.clip-reveal {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clip-reveal.visible {
+  clip-path: inset(0 0 0% 0);
+}
+
+/* Anyone who's asked their OS for reduced motion gets content in its final
+   state immediately — no fade/scale/clip, no transition. Applies regardless
+   of whether .visible has been toggled yet, so there's no dependency on the
+   IntersectionObserver having fired first. */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .scale-in,
+  .clip-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    transition: none !important;
+  }
+
+  /* Hero: kill the infinite logo pulse/glow (which would otherwise loop
+     forever — including whatever mid-cycle opacity it happened to be at,
+     since browsers don't auto-pause author animations for reduced motion)
+     and the one-shot entrance animations. No need to touch .hero-content's
+     own transform (used for centering, not motion) — the JS parallax that
+     would otherwise override it never runs here, since scroll.js refuses
+     to init Lenis under reduced motion and script.js's parallax is gated
+     on window.lenis. */
+  .hero-animated-logo,
+  .hero-logo-container::before,
+  .hero-counter,
+  .hero-content .hero-tag,
+  .hero-content .hero-title,
+  .hero-content .hero-cta,
+  .hero-content .hero-trust-badges,
+  .scroll-cue-wheel {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .scroll-cue {
+    display: none;
+  }
+
+  /* Freeze the CTA banner's gradient drift at its resting position — but
+     NOT via the shared rule above, which forces filter:none. That would
+     strip this element's blur(50px), which softens the gradient blobs and
+     has nothing to do with motion; killing it would leave hard-edged circles. */
+  .cta-banner::after {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* Both marquees are infinite auto-scrolling loops with no user control to
+     stop them — exactly the kind of motion reduced-motion exists to opt out
+     of. .marquee-track predates this build and never had this handled;
+     fixing it alongside the new .footer-marquee-track rather than leaving
+     an old, worse version of the same gap sitting right next to the fix. */
+  .marquee-track,
+  .footer-marquee-track {
+    animation: none !important;
+  }
+}
 
 
 /* ===== CART DRAWER ===== */
@@ -2180,6 +2476,10 @@ body.preloader-active .hero-counter {
 
   .testimonials-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .testimonial-card:nth-child(2) {
+    margin-top: 0; /* the desktop bento offset assumes a single row of 3 — doesn't apply once it wraps to 2 columns */
   }
 
   .footer-grid {

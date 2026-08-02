@@ -5,6 +5,11 @@
 document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
 
+  // Shared across every decorative-motion feature below (hero parallax already
+  // gates itself via window.lenis; category tilt and the carousel's internal
+  // parallax gate directly on this).
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // ---- Preloader ----
   const preloader = document.getElementById('preloader');
   if (preloader) {
@@ -241,6 +246,83 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  // ---- Hero Parallax + Scroll Cue ----
+  // Gated entirely on window.lenis existing, which is itself already the
+  // single source of truth for "decorative scroll motion is appropriate
+  // right now" — scroll.js refuses to create it under prefers-reduced-motion
+  // or if the Lenis CDN script failed to load, so this block simply never
+  // runs in either case rather than needing its own reduced-motion check.
+  const heroEl = document.getElementById('hero');
+  const heroSliderEl = document.getElementById('hero-slider');
+  const heroContentEl = heroEl ? heroEl.querySelector('.hero-content') : null;
+  const scrollCueEl = document.getElementById('scroll-cue');
+
+  if (heroEl && window.lenis) {
+    const updateHeroParallax = (scrollY) => {
+      const heroHeight = heroEl.offsetHeight;
+      if (scrollY > heroHeight) return; // nothing left to update once the hero is fully scrolled past
+
+      const progress = Math.min(1, scrollY / heroHeight);
+
+      if (heroSliderEl) {
+        // Background lags behind the page scroll (classic parallax depth cue).
+        // Safe from gaps: overflow:hidden on .hero clips both the shifted-away
+        // top edge (always in the already-scrolled-past region, since this
+        // multiplier keeps the shift smaller than scrollY itself) and the
+        // shifted-in excess at the bottom.
+        heroSliderEl.style.transform = `translateY(${scrollY * 0.3}px)`;
+      }
+
+      if (heroContentEl) {
+        // Foreground content rises and fades faster than the scroll itself,
+        // separating it visually from the (slower) background layer.
+        heroContentEl.style.transform = `translateX(-50%) translateY(${scrollY * -0.18}px)`;
+        heroContentEl.style.opacity = String(Math.max(0, 1 - progress * 1.3));
+      }
+
+      if (scrollCueEl) {
+        scrollCueEl.classList.toggle('is-hidden', scrollY > 40);
+      }
+    };
+
+    updateHeroParallax(window.lenis.scroll || 0);
+    window.lenis.on('scroll', (e) => updateHeroParallax(e.scroll));
+  }
+
+
+  // ---- Category Card Cursor Tilt ----
+  // Gated on real hover + a precise pointer (mouse/trackpad) so touch
+  // devices — where "hover" fires on tap and has no continuous mousemove —
+  // never get a half-working version of this, and on reduced-motion,
+  // where a cursor-chased 3D tilt is exactly the kind of motion that
+  // preference exists to opt out of.
+  const canTilt = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    && !prefersReducedMotion;
+
+  if (canTilt) {
+    const maxTilt = 8; // degrees, at the card's edge
+
+    document.querySelectorAll('.category-card').forEach((card) => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
+        const rotateY = (px - 0.5) * maxTilt * 2;
+        const rotateX = (0.5 - py) * maxTilt * 2;
+        // No transition while tracking — any easing here would make the
+        // tilt visibly lag behind the cursor instead of following it.
+        card.style.transition = 'transform 0.1s ease-out';
+        card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+        card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+      });
+    });
+  }
+
+
   // ---- Hero Poster Counter ----
   // Counts up to the live product total, but never sits frozen at 0 —
   // if the backend (Render free tier) is cold-starting or unreachable,
@@ -288,6 +370,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // ---- Product carousels (Bestsellers & New Arrivals) ----
+  // Poster images drift a few px within their frame as the track scrolls —
+  // cards near the track's center stay put, cards toward the edges shift
+  // slightly, giving each card a small internal parallax as it slides past.
+  // Skipped under reduced motion, same as every other scroll-tied effect.
+  function updateCardParallax(track) {
+    if (prefersReducedMotion) return;
+
+    const trackRect = track.getBoundingClientRect();
+    const trackCenterX = trackRect.left + trackRect.width / 2;
+
+    // Read every card's position first, then write transforms in a second
+    // pass — interleaving getBoundingClientRect() with style writes forces
+    // a layout recalculation on every iteration instead of once.
+    const updates = [];
+    track.querySelectorAll('.mockup-poster').forEach((poster) => {
+      const card = poster.closest('.product-card');
+      if (!card) return;
+      const cardRect = card.getBoundingClientRect();
+      const cardCenterX = cardRect.left + cardRect.width / 2;
+      const offset = Math.max(-6, Math.min(6, (cardCenterX - trackCenterX) * 0.015));
+      updates.push([poster, offset]);
+    });
+    updates.forEach(([poster, offset]) => {
+      poster.style.transform = `translateX(${offset}px)`;
+    });
+  }
+
   function setupCarousel(trackId, prevId, nextId, counterId) {
     const track = document.getElementById(trackId);
     const prevBtn = document.getElementById(prevId);
@@ -310,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       prevBtn.disabled = track.scrollLeft <= 4;
       nextBtn.disabled = track.scrollLeft >= maxScroll - 4;
+      updateCardParallax(track);
     }
 
     nextBtn.addEventListener('click', () => {
@@ -350,25 +460,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // ---- Intersection Observer for fade-in animations ----
-  const fadeElements = document.querySelectorAll('.fade-in');
+  // Hoisted (not block-scoped to the `if` below) and wrapped in a helper so
+  // content injected later — the product carousels below fetch from the API
+  // asynchronously, well after this initial pass — can opt into the same
+  // real scroll-reveal instead of the old workaround of shipping it
+  // pre-marked .visible (which skipped the animation entirely, and for the
+  // same reason a .fade-in element hidden at observe-time never fires: see
+  // the near-identical bug fixed in the category "View More" toggle).
+  let revealObserver = null;
+
+  function observeRevealElements(root = document) {
+    const elements = root.querySelectorAll('.fade-in, .scale-in, .clip-reveal');
+    if (revealObserver) {
+      elements.forEach(el => revealObserver.observe(el));
+    } else {
+      elements.forEach(el => el.classList.add('visible'));
+    }
+  }
 
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
+    revealObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
+          revealObserver.unobserve(entry.target);
         }
       });
     }, {
       threshold: 0.1,
       rootMargin: '0px 0px -40px 0px'
     });
-
-    fadeElements.forEach(el => observer.observe(el));
-  } else {
-    fadeElements.forEach(el => el.classList.add('visible'));
   }
+
+  observeRevealElements();
 
 
   // ---- Smooth scroll for anchor links ----
@@ -381,7 +505,13 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const navHeight = navbar ? navbar.offsetHeight : 0;
         const targetPos = target.getBoundingClientRect().top + window.scrollY - navHeight - 10;
-        window.scrollTo({ top: targetPos, behavior: 'smooth' });
+        // Route through Lenis when it's running — native scrollTo fights
+        // Lenis's own rAF-driven position updates and produces a jitter.
+        if (window.lenis) {
+          window.lenis.scrollTo(targetPos);
+        } else {
+          window.scrollTo({ top: targetPos, behavior: 'smooth' });
+        }
       }
     });
   });
@@ -424,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isOut = stockQty <= 0;
         
         return `
-          <div class="product-card fade-in ${delayClass} visible" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
+          <div class="product-card scale-in ${delayClass}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
             <div class="product-card-image">
               <div class="mockup-wrapper">
                 <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame" loading="lazy">
@@ -453,16 +583,19 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleSection('bestsellers', bestSellers.length > 0);
       if (productList) {
         productList.innerHTML = bestSellers.map((p, i) => createProductCard(p, i % 4, 'Trending')).join('');
+        observeRevealElements(productList);
       }
 
       toggleSection('newarrival', newArrivals.length > 0);
       if (scrollTrack) {
         scrollTrack.innerHTML = newArrivals.map(p => createProductCard(p, 0, 'New', 'var(--accent)')).join('');
+        observeRevealElements(scrollTrack);
       }
 
       toggleSection('grossing-picks', grossingPicks.length > 0);
       if (grossingTrack) {
         grossingTrack.innerHTML = grossingPicks.map((p, i) => createProductCard(p, i % 4, 'Trending')).join('');
+        observeRevealElements(grossingTrack);
       }
 
       updateBestsellersCarousel();
