@@ -23,6 +23,8 @@
 
 <body class="preloader-active">
 
+  <div class="scroll-progress" id="scroll-progress"></div>
+
   <!-- Preloader -->
   <div class="preloader" id="preloader">
     <img src="assets/misc/Brush%20Text%20Arial.png" alt="Brush" class="preloader-logo">
@@ -99,10 +101,12 @@
 
       <h1 class="hero-title">Transform your walls into Art</h1>
 
-      <a href="#bestsellers" class="hero-cta">
-        Shop Now
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </a>
+      <span class="hero-cta-reveal">
+        <a href="#bestsellers" class="hero-cta">
+          Shop Now
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      </span>
       
       <!-- Dynamic Counter (Will be updated via JS or CSS animation) -->
       <div class="hero-counter">
@@ -732,7 +736,9 @@
               <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Yes! We cater to bulk orders, especially for businesses. Simply drop us a message on WhatsApp for special rates and assistance.</p>
+              <div class="faq-answer-inner">
+                <p>Yes! We cater to bulk orders, especially for businesses. Simply drop us a message on WhatsApp for special rates and assistance.</p>
+              </div>
             </div>
           </div>
 
@@ -742,7 +748,9 @@
               <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Absolutely! We offer a custom print option, conveniently located in the menu tab. Simply upload your artwork for a poster and leave the rest to us. We'll ensure your design is beautifully printed and delivered to your doorstep.</p>
+              <div class="faq-answer-inner">
+                <p>Absolutely! We offer a custom print option, conveniently located in the menu tab. Simply upload your artwork for a poster and leave the rest to us. We'll ensure your design is beautifully printed and delivered to your doorstep.</p>
+              </div>
             </div>
           </div>
 
@@ -752,7 +760,9 @@
               <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Delivery typically takes 5-7 days, depending on your location.</p>
+              <div class="faq-answer-inner">
+                <p>Delivery typically takes 5-7 days, depending on your location.</p>
+              </div>
             </div>
           </div>
 
@@ -762,13 +772,15 @@
               <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Tracking your order is easy! Once your order is placed, you'll receive both a WhatsApp notification and an email confirming your purchase, complete with a tracking ID. Additionally, you'll get another WhatsApp message when your order is picked up by our courier partner. Keep an eye on your WhatsApp and email for regular updates on your order's progress!</p>
+              <div class="faq-answer-inner">
+                <p>Tracking your order is easy! Once your order is placed, you'll receive both a WhatsApp notification and an email confirming your purchase, complete with a tracking ID. Additionally, you'll get another WhatsApp message when your order is picked up by our courier partner. Keep an eye on your WhatsApp and email for regular updates on your order's progress!</p>
+              </div>
             </div>
           </div>
 
         </div>
-        <div class="faq-image-col fade-in fade-in-delay-2">
-          <img src="assets/misc/faq-illustration.jpg" alt="FAQ Illustration" loading="lazy">
+        <div class="faq-image-col clip-reveal fade-in-delay-2">
+          <img src="assets/misc/faq-illustration.jpg" alt="FAQ Illustration">
         </div>
       </div>
     </div>
@@ -986,7 +998,7 @@
         <input type="text" id="global-search-input" placeholder="Search posters, categories, themes..." autocomplete="off">
         <button type="submit" aria-label="Submit search"><i class="fa-solid fa-magnifying-glass"></i></button>
       </form>
-      <div class="search-suggestions" id="search-suggestions"></div>
+      <div class="search-suggestions" id="search-suggestions" data-lenis-prevent></div>
     </div>
   </div>
 
@@ -1065,7 +1077,7 @@
 
   <!-- Profile Modal -->
   <div class="profile-modal-overlay" id="profile-modal-overlay"></div>
-  <div class="profile-modal" id="profile-modal">
+  <div class="profile-modal" id="profile-modal" data-lenis-prevent>
     <button class="profile-close-btn" id="profile-close-btn" aria-label="Close profile"><i class="fa-solid fa-xmark"></i></button>
     <h2>My Account</h2>
     <div class="profile-content">
@@ -1107,7 +1119,7 @@
 
   <!-- Orders Modal -->
   <div class="profile-modal-overlay" id="orders-modal-overlay"></div>
-  <div class="profile-modal" id="orders-modal">
+  <div class="profile-modal" id="orders-modal" data-lenis-prevent>
     <button class="modal-close-btn" id="orders-close-btn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
     <div class="auth-box">
       <h2 style="font-family: 'Outfit', sans-serif; margin-top:0;">Your Orders</h2>
@@ -1121,7 +1133,7 @@
 
   <!-- Product Detail Modal -->
   <div class="product-modal-overlay" id="product-modal-overlay"></div>
-  <div class="product-modal" id="product-modal">
+  <div class="product-modal" id="product-modal" data-lenis-prevent>
     <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
     <div class="modal-content-wrapper">
       <div class="modal-image-col">
@@ -1158,7 +1170,7 @@
         
         <div class="reviews-section">
           <h3>Customer Reviews (<span id="review-count">0</span>)</h3>
-          <div class="reviews-list" id="reviews-list">
+          <div class="reviews-list" id="reviews-list" data-lenis-prevent>
             <!-- Reviews injected here -->
           </div>
           
@@ -1187,7 +1199,7 @@
       <h3><i class="fa-solid fa-bag-shopping"></i> Your Cart <span class="cart-drawer-count" id="cart-drawer-count">(0)</span></h3>
       <button class="cart-close-btn" id="cart-close-btn" aria-label="Close cart"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div class="cart-drawer-body" id="cart-drawer-body">
+    <div class="cart-drawer-body" id="cart-drawer-body" data-lenis-prevent>
       <!-- Rendered by JS -->
     </div>
     <div class="cart-drawer-footer" id="cart-drawer-footer">
@@ -1223,6 +1235,8 @@
   <!-- Scripts -->
   <script src="https://unpkg.com/lenis@1.3.25/dist/lenis.min.js"></script>
   <script src="scroll.js"></script>
+  <script src="navbar-scroll.js"></script>
+  <script src="micro-interactions.js"></script>
   <script src="cart.js"></script>
   <script src="script.js?v=7"></script>
 </body>

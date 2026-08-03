@@ -135,6 +135,13 @@ body.preloader-active {
   --transition-fast: 0.2s ease;
   --transition-med: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  /* The "premium" ease-out-with-a-touch-of-overshoot curve already used
+     ad-hoc (as a repeated literal) by several reveal/hover effects
+     throughout this file — formalized here as the signature curve for
+     every overlay's entrance/exit (modals, drawer, search) in Phase 10,
+     so they all share one motion language instead of each having picked
+     up a slightly different curve over time. */
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Radius */
   --radius-sm: 6px;
@@ -286,12 +293,34 @@ button {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
-  transition: background var(--transition-med), box-shadow var(--transition-med);
+  /* transform (not the JS-driven `top`) is what animates the hide/reveal
+     below — a discrete UI-chrome state change, not decorative scroll-linked
+     motion, so (like the cart drawer's own slide) it isn't gated behind
+     prefers-reduced-motion; it's just kept brief. */
+  transition: background var(--transition-med), box-shadow var(--transition-med), transform var(--transition-med);
 }
 
 .navbar.scrolled {
   background: rgba(var(--bg-primary-rgb), 0.95);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.navbar.nav-hidden {
+  transform: translateY(-100%);
+}
+
+/* Always fixed at the true top of the viewport, independent of the navbar's
+   own position/hide state — z-index above the navbar so it stays visible
+   as a reading-progress cue even while the navbar itself is hidden. */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: var(--accent);
+  z-index: 1001;
+  pointer-events: none;
 }
 
 .nav-brand {
@@ -362,6 +391,38 @@ button {
 .nav-action-btn:hover {
   color: var(--text-primary);
   transform: scale(1.1);
+}
+
+/* Landing pop when the fly-to-cart clone (see .fly-to-cart-clone below)
+   arrives — triggered by adding/removing this class in script.js. */
+@keyframes cartIconPop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.25); }
+  65% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.nav-action-btn.cart-pop {
+  animation: cartIconPop 0.4s ease;
+}
+
+/* ===== FLY TO CART (Phase 12 micro-interaction) =====
+   A cloned poster image, created and animated entirely from script.js
+   (flyToCart()): appended at the source image's exact on-screen rect,
+   then given a transform/opacity transition toward the cart icon on the
+   very next frame. Scaling is done via transform, not by animating
+   width/height, so it shrinks around its own center instead of collapsing
+   toward a corner. */
+.fly-to-cart-clone {
+  position: fixed;
+  margin: 0;
+  z-index: 9999;
+  pointer-events: none;
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition: transform 0.7s cubic-bezier(0.55, 0, 0.85, 0.35), opacity 0.7s ease-in;
+  will-change: transform, opacity;
 }
 
 /* Theme toggle — a .nav-action-btn with a sun/moon pair; CSS shows
@@ -532,11 +593,12 @@ button {
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  transform: translate(var(--magnet-x, 0px), var(--magnet-y, 0px));
   transition: transform var(--transition-med), box-shadow var(--transition-med), background var(--transition-fast);
 }
 
 .hero-cta:hover {
-  transform: translateY(-2px);
+  transform: translate(var(--magnet-x, 0px), calc(var(--magnet-y, 0px) - 2px));
   box-shadow: 0 8px 30px rgba(var(--accent-rgb), 0.3);
   background: var(--accent-hover);
 }
@@ -600,10 +662,18 @@ button {
 /* Staggered on-load entrance — above the fold, so this plays automatically
    on load rather than waiting for the .fade-in scroll-observer. Scoped to
    .hero-content specifically because .hero-cta is reused by non-hero
-   buttons elsewhere on the page that must NOT replay this entrance. */
+   buttons elsewhere on the page that must NOT replay this entrance.
+   The entrance animation targets .hero-cta-reveal (a plain inline-block
+   wrapper around .hero-cta), not .hero-cta itself: animation-fill-mode:both
+   holds its keyframe's `transform` forever at the CSS Animation cascade
+   layer, which outranks normal rules regardless of specificity — including
+   :hover — so animating .hero-cta directly would permanently pin its
+   transform to translateY(0) and silently swallow the magnetic-pull effect
+   from micro-interactions.js. Keeping the two concerns on separate elements
+   leaves .hero-cta's own transform free for hover/magnet use. */
 .hero-content .hero-tag { animation: fadeInUp 0.7s ease both; animation-delay: 0.1s; }
 .hero-content .hero-title { animation: fadeInUp 0.7s ease both; animation-delay: 0.3s; }
-.hero-content .hero-cta { animation: fadeInUp 0.7s ease both; animation-delay: 0.5s; }
+.hero-content .hero-cta-reveal { display: inline-block; animation: fadeInUp 0.7s ease both; animation-delay: 0.5s; }
 .hero-content .hero-trust-badges { animation: fadeInUp 0.7s ease both; animation-delay: 0.7s; }
 
 /* Scroll cue — bounces to hint "more below", fades out via JS once the
@@ -852,7 +922,7 @@ body.preloader-active .hero-logo-container::before,
 body.preloader-active .hero-counter,
 body.preloader-active .hero-content .hero-tag,
 body.preloader-active .hero-content .hero-title,
-body.preloader-active .hero-content .hero-cta,
+body.preloader-active .hero-content .hero-cta-reveal,
 body.preloader-active .hero-content .hero-trust-badges {
   animation-play-state: paused;
 }
@@ -1095,6 +1165,31 @@ body.preloader-active .hero-content .hero-trust-badges {
   cursor: pointer;
   isolation: isolate; /* scopes z-index of mockup layers/title so the title always wins, hover state included */
   container-type: inline-size; /* lets the title scale off the card's own width via cqw */
+  transition: box-shadow var(--transition-med);
+}
+
+/* No `transform` on hover here, deliberately — this card has
+   container-type: inline-size (needed above for the title's cqw sizing),
+   and animating `transform` via CSS transition on an element that also has
+   container-type reliably broke overflow:hidden clipping on this card's
+   .mockup-wrapper descendant in Chromium (poster rendered unclipped, frame
+   graphic invisible) on every normal hover — not an edge case, and not
+   about which transform function was used: a JS-driven 3D
+   perspective()/rotateX/rotateY tilt, a plain 2D scale(), and a CSS-only
+   translateY+scale hover all reproduced it identically once animated
+   (setting the same transform statically, no transition, was always fine).
+   Confirmed via isolation that removing container-type — not isolation,
+   not the specific transform function — was what fixed it. Since the title
+   sizing needs container-type to stay, the fix is the other side: don't
+   animate `transform` on this element at all. The zoom-on-hover instead
+   targets .mockup-wrapper below, a plain descendant with no
+   container-type of its own. */
+.category-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(var(--accent-rgb), 0.15);
+}
+
+.category-card:hover .mockup-wrapper {
+  transform: scale(1.06);
 }
 
 .category-card-title {
@@ -1755,13 +1850,59 @@ body.preloader-active .hero-content .hero-trust-badges {
   transform: scale(1);
 }
 
+/* Not clip-path on this element itself, deliberately — that was the
+   original design and it never actually worked: IntersectionObserver
+   computes intersection against the target's own clipped/rendered area, so
+   an element clipped to zero visible height (inset(0 0 100% 0)) always
+   reports isIntersecting:false, even while it's squarely in the viewport.
+   That's a real deadlock, not an edge case — the element can never be
+   detected as visible precisely because it's clipped, which is the same
+   clip the detection is supposed to lift. Confirmed via an isolated
+   reproduction outside this codebase before rewriting this. Fix: put the
+   clip on the PARENT via overflow:hidden (which does not shrink the
+   parent's own layout box — the parent's geometry, and thus what
+   IntersectionObserver sees, is unaffected by its own overflow), and
+   animate a translateY reveal on the child instead. */
 .clip-reveal {
-  clip-path: inset(0 0 100% 0);
-  transition: clip-path 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
-.clip-reveal.visible {
-  clip-path: inset(0 0 0% 0);
+.clip-reveal > * {
+  transform: translateY(100%);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clip-reveal.visible > * {
+  transform: translateY(0);
+}
+
+/* ===== CUSTOM CURSOR (Phase 11 micro-interactions) =====
+   Only mounted by micro-interactions.js when the visitor has a fine
+   pointer (mouse/trackpad) and hasn't asked for reduced motion — see the
+   JS gate there. body.custom-cursor-active is added by that same script,
+   so a page with this script missing/broken just keeps the native
+   cursor rather than going invisible. */
+.custom-cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 10000;
+  opacity: 0;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: var(--accent);
+  transition: opacity 0.2s ease;
+}
+
+/* !important: many elements set their own cursor: pointer (cards, custom
+   controls) which would otherwise out-specificity a plain class selector
+   here and leave the native cursor peeking through next to the custom one. */
+body.custom-cursor-active,
+body.custom-cursor-active * {
+  cursor: none !important;
 }
 
 /* Anyone who's asked their OS for reduced motion gets content in its final
@@ -1774,7 +1915,13 @@ body.preloader-active .hero-content .hero-trust-badges {
   .clip-reveal {
     opacity: 1 !important;
     transform: none !important;
-    clip-path: none !important;
+    transition: none !important;
+  }
+
+  /* .clip-reveal's own hide/reveal transform now lives on its direct
+     child (see .clip-reveal > * above), not on .clip-reveal itself. */
+  .clip-reveal > * {
+    transform: none !important;
     transition: none !important;
   }
 
@@ -1791,7 +1938,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   .hero-counter,
   .hero-content .hero-tag,
   .hero-content .hero-title,
-  .hero-content .hero-cta,
+  .hero-content .hero-cta-reveal,
   .hero-content .hero-trust-badges,
   .scroll-cue-wheel {
     animation: none !important;
@@ -1802,6 +1949,30 @@ body.preloader-active .hero-content .hero-trust-badges {
 
   .scroll-cue {
     display: none;
+  }
+
+  /* Safety net: micro-interactions.js already refuses to mount the cursor
+     or bind magnetic buttons under reduced motion, but in case that class
+     is ever left on the body (e.g. motion preference changes mid-session
+     without a reload) don't leave visitors without a real cursor. */
+  .custom-cursor-dot {
+    display: none !important;
+  }
+
+  body.custom-cursor-active,
+  body.custom-cursor-active * {
+    cursor: auto !important;
+  }
+
+  /* flyToCart() already refuses to create a clone or pop the cart icon
+     under reduced motion — this is a safety net in case either class
+     is ever applied some other way. */
+  .fly-to-cart-clone {
+    display: none !important;
+  }
+
+  .nav-action-btn.cart-pop {
+    animation: none !important;
   }
 
   /* Freeze the CTA banner's gradient drift at its resting position — but
@@ -1833,7 +2004,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   z-index: 2000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity var(--transition-med), visibility var(--transition-med);
+  transition: opacity 0.35s var(--ease-premium), visibility 0.35s var(--ease-premium);
   backdrop-filter: blur(4px);
 }
 
@@ -1855,7 +2026,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform var(--transition-med);
+  transition: transform 0.4s var(--ease-premium);
   box-shadow: -8px 0 30px rgba(0, 0, 0, 0.4);
 }
 
@@ -2097,12 +2268,13 @@ body.preloader-active .hero-content .hero-trust-badges {
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 16px;
+  transform: translate(var(--magnet-x, 0px), var(--magnet-y, 0px));
   transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .cart-checkout-btn:hover {
   background: var(--accent-hover);
-  transform: translateY(-2px);
+  transform: translate(var(--magnet-x, 0px), calc(var(--magnet-y, 0px) - 2px));
   box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.3);
 }
 
@@ -2165,7 +2337,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   z-index: 2000;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s var(--ease-premium), visibility 0.3s var(--ease-premium);
 }
 
 .product-modal-overlay.open {
@@ -2177,7 +2349,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -45%);
+  transform: translate(-50%, -47%) scale(0.95);
   width: 90%;
   max-width: 900px;
   max-height: 90vh;
@@ -2187,7 +2359,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   z-index: 2001;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.35s var(--ease-premium), visibility 0.35s var(--ease-premium), transform 0.35s var(--ease-premium);
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
 }
@@ -2195,7 +2367,7 @@ body.preloader-active .hero-content .hero-trust-badges {
 .product-modal.open {
   opacity: 1;
   visibility: visible;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .modal-close-btn {
@@ -2309,11 +2481,12 @@ body.preloader-active .hero-content .hero-trust-badges {
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
+  transform: translate(var(--magnet-x, 0px), var(--magnet-y, 0px));
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .modal-add-to-cart:hover {
-  transform: translateY(-2px);
+  transform: translate(var(--magnet-x, 0px), calc(var(--magnet-y, 0px) - 2px));
   box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.4);
 }
 
@@ -2575,7 +2748,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   backdrop-filter: blur(5px);
   z-index: 2000;
   opacity: 0; visibility: hidden;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s var(--ease-premium), visibility 0.3s var(--ease-premium);
 }
 
 .auth-modal-overlay.open, .profile-modal-overlay.open {
@@ -2585,14 +2758,14 @@ body.preloader-active .hero-content .hero-trust-badges {
 .auth-modal, .profile-modal {
   position: fixed;
   top: 50%; left: 50%;
-  transform: translate(-50%, -45%);
+  transform: translate(-50%, -47%) scale(0.95);
   width: 90%; max-width: 450px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   z-index: 2001;
   opacity: 0; visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.35s var(--ease-premium), visibility 0.35s var(--ease-premium), transform 0.35s var(--ease-premium);
   padding: 2rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
 }
@@ -2604,7 +2777,7 @@ body.preloader-active .hero-content .hero-trust-badges {
 
 .auth-modal.open, .profile-modal.open {
   opacity: 1; visibility: visible;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .auth-close-btn, .profile-close-btn {
@@ -2672,7 +2845,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s var(--ease-premium);
 }
 
 .search-overlay.open {
@@ -2690,7 +2863,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   padding: 10px;
   position: relative;
   transform: translateY(-20px);
-  transition: transform 0.3s ease;
+  transition: transform 0.35s var(--ease-premium);
 }
 
 .search-overlay.open .search-container {
@@ -2831,6 +3004,11 @@ body.preloader-active .hero-content .hero-trust-badges {
 
 .faq-item {
   border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+}
+
+.faq-item:hover {
+  background: rgba(var(--accent-rgb), 0.04);
 }
 
 .faq-question {
@@ -2838,6 +3016,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   background: none;
   border: none;
   padding: 1.5rem 0;
+  padding-left: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2847,11 +3026,12 @@ body.preloader-active .hero-content .hero-trust-badges {
   color: var(--text-primary);
   cursor: pointer;
   text-align: left;
-  transition: color var(--transition-fast);
+  transition: color var(--transition-fast), padding-left var(--transition-fast);
 }
 
 .faq-question:hover {
   color: var(--accent);
+  padding-left: 8px;
 }
 
 .faq-q-text {
@@ -2877,21 +3057,39 @@ body.preloader-active .hero-content .hero-trust-badges {
   color: var(--accent);
 }
 
+/* grid-template-rows 0fr->1fr, not the old max-height:0->500px hack — that
+   guessed a large fixed max-height, so the transition duration applied
+   across the full 500px regardless of how short the actual answer was
+   (harmless for these short answers, but imprecise and not reusable if a
+   longer answer is ever added). This animates to the exact natural content
+   height instead, for every answer length. Needs the .faq-answer-inner
+   wrapper in the markup — the row-track animates the grid container itself,
+   while the inner div's own overflow:hidden clips its content during that. */
 .faq-answer {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .faq-item.active .faq-answer {
-  max-height: 500px;
-  padding-bottom: 1.5rem;
+  grid-template-rows: 1fr;
+}
+
+.faq-answer-inner {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .faq-answer p {
   color: var(--text-secondary);
   line-height: 1.6;
-  margin: 0;
+  /* margin-bottom, not padding on the wrapper — padding doesn't collapse
+     via min-height:0 (min-height constrains the content box, padding is
+     added on top of it regardless), so at grid-template-rows: 0fr the
+     collapsed row was stuck at 24px instead of 0. A margin on this
+     innermost element does actually disappear once its clipped,
+     zero-height ancestor stops rendering it. */
+  margin: 0 0 1.5rem 0;
   padding-left: 32px;
 }
 
@@ -2983,7 +3181,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  transition: transform var(--transition-med), border-color var(--transition-med);
+  transition: transform var(--transition-med), border-color var(--transition-med), box-shadow var(--transition-med);
   cursor: pointer;
   height: 400px;
 }
@@ -2991,6 +3189,7 @@ body.preloader-active .hero-content .hero-trust-badges {
 .custom-print-card:hover {
   transform: translateY(-10px);
   border-color: var(--accent);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(var(--accent-rgb), 0.15);
 }
 
 .custom-print-card img {
@@ -3001,6 +3200,11 @@ body.preloader-active .hero-content .hero-trust-badges {
   top: 0;
   left: 0;
   z-index: 1;
+  transition: transform var(--transition-slow);
+}
+
+.custom-print-card:hover img {
+  transform: scale(1.08);
 }
 
 .custom-print-overlay {
@@ -3145,6 +3349,15 @@ img {
   transform: translateY(-5px);
 }
 
+/* The glow goes on .ws-img-container, not .wall-setup-card itself — the
+   card is just a text-align wrapper with no background/border of its own,
+   so a shadow on it wouldn't read as anything (no visible edge to glow
+   from). .ws-img-container is the actual bordered box. */
+.wall-setup-card:hover .ws-img-container {
+  border-color: var(--accent);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 30px rgba(var(--accent-rgb), 0.15);
+}
+
 .ws-img-container {
   position: relative;
   width: 100%;
@@ -3154,6 +3367,7 @@ img {
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--bg-secondary);
+  transition: border-color var(--transition-med), box-shadow var(--transition-med);
 }
 
 .ws-img-container img {
@@ -3161,10 +3375,16 @@ img {
   height: 100%;
   object-fit: cover;
   transition: transform var(--transition-slow);
+  /* --ws-parallax-x is set via JS (script.js's updateCardParallax, extended
+     in Phase 8 to cover this carousel too) as the track scrolls — composed
+     here via a custom property, not by JS writing .style.transform
+     directly, so it doesn't clobber the :hover scale below (inline styles
+     would win over the class rule and silently kill the zoom on hover). */
+  transform: translateX(var(--ws-parallax-x, 0px));
 }
 
 .wall-setup-card:hover .ws-img-container img {
-  transform: scale(1.05);
+  transform: translateX(var(--ws-parallax-x, 0px)) scale(1.05);
 }
 
 .ws-sale-badge {
@@ -3242,18 +3462,25 @@ img {
   border-radius: var(--radius-md);
   padding: 40px 32px;
   text-align: center;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .reachout-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  border-color: var(--accent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 24px rgba(var(--accent-rgb), 0.12);
 }
 
 .reachout-icon {
   font-size: 2.5rem;
   color: var(--accent);
   margin-bottom: 24px;
+  display: inline-block;
+  transition: transform var(--transition-med);
+}
+
+.reachout-card:hover .reachout-icon {
+  transform: scale(1.15) rotate(-4deg);
 }
 
 .reachout-card h3 {

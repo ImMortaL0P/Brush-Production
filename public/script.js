@@ -10,6 +10,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // parallax gate directly on this).
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // ---- Scroll lock (mobile menu, cart drawer, product modal) ----
+  // document.body.style.overflow = 'hidden' alone doesn't stop Lenis — it
+  // intercepts wheel/touch input directly and drives scroll independently
+  // of the underlying CSS overflow, so the page kept scrolling behind any
+  // open overlay even with overflow locked. Needs both. Reference-counted
+  // so if two overlays ever end up open at once, the first one closing
+  // doesn't prematurely unlock scroll out from under the other.
+  let scrollLockCount = 0;
+
+  function lockPageScroll() {
+    scrollLockCount++;
+    document.body.style.overflow = 'hidden';
+    if (window.lenis) window.lenis.stop();
+  }
+
+  function unlockPageScroll() {
+    scrollLockCount = Math.max(0, scrollLockCount - 1);
+    if (scrollLockCount === 0) {
+      document.body.style.overflow = '';
+      if (window.lenis) window.lenis.start();
+    }
+  }
+
   // ---- Preloader ----
   const preloader = document.getElementById('preloader');
   if (preloader) {
@@ -67,28 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateProgress();
   }
 
-  // ---- Navbar scroll effect ----
+  // Navbar scroll behavior (scrolled-state, hide-on-scroll-down, scroll
+  // progress) now lives in navbar-scroll.js, shared across every page with
+  // a navbar — this reference is kept only because the anchor-scroll
+  // handler further down still needs navbar.offsetHeight.
   const navbar = document.getElementById('navbar');
-  const announcementBar = document.getElementById('announcement-bar');
-
-  function handleNavbarScroll() {
-    const scrollY = window.scrollY;
-    const barHeight = announcementBar ? announcementBar.offsetHeight : 0;
-
-    if (scrollY > 10) {
-      navbar.classList.add('scrolled');
-      navbar.style.top = '0';
-    } else {
-      navbar.classList.remove('scrolled');
-      navbar.style.top = barHeight + 'px';
-    }
-  }
-
-  if (announcementBar) {
-    navbar.style.top = announcementBar.offsetHeight + 'px';
-  }
-  window.addEventListener('scroll', handleNavbarScroll, { passive: true });
-  handleNavbarScroll();
 
 
   // ---- Mobile menu toggle ----
@@ -99,14 +105,24 @@ document.addEventListener('DOMContentLoaded', () => {
     menuToggle.addEventListener('click', () => {
       menuToggle.classList.toggle('active');
       navLinks.classList.toggle('open');
-      document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
+      if (navLinks.classList.contains('open')) {
+        lockPageScroll();
+      } else {
+        unlockPageScroll();
+      }
     });
 
     navLinks.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         menuToggle.classList.remove('active');
+        // Only unlock if this link click is what's actually closing an open
+        // menu (on desktop these links are always visible/clickable with
+        // the menu never "open" in the mobile sense — mustn't decrement a
+        // lock that was never acquired).
+        if (navLinks.classList.contains('open')) {
+          unlockPageScroll();
+        }
         navLinks.classList.remove('open');
-        document.body.style.overflow = '';
       });
     });
   }
@@ -290,37 +306,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  // ---- Category Card Cursor Tilt ----
-  // Gated on real hover + a precise pointer (mouse/trackpad) so touch
-  // devices — where "hover" fires on tap and has no continuous mousemove —
-  // never get a half-working version of this, and on reduced-motion,
-  // where a cursor-chased 3D tilt is exactly the kind of motion that
-  // preference exists to opt out of.
-  const canTilt = window.matchMedia('(hover: hover) and (pointer: fine)').matches
-    && !prefersReducedMotion;
-
-  if (canTilt) {
-    const maxTilt = 8; // degrees, at the card's edge
-
-    document.querySelectorAll('.category-card').forEach((card) => {
-      card.addEventListener('mousemove', (e) => {
-        const rect = card.getBoundingClientRect();
-        const px = (e.clientX - rect.left) / rect.width;
-        const py = (e.clientY - rect.top) / rect.height;
-        const rotateY = (px - 0.5) * maxTilt * 2;
-        const rotateX = (0.5 - py) * maxTilt * 2;
-        // No transition while tracking — any easing here would make the
-        // tilt visibly lag behind the cursor instead of following it.
-        card.style.transition = 'transform 0.1s ease-out';
-        card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`;
-      });
-
-      card.addEventListener('mouseleave', () => {
-        card.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-      });
-    });
-  }
+  // Category card hover depth used to be a JS-driven cursor-tracked 3D tilt
+  // (perspective()/rotateX/rotateY). Removed: animating that transform via
+  // CSS transition reliably broke overflow:hidden clipping on the card's
+  // .mockup-wrapper descendant in Chromium — the poster rendered unclipped
+  // and the frame graphic disappeared, on every normal hover, not as an
+  // edge case. Neither swapping scale3d() for 2D scale() nor forcing a
+  // permanent compositing layer via will-change fixed it once the
+  // transform was animated rather than set statically. Replaced with a
+  // plain CSS translateY+scale hover (see .category-card:hover in
+  // styles.css) — no JS needed for it at all.
 
 
   // ---- Hero Poster Counter ----
@@ -383,6 +378,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Read every card's position first, then write transforms in a second
     // pass — interleaving getBoundingClientRect() with style writes forces
     // a layout recalculation on every iteration instead of once.
+    // Two card types share this: product cards (.mockup-poster, safe to
+    // drive via .style.transform directly — nothing else there sets its
+    // transform) and Wall Setup Packs (.ws-img-container img, which has its
+    // own :hover scale() rule, so it's driven via a CSS custom property
+    // instead — see .ws-img-container img in styles.css — so this doesn't
+    // clobber that with an inline style).
     const updates = [];
     track.querySelectorAll('.mockup-poster').forEach((poster) => {
       const card = poster.closest('.product-card');
@@ -390,10 +391,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const cardRect = card.getBoundingClientRect();
       const cardCenterX = cardRect.left + cardRect.width / 2;
       const offset = Math.max(-6, Math.min(6, (cardCenterX - trackCenterX) * 0.015));
-      updates.push([poster, offset]);
+      updates.push({ img: poster, offset, viaProperty: false });
     });
-    updates.forEach(([poster, offset]) => {
-      poster.style.transform = `translateX(${offset}px)`;
+    track.querySelectorAll('.ws-img-container img').forEach((img) => {
+      const card = img.closest('.wall-setup-card');
+      if (!card) return;
+      const cardRect = card.getBoundingClientRect();
+      const cardCenterX = cardRect.left + cardRect.width / 2;
+      const offset = Math.max(-6, Math.min(6, (cardCenterX - trackCenterX) * 0.015));
+      updates.push({ img, offset, viaProperty: true });
+    });
+    updates.forEach(({ img, offset, viaProperty }) => {
+      if (viaProperty) {
+        img.style.setProperty('--ws-parallax-x', `${offset}px`);
+      } else {
+        img.style.transform = `translateX(${offset}px)`;
+      }
     });
   }
 
@@ -634,15 +647,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ---- Open / Close cart drawer ----
   function openCart() {
+    // openCart() is also called as a "flash the drawer" nudge after Add to
+    // Cart even when it's already open — only acquire the lock on a genuine
+    // closed->open transition, or a second nudge while already open would
+    // double-lock and leave scroll stuck after a single close.
+    const wasOpen = cartDrawer.classList.contains('open');
     cartDrawer.classList.add('open');
     cartOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    if (!wasOpen) lockPageScroll();
   }
 
   function closeCart() {
+    const wasOpen = cartDrawer.classList.contains('open');
     cartDrawer.classList.remove('open');
     cartOverlay.classList.remove('open');
-    document.body.style.overflow = '';
+    if (wasOpen) unlockPageScroll();
   }
 
   // Cart icon in navbar opens drawer
@@ -652,6 +671,42 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       openCart();
     });
+  }
+
+  // ---- Fly to cart ----
+  // Clones the poster image being added, flies it from its current on-screen
+  // position to the cart icon, then pops the icon on arrival. Purely
+  // decorative feedback layered on top of the real add-to-cart logic below,
+  // so it's gated behind prefers-reduced-motion like the rest of this site's
+  // decorative motion (cursor, magnetic buttons, parallax).
+  function flyToCart(sourceImgEl) {
+    if (prefersReducedMotion || !cartNavBtn || !sourceImgEl) return;
+
+    const startRect = sourceImgEl.getBoundingClientRect();
+    const endRect = cartNavBtn.getBoundingClientRect();
+    if (startRect.width === 0 || startRect.height === 0) return;
+
+    const clone = document.createElement('img');
+    clone.src = sourceImgEl.currentSrc || sourceImgEl.src;
+    clone.className = 'fly-to-cart-clone';
+    clone.style.top = `${startRect.top}px`;
+    clone.style.left = `${startRect.left}px`;
+    clone.style.width = `${startRect.width}px`;
+    clone.style.height = `${startRect.height}px`;
+    document.body.appendChild(clone);
+
+    void clone.offsetWidth; // force layout so the transform below transitions instead of jumping straight there
+
+    const dx = (endRect.left + endRect.width / 2) - (startRect.left + startRect.width / 2);
+    const dy = (endRect.top + endRect.height / 2) - (startRect.top + startRect.height / 2);
+    clone.style.transform = `translate(${dx}px, ${dy}px) scale(0.12) rotate(8deg)`;
+    clone.style.opacity = '0.25';
+
+    clone.addEventListener('transitionend', () => {
+      clone.remove();
+      cartNavBtn.classList.add('cart-pop');
+      setTimeout(() => cartNavBtn.classList.remove('cart-pop'), 400);
+    }, { once: true });
   }
 
   if (cartCloseBtn) cartCloseBtn.addEventListener('click', closeCart);
@@ -809,6 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!product.id || !product.name) return;
 
+    flyToCart(card.querySelector('.mockup-poster'));
     Cart.addItem(product, 1);
 
     // Button feedback
@@ -854,10 +910,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentProduct = null;
 
   async function openProductModal(productId) {
+    // Guarded the same way as openCart() — harmless in practice today (the
+    // overlay blocks clicks reaching another product card while open) but
+    // keeps the lock/unlock pairing correct even if that ever changes.
+    const wasOpen = productModal.classList.contains('open');
     productModal.classList.add('open');
     productModalOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    
+    if (!wasOpen) lockPageScroll();
+
     try {
       const res = await fetch(`${API_BASE}/products/${productId}`);
       if (!res.ok) throw new Error('Product not found');
@@ -914,9 +974,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeProductModal() {
+    const wasOpen = productModal.classList.contains('open');
     productModal.classList.remove('open');
     productModalOverlay.classList.remove('open');
-    document.body.style.overflow = '';
+    if (wasOpen) unlockPageScroll();
     currentProduct = null;
   }
 
@@ -957,7 +1018,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const size = sizeSelector.value;
       const gsm = gsmSelector.value;
       const finalPrice = parseInt(document.getElementById('modal-price').textContent.replace('₹', ''));
-      
+
+      // Capture the modal's poster position before closeProductModal() starts
+      // its own close transition, which would otherwise move/fade it out from
+      // under a getBoundingClientRect() read.
+      flyToCart(document.querySelector('.modal-image-col .mockup-poster'));
+
       Cart.addItem(currentProduct, 1, size, gsm, finalPrice);
       showToast(`${currentProduct.name} added to cart!`);
       closeProductModal();
