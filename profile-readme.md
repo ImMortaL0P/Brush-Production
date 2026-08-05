@@ -47,8 +47,8 @@ I'm a Mechanical Engineering graduate with a CS minor, possessing a strong stati
 ## 📊 GitHub Analytics (Interactive Dashboard)
 
 <div align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=ImMortaL0P&show_icons=true&theme=radical&hide_border=true" width="48%" alt="GitHub Stats" />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ImMortaL0P&layout=compact&theme=radical&hide_border=true" width="48%" alt="Top Languages" />
+  <img src="https://github-readme-stats-anuraghazra1.vercel.app/api?username=ImMortaL0P&show_icons=true&theme=radical&hide_border=true" width="48%" alt="GitHub Stats" />
+  <img src="https://github-readme-stats-anuraghazra1.vercel.app/api/top-langs/?username=ImMortaL0P&layout=compact&theme=radical&hide_border=true" width="48%" alt="Top Languages" />
 </div>
 
 <div align="center">
