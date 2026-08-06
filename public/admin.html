@@ -467,12 +467,13 @@
               <th>Badge</th>
               <th>Base Price</th>
               <th>Stock Qty</th>
+              <th>Order Freq</th>
               <th>Homepage Placement</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="inventory-table-body">
-            <tr><td colspan="7" style="text-align: center;">Loading inventory...</td></tr>
+            <tr><td colspan="8" style="text-align: center;">Loading inventory...</td></tr>
           </tbody>
         </table>
       </div>
@@ -839,7 +840,7 @@
         }
         
         if (products.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No products found in this category.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No products found in this category.</td></tr>';
           return;
         }
 
@@ -870,6 +871,9 @@
             </td>
             <td>
               <input type="number" id="stock-${p.id}" value="${p.stockQuantity !== undefined ? p.stockQuantity : 0}" ${stockDisabled} style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
+            </td>
+            <td style="text-align: center;">
+              <span style="font-weight: 600; color: var(--text-primary);">${p.orderFrequency || 0}</span>
             </td>
             <td>
               <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; cursor:pointer;">

@@ -231,7 +231,7 @@ app.get('/api/orders/user/:id', async (req, res) => {
 
 app.get('/api/products', async (req, res) => {
   try {
-    const docs = await productsRef.find().sort({ id: 1 }).toArray();
+    const docs = await productsRef.find().sort({ orderFrequency: -1, id: -1 }).toArray();
     res.json(docs.map(stripId));
   } catch (error) {
     console.error(error);
@@ -403,7 +403,7 @@ app.post('/api/orders', async (req, res) => {
       for (const item of enrichedItems) {
         await productsRef.updateOne(
           { id: item.productId },
-          { $inc: { stockQuantity: -item.quantity } },
+          { $inc: { stockQuantity: -item.quantity, orderFrequency: item.quantity } },
           { session }
         );
       }
