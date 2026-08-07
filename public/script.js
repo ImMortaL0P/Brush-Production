@@ -1290,7 +1290,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileCloseBtn = document.getElementById('profile-close-btn');
   if(profileCloseBtn) profileCloseBtn.addEventListener('click', closeProfileModal);
   if(profileModalOverlay) profileModalOverlay.addEventListener('click', closeProfileModal);
-  
+
+  // A 401 here means the session token is missing or no longer valid - either
+  // a pre-existing login from before session tokens existed, or one that's
+  // outlived a server restart (tokens are held in memory, not persisted).
+  // Surfacing that as a real "log in again" prompt instead of a bare
+  // "failed to load" message.
+  function handleSessionExpiry() {
+    localStorage.removeItem('brushUser');
+    closeProfileModal();
+    closeOrdersModal();
+    showToast('Your session has expired. Please log in again.');
+    openAuthModal();
+  }
+
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
@@ -1364,6 +1377,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           `).join('');
         }
+      } else if (res.status === 401) {
+        handleSessionExpiry();
       } else {
         orderList.innerHTML = '<p>Failed to load orders.</p>';
       }
@@ -1396,6 +1411,8 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('brushUser', JSON.stringify(user));
           document.getElementById('profile-msg').textContent = 'Profile updated!';
           document.getElementById('profile-msg').style.color = 'green';
+        } else if (res.status === 401) {
+          handleSessionExpiry();
         } else {
           document.getElementById('profile-msg').textContent = 'Update failed';
           document.getElementById('profile-msg').style.color = 'red';
@@ -1428,9 +1445,13 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}` },
           body: JSON.stringify({ currentPassword, newPassword })
         });
+        if (res.status === 401) {
+          handleSessionExpiry();
+          return;
+        }
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to update password');
-        
+
         msg.style.color = 'var(--success)';
         msg.textContent = 'Password updated successfully!';
         changePasswordForm.reset();

@@ -342,7 +342,11 @@ app.post('/api/auth/change-password', requireUser, async (req, res) => {
 
     const currentHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
     if (currentHash !== user.passwordHash) {
-      return res.status(401).json({ error: 'Current password is incorrect' });
+      // 400, not 401: the session itself (Bearer token, checked by requireUser
+      // above) is valid - only the current-password check failed. Keeping 401
+      // reserved exclusively for "your session is invalid" lets the frontend
+      // treat any 401 as an unambiguous signal to log the user out.
+      return res.status(400).json({ error: 'Current password is incorrect' });
     }
 
     const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
