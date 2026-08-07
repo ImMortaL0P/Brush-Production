@@ -9,7 +9,11 @@ const path = require('path');
 const fs = require('fs');
 
 const LOGO_PATH = path.join(__dirname, '../public/assets/misc/Brush Text Arial.png');
-const SIGNATURE_PATH = path.join(__dirname, 'assets/signature.png');
+const SIGNATURE_IMAGE_PATH = path.join(__dirname, 'assets/signature.png');
+// Falls back to this cursive font (already used elsewhere on the site) to
+// render the signatory's name as a real vector signature when no scanned
+// signature image has been provided.
+const SIGNATURE_FONT_PATH = path.join(__dirname, '../public/Fonts/amsterdam_signature/Amsterdam Signature.ttf');
 
 const COMPANY = {
   legalName: 'Krafters Inc.',
@@ -170,8 +174,12 @@ function drawInvoice(pdfDoc, order) {
 
   const sigX = 380;
   const sigLineY = belowTotalsY + 45;
-  if (fs.existsSync(SIGNATURE_PATH)) {
-    pdfDoc.image(SIGNATURE_PATH, sigX, belowTotalsY - 25, { width: 120, height: 55, fit: [120, 55] });
+  if (fs.existsSync(SIGNATURE_IMAGE_PATH)) {
+    // Prefer a real scanned signature if one has been provided.
+    pdfDoc.image(SIGNATURE_IMAGE_PATH, sigX, belowTotalsY - 25, { width: 120, height: 55, fit: [120, 55] });
+  } else if (fs.existsSync(SIGNATURE_FONT_PATH)) {
+    pdfDoc.font(SIGNATURE_FONT_PATH).fontSize(30).fillColor('#1a3d8f')
+      .text(SIGNATORY_NAME, sigX, sigLineY - 32, { width: 170 });
   }
   pdfDoc.moveTo(sigX, sigLineY).lineTo(sigX + 170, sigLineY).strokeColor('#cbd5e0').stroke();
   pdfDoc.fontSize(9).font('Helvetica-Bold').fillColor('#2d3748').text(SIGNATORY_NAME, sigX, sigLineY + 6);
