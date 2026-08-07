@@ -149,11 +149,16 @@ body.preloader-active {
   --radius-lg: 20px;
   --radius-xl: 28px;
 
-  /* Mockup Coordinates (assets/mockup_2.jpg, 2193x3348) */
-  --mockup-top: 21.00%;
-  --mockup-left: 24.81%;
-  --mockup-width: 49.75%;
-  --mockup-height: 46.83%;
+  /* Mockup Coordinates (assets/mockup_2.jpg, 2193x3348) - the poster's box
+     within the frame photo's picture window. Re-measured: the previous
+     values undersized the box (matched the frame's true top/left inner
+     edge but fell short of its actual bottom/right edge), so the poster
+     sat flush against the frame's top border with a large, uneven gap at
+     the bottom instead of an even margin on all sides. */
+  --mockup-top: 22.30%;
+  --mockup-left: 25.60%;
+  --mockup-width: 48.80%;
+  --mockup-height: 44.00%;
 }
 
 /* ====================================================================
