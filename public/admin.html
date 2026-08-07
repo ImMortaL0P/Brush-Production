@@ -236,6 +236,8 @@
       opacity: 1;
     }
     .toast i { color: var(--accent); }
+    .toast.toast-error { border-left-color: var(--sale-red); }
+    .toast.toast-error i { color: var(--sale-red); }
     
     .refresh-btn {
       background: var(--accent);
@@ -625,9 +627,12 @@
 
     // Toast
     let toastTimer;
-    function showToast(message) {
+    function showToast(message, isError = false) {
       const toast = document.getElementById('toast');
+      const icon = toast.querySelector('i');
       document.getElementById('toast-text').textContent = message;
+      toast.classList.toggle('toast-error', isError);
+      icon.className = isError ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-check-circle';
       toast.classList.add('visible');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
@@ -718,6 +723,9 @@
                       <i class="fa-solid fa-ban"></i>
                     </button>
                   ` : ''}
+                  <button class="action-btn" style="background:var(--accent);color:white;border:none;" onclick="sendOrderUpdate('${o.orderId}')" title="Send Current Updates">
+                    <i class="fa-solid fa-envelope"></i>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -790,11 +798,36 @@
           body: JSON.stringify({ status: newStatus })
         });
         handleApiError(res);
-        if(!res.ok) throw new Error('Failed to update');
-        showToast(`Order ${orderId} marked as ${newStatus}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Failed to update');
+        if (data.emailSent) {
+          showToast(`Order ${orderId} marked as ${newStatus} — email sent to customer`);
+        } else {
+          showToast(`Order ${orderId} marked as ${newStatus}, but the update email failed to send (${data.emailError || 'unknown error'})`, true);
+        }
         loadOrders();
       } catch (e) {
-        showToast(e.message);
+        showToast(e.message, true);
+      }
+    }
+
+    // Send Current Updates - re-sends a status email without changing the order
+    async function sendOrderUpdate(orderId) {
+      if (!adminToken) return;
+      try {
+        const res = await fetch(`${API_BASE}/orders/${orderId}/send-update`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          }
+        });
+        handleApiError(res);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Failed to send update');
+        showToast(`Email sent successfully to ${data.to || 'customer'}`);
+      } catch (e) {
+        showToast(e.message, true);
       }
     }
 

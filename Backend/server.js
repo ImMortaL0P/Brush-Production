@@ -16,15 +16,114 @@ const fs = require('fs');
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
 const multer = require('multer');
+const nodemailer = require('nodemailer');
+const rateLimit = require('express-rate-limit');
+const { buildOrderStatusEmail } = require('./orderEmailTemplate');
+const { drawInvoice } = require('./invoiceTemplate');
+
+const SITE_URL = process.env.SITE_URL || 'https://immortal0p.github.io/Brush-Production';
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT || 465,
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
+// Returns { sent: true } on success, or { sent: false, reason } on failure -
+// never throws, so callers can report accurate status back to the admin
+// instead of assuming the email went out.
+async function sendOrderEmail(order, forceSend = false) {
+  if (!order || !order.customer) return { sent: false, reason: 'Order has no customer details' };
+  const toEmail = order.customer.email || order.customer.id;
+  if (!toEmail || !toEmail.includes('@')) return { sent: false, reason: 'Customer has no valid email address' };
+
+  const { subject, html, text } = buildOrderStatusEmail(order, SITE_URL);
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || '"Brush Posters" <noreply@brushposters.com>',
+    to: toEmail,
+    subject,
+    html,
+    text
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent for order ${order.orderId || order._id} to ${toEmail}`);
+    return { sent: true, to: toEmail };
+  } catch (error) {
+    console.error(`Failed to send email for order ${order.orderId || order._id}:`, error);
+    return { sent: false, reason: error.message };
+  }
+}
+
+// Sequential, human-readable invoice numbers (INV-<year>-<seq>), distinct
+// from the order ID. Unlike the order ID, this is NEVER used to look up an
+// order - it's a display-only field - because a sequential number is
+// trivially enumerable and must not double as an access credential.
+async function getNextInvoiceNumber() {
+  const year = new Date().getFullYear();
+  const counter = await countersRef.findOneAndUpdate(
+    { _id: `invoice-${year}` },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: 'after' }
+  );
+  const seq = counter.seq ?? counter.value?.seq; // tolerate driver version differences in return shape
+  return `INV-${year}-${String(seq).padStart(6, '0')}`;
+}
 
 const app = express();
 let activeAdminToken = null; // Legacy single token
 const activeAdminTokens = new Map(); // Store tokens and roles in memory
+const activeUserTokens = new Map(); // token -> userId, issued at customer login/signup
+const passwordResetTokens = new Map(); // token -> { userId, expiresAt }
 const port = process.env.PORT || 5500;
+
+function issueUserToken(userId) {
+  const token = crypto.randomBytes(24).toString('hex');
+  activeUserTokens.set(token, userId);
+  return token;
+}
+
+// Middleware for customer-facing routes that must be scoped to the logged-in account.
+const requireUser = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Please log in.' });
+  }
+  const userId = activeUserTokens.get(authHeader.split(' ')[1]);
+  if (!userId) return res.status(401).json({ error: 'Session expired. Please log in again.' });
+  req.userId = userId;
+  next();
+};
+
+// Use after requireUser on routes keyed by :id - ensures the logged-in
+// account can only ever act on its own data, never someone else's by
+// swapping the :id in the URL.
+const requireOwnUser = (req, res, next) => {
+  if (req.userId !== req.params.id) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+};
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Defense-in-depth on top of the unguessable order ID itself: caps how many
+// order/invoice lookups a single IP can attempt, so even a leaked or
+// partially-guessed ID can't be brute-forced at scale.
+const orderLookupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many order lookups from this device. Please try again later.' }
+});
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID',
@@ -94,7 +193,7 @@ if (!process.env.MONGODB_URI) {
 
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
 
-let db, productsRef, ordersRef, usersRef, adminsRef, adminLogsRef;
+let db, productsRef, ordersRef, usersRef, adminsRef, adminLogsRef, countersRef;
 
 // Strips Mongo's internal _id before a document goes out over the API,
 // so response shapes stay identical to what the frontend already expects.
@@ -136,7 +235,8 @@ app.post('/api/auth/signup', async (req, res) => {
     };
 
     await usersRef.insertOne(newUser);
-    res.json({ success: true, userId: id, name, phone, address });
+    const token = issueUserToken(id);
+    res.json({ success: true, token, userId: id, name, phone, address });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Signup failed' });
@@ -159,25 +259,69 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    res.json({ success: true, userId: id, name: user.name, phone: user.phone, address: user.address });
+    const token = issueUserToken(id);
+    res.json({ success: true, token, userId: id, name: user.name, phone: user.phone, address: user.address });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Login failed' });
   }
 });
 
-app.post('/api/auth/reset-password', async (req, res) => {
+app.post('/api/auth/logout', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    activeUserTokens.delete(authHeader.split(' ')[1]);
+  }
+  res.json({ success: true });
+});
+
+// Step 1 of self-service password reset: never reveals whether an account
+// exists (same response either way). Only emails a link when the account's
+// id is an email address - phone-only accounts have no address to send to.
+app.post('/api/auth/forgot-password', async (req, res) => {
   try {
-    const { id, newPassword } = req.body;
-    if (!id || !newPassword) return res.status(400).json({ error: 'ID and new password required' });
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ error: 'ID required' });
+
+    const genericResponse = { success: true, message: 'If an account exists for that ID and has an email on file, a reset link has been sent.' };
 
     const user = await usersRef.findOne({ _id: id });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    if (user && id.includes('@')) {
+      const token = crypto.randomBytes(24).toString('hex');
+      passwordResetTokens.set(token, { userId: id, expiresAt: Date.now() + 30 * 60 * 1000 });
+      const resetUrl = `${SITE_URL.replace(/\/$/, '')}/reset-password.html?token=${token}`;
+      transporter.sendMail({
+        from: process.env.EMAIL_FROM || '"Brush Posters" <noreply@brushposters.com>',
+        to: id,
+        subject: 'Reset your Brush password',
+        html: `<p>Hi${user.name ? ' ' + user.name : ''},</p><p>Click below to reset your Brush account password. This link expires in 30 minutes.</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>If you didn't request this, you can safely ignore this email.</p>`,
+        text: `Reset your Brush account password: ${resetUrl}\n\nThis link expires in 30 minutes. If you didn't request this, you can ignore this email.`
+      }).catch(err => console.error('Failed to send password reset email:', err));
+    }
+    res.json(genericResponse);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
+});
+
+// Step 2: the actual reset, gated on the emailed token rather than a
+// caller-supplied id, so knowing someone's login id is no longer enough to
+// take over their account.
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ error: 'Reset token and new password required' });
+
+    const entry = passwordResetTokens.get(token);
+    if (!entry || entry.expiresAt < Date.now()) {
+      passwordResetTokens.delete(token);
+      return res.status(400).json({ error: 'This reset link is invalid or has expired. Please request a new one.' });
     }
 
     const hash = crypto.createHash('sha256').update(newPassword).digest('hex');
-    await usersRef.updateOne({ _id: id }, { $set: { passwordHash: hash } });
+    await usersRef.updateOne({ _id: entry.userId }, { $set: { passwordHash: hash } });
+    passwordResetTokens.delete(token);
 
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
@@ -186,7 +330,32 @@ app.post('/api/auth/reset-password', async (req, res) => {
   }
 });
 
-app.get('/api/auth/profile/:id', async (req, res) => {
+// Change password from within the account (requires a live session AND the
+// current password) - distinct from the forgot-password flow above.
+app.post('/api/auth/change-password', requireUser, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Current and new password required' });
+
+    const user = await usersRef.findOne({ _id: req.userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const currentHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
+    if (currentHash !== user.passwordHash) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+    await usersRef.updateOne({ _id: req.userId }, { $set: { passwordHash: newHash } });
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
+app.get('/api/auth/profile/:id', requireUser, requireOwnUser, async (req, res) => {
   try {
     const user = await usersRef.findOne({ _id: req.params.id });
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -199,7 +368,7 @@ app.get('/api/auth/profile/:id', async (req, res) => {
   }
 });
 
-app.put('/api/auth/profile/:id', async (req, res) => {
+app.put('/api/auth/profile/:id', requireUser, requireOwnUser, async (req, res) => {
   try {
     const { name, phone, address } = req.body;
     await usersRef.updateOne({ _id: req.params.id }, {
@@ -217,7 +386,7 @@ app.put('/api/auth/profile/:id', async (req, res) => {
   }
 });
 
-app.get('/api/orders/user/:id', async (req, res) => {
+app.get('/api/orders/user/:id', requireUser, requireOwnUser, async (req, res) => {
   try {
     const docs = await ordersRef.find({ userId: req.params.id }).toArray();
     const orders = docs.map(d => ({ id: d._id, ...stripId(d) }));
@@ -376,7 +545,13 @@ app.post('/api/orders', async (req, res) => {
     const discount = subtotal > 1000 ? subtotal * 0.1 : 0;
     const total = subtotal + shipping - discount;
 
-    const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+    // Order lookup (order-confirmation page, invoice, status emails) is
+    // unauthenticated by design - guest checkout has no account to check
+    // ownership against, so the order ID itself is the access credential,
+    // same as Amazon/Flipkart guest tracking links. It must therefore be
+    // unguessable, not just unique - crypto-random, not a 4-digit counter.
+    const orderId = 'ORD-' + crypto.randomBytes(6).toString('hex').toUpperCase();
+    const invoiceNumber = await getNextInvoiceNumber();
     const now = new Date();
     const estimatedDelivery = new Date(now.setDate(now.getDate() + 5 + Math.floor(Math.random() * 3))); // 5-7 days
 
@@ -384,6 +559,7 @@ app.post('/api/orders', async (req, res) => {
       _id: orderId,
       id: orderId,
       orderId: orderId,
+      invoiceNumber,
       userId: userId || null,
       customer,
       items: enrichedItems,
@@ -414,6 +590,10 @@ app.post('/api/orders', async (req, res) => {
     responseOrder.createdAt = order.createdAt.toISOString();
 
     res.status(201).json({ order: responseOrder });
+
+    // Fire-and-forget: don't make the customer wait on an SMTP round trip
+    // to see their order confirmation page.
+    sendOrderEmail(order);
   } catch (error) {
     console.error('Order creation error:', error);
     res.status(500).json({ error: 'Failed to create order' });
@@ -422,7 +602,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-app.get('/api/orders/:orderId', async (req, res) => {
+app.get('/api/orders/:orderId', orderLookupLimiter, async (req, res) => {
   try {
     const order = await ordersRef.findOne({ _id: req.params.orderId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
@@ -461,130 +641,19 @@ app.post('/api/orders/:orderId/cancel', async (req, res) => {
   }
 });
 
-app.get('/api/orders/:orderId/invoice', async (req, res) => {
+app.get('/api/orders/:orderId/invoice', orderLookupLimiter, async (req, res) => {
   try {
     const order = await ordersRef.findOne({ _id: req.params.orderId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
     const pdfDoc = new PDFDocument({ size: 'A4', margin: 50 });
 
-    const filename = `invoice-${order.orderId}.pdf`;
+    const filename = `invoice-${order.invoiceNumber || order.orderId}.pdf`;
     res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
     res.setHeader('Content-type', 'application/pdf');
 
     pdfDoc.pipe(res);
-
-    // Header
-    pdfDoc.fontSize(36).font('Helvetica-Bold').fillColor('#2d3748').text('Brush', 50, 50, { continued: true }).fillColor('#dcff80').text('.', { continued: false });
-    pdfDoc.fontSize(24).fillColor('#1a202c').text('Invoice', 400, 55, { align: 'right' });
-
-    // From & Invoice Meta
-    pdfDoc.fontSize(10).fillColor('#4a5568');
-    pdfDoc.text('From:', 50, 110, { continued: true }).font('Helvetica-Bold').text('\nBrush.', { continued: false }).font('Helvetica');
-    pdfDoc.text('Suite 1A-204');
-    pdfDoc.text('123 Creative Street');
-    pdfDoc.text('Patna, Bihar 800001');
-    pdfDoc.text('admin@brush.ind.in');
-
-    const metaTop = 110;
-    const rightCol = 350;
-
-    pdfDoc.rect(rightCol, metaTop, 200, 100).strokeColor('#cbd5e0').stroke();
-    pdfDoc.moveTo(rightCol, metaTop + 20).lineTo(rightCol + 200, metaTop + 20).stroke();
-    pdfDoc.moveTo(rightCol, metaTop + 40).lineTo(rightCol + 200, metaTop + 40).stroke();
-    pdfDoc.moveTo(rightCol, metaTop + 60).lineTo(rightCol + 200, metaTop + 60).stroke();
-    pdfDoc.moveTo(rightCol, metaTop + 80).lineTo(rightCol + 200, metaTop + 80).stroke();
-    pdfDoc.moveTo(rightCol + 85, metaTop).lineTo(rightCol + 85, metaTop + 100).stroke();
-
-    pdfDoc.fillColor('#2d3748').font('Helvetica-Bold').text('Invoice Number', rightCol + 5, metaTop + 6);
-    pdfDoc.font('Helvetica').text(order.orderId, rightCol + 90, metaTop + 6);
-
-    pdfDoc.font('Helvetica-Bold').text('Order Number', rightCol + 5, metaTop + 26);
-    pdfDoc.font('Helvetica').text(order.orderId, rightCol + 90, metaTop + 26);
-
-    const invoiceDate = new Date(order.createdAt instanceof Date ? order.createdAt : (order.createdAt || Date.now()));
-    pdfDoc.font('Helvetica-Bold').text('Invoice Date', rightCol + 5, metaTop + 46);
-    pdfDoc.font('Helvetica').text(invoiceDate.toLocaleDateString(), rightCol + 90, metaTop + 46);
-
-    pdfDoc.font('Helvetica-Bold').text('Due Date', rightCol + 5, metaTop + 66);
-    pdfDoc.font('Helvetica').text(invoiceDate.toLocaleDateString(), rightCol + 90, metaTop + 66);
-
-    pdfDoc.font('Helvetica-Bold').text('Total Due', rightCol + 5, metaTop + 86);
-    pdfDoc.font('Helvetica-Bold').text('Rs. ' + order.total.toFixed(2), rightCol + 90, metaTop + 86);
-
-    // To
-    pdfDoc.font('Helvetica-Bold').text('To:', 50, 210);
-    pdfDoc.font('Helvetica').text(order.customer.name);
-    pdfDoc.text(order.customer.address);
-    pdfDoc.text(`${order.customer.city}, ${order.customer.state} ${order.customer.pincode}`);
-    pdfDoc.text(order.customer.email);
-
-    // Items Table
-    const tableTop = 290;
-
-    pdfDoc.rect(50, tableTop, 500, 20).fillAndStroke('#f7fafc', '#cbd5e0');
-    pdfDoc.fillColor('#2d3748').font('Helvetica-Bold');
-    pdfDoc.text('Qty', 60, tableTop + 5);
-    pdfDoc.text('Service/Product', 100, tableTop + 5);
-    pdfDoc.text('Rate/Price', 330, tableTop + 5, { width: 70, align: 'right' });
-    pdfDoc.text('Adjust', 410, tableTop + 5, { width: 50, align: 'right' });
-    pdfDoc.text('Sub Total', 470, tableTop + 5, { width: 70, align: 'right' });
-
-    let y = tableTop + 25;
-    pdfDoc.font('Helvetica');
-
-    order.items.forEach(item => {
-      pdfDoc.text(item.quantity.toString(), 60, y + 5);
-      pdfDoc.font('Helvetica-Bold').text(item.name, 100, y + 5);
-      pdfDoc.font('Helvetica').fillColor('#718096').text(`Size: ${item.size} | Paper: ${item.gsm} GSM`, 100, y + 17);
-      pdfDoc.fillColor('#2d3748').text('Rs. ' + item.price.toFixed(2), 330, y + 5, { width: 70, align: 'right' });
-      pdfDoc.text('0.00%', 410, y + 5, { width: 50, align: 'right' });
-      pdfDoc.text('Rs. ' + item.subtotal.toFixed(2), 470, y + 5, { width: 70, align: 'right' });
-
-      pdfDoc.moveTo(50, y + 35).lineTo(550, y + 35).strokeColor('#e2e8f0').stroke();
-      y += 35;
-    });
-
-    // Totals Table (right aligned, underneath items table)
-    const summaryTop = y + 10;
-    pdfDoc.rect(330, summaryTop - 5, 220, 65).strokeColor('#cbd5e0').stroke();
-    pdfDoc.moveTo(330, summaryTop + 15).lineTo(550, summaryTop + 15).stroke();
-    pdfDoc.moveTo(330, summaryTop + 35).lineTo(550, summaryTop + 35).stroke();
-    pdfDoc.moveTo(430, summaryTop - 5).lineTo(430, summaryTop + 60).stroke();
-
-    pdfDoc.font('Helvetica').text('Sub Total', 340, summaryTop, { width: 80 });
-    pdfDoc.font('Helvetica').text('Rs. ' + order.subtotal.toFixed(2), 440, summaryTop, { width: 100, align: 'right' });
-
-    pdfDoc.font('Helvetica').text('Shipping', 340, summaryTop + 20, { width: 80 });
-    pdfDoc.font('Helvetica').text('Rs. ' + order.shipping.toFixed(2), 440, summaryTop + 20, { width: 100, align: 'right' });
-
-    pdfDoc.font('Helvetica-Bold').text('Total', 340, summaryTop + 40, { width: 80 });
-    pdfDoc.font('Helvetica-Bold').text('Rs. ' + order.total.toFixed(2), 440, summaryTop + 40, { width: 100, align: 'right' });
-
-    // Watermark "PAID"
-    if (order.paymentMethod !== 'cod') {
-      pdfDoc.save()
-            .translate(280, 400)
-            .rotate(-30)
-            .fontSize(100)
-            .fillColor('#e2e8f0')
-            .fillOpacity(0.3)
-            .text('PAID', 0, 0, { align: 'center' })
-            .restore();
-    }
-
-    // Bottom bank details
-    pdfDoc.fontSize(10).fillColor('#4a5568').font('Helvetica');
-    pdfDoc.text('Brush Bank', 50, summaryTop);
-    pdfDoc.text('ACC # 1234 1234');
-    pdfDoc.text('IFSC # HDFC0001234');
-
-    // Footer
-    pdfDoc.fontSize(9).fillColor('#718096');
-    pdfDoc.text('Payment is due within 30 days from date of invoice. Late payment is subject to fees of 5% per month.', 50, 715);
-    pdfDoc.text('Thanks for choosing Brush | admin@brush.ind.in', 50, 730);
-    pdfDoc.text('Page 1/1', 50, 745);
-
+    drawInvoice(pdfDoc, order);
     pdfDoc.end();
   } catch (error) {
     console.error('Invoice generation error:', error);
@@ -879,10 +948,30 @@ app.patch('/api/orders/:orderId/status', requireAdmin, requireSuperAdmin, async 
     if (!order) return res.status(404).json({ error: 'Order not found' });
     const oldStatus = order.status;
     await ordersRef.updateOne({ _id: req.params.orderId }, { $set: { status } });
+    order.status = status;
+    const emailResult = await sendOrderEmail(order);
     logAdminActivity(req.adminSession.username, 'Update Order Status', `Changed order ${req.params.orderId} status from ${oldStatus} to ${status}`);
-    res.json({ message: 'Order status updated successfully' });
+    res.json({
+      message: 'Order status updated successfully',
+      emailSent: emailResult.sent,
+      emailError: emailResult.sent ? undefined : emailResult.reason
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update order status' });
+  }
+});
+
+app.post('/api/orders/:orderId/send-update', requireAdmin, async (req, res) => {
+  try {
+    const order = await ordersRef.findOne({ _id: req.params.orderId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    const emailResult = await sendOrderEmail(order, true);
+    if (!emailResult.sent) {
+      return res.status(502).json({ error: `Failed to send email: ${emailResult.reason}` });
+    }
+    res.json({ message: 'Order update email sent successfully', to: emailResult.to });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send order update' });
   }
 });
 
@@ -901,6 +990,7 @@ async function start() {
   usersRef = db.collection('users');
   adminsRef = db.collection('admins');
   adminLogsRef = db.collection('admin_logs');
+  countersRef = db.collection('counters');
   console.log('✅ Connected to MongoDB');
 
   app.listen(port, () => {

@@ -232,6 +232,30 @@
       letter-spacing: 0.5px;
     }
 
+    .status-timeline.cancelled-banner {
+      justify-content: center;
+      gap: 12px;
+      background: rgba(var(--sale-red-rgb), 0.08);
+      border: 1px solid var(--sale-red);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .status-timeline.cancelled-banner::before { content: none; }
+
+    .status-timeline.cancelled-banner i {
+      color: var(--sale-red);
+      font-size: 1.3rem;
+    }
+
+    .status-timeline.cancelled-banner span {
+      color: var(--sale-red);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.85rem;
+    }
+
     /* Actions */
     .confirmation-actions {
       display: flex;
@@ -364,6 +388,35 @@
           'card': 'Credit/Debit Card'
         }[order.paymentMethod] || order.paymentMethod;
 
+        const STATUS_STEPS = ['confirmed', 'packed', 'shipped', 'delivered'];
+        const statusIndex = STATUS_STEPS.indexOf(order.status);
+
+        const timelineHtml = order.status === 'cancelled' ? `
+          <div class="status-timeline cancelled-banner">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>This order was cancelled</span>
+          </div>
+        ` : `
+          <div class="status-timeline">
+            <div class="status-step ${statusIndex >= 0 ? 'active' : ''}">
+              <div class="status-dot"><i class="fa-solid fa-check"></i></div>
+              <span class="status-label">Confirmed</span>
+            </div>
+            <div class="status-step ${statusIndex >= 1 ? 'active' : ''}">
+              <div class="status-dot"><i class="fa-solid fa-box"></i></div>
+              <span class="status-label">Packed</span>
+            </div>
+            <div class="status-step ${statusIndex >= 2 ? 'active' : ''}">
+              <div class="status-dot"><i class="fa-solid fa-truck"></i></div>
+              <span class="status-label">Shipped</span>
+            </div>
+            <div class="status-step ${statusIndex >= 3 ? 'active' : ''}">
+              <div class="status-dot"><i class="fa-solid fa-house"></i></div>
+              <span class="status-label">Delivered</span>
+            </div>
+          </div>
+        `;
+
         card.innerHTML = `
           <div class="confirmation-icon"><i class="fa-solid fa-check"></i></div>
           <h1>Order Confirmed!</h1>
@@ -374,24 +427,7 @@
             <span class="id">${order.orderId}</span>
           </div>
 
-          <div class="status-timeline">
-            <div class="status-step active">
-              <div class="status-dot"><i class="fa-solid fa-check"></i></div>
-              <span class="status-label">Confirmed</span>
-            </div>
-            <div class="status-step">
-              <div class="status-dot"><i class="fa-solid fa-box"></i></div>
-              <span class="status-label">Packed</span>
-            </div>
-            <div class="status-step">
-              <div class="status-dot"><i class="fa-solid fa-truck"></i></div>
-              <span class="status-label">Shipped</span>
-            </div>
-            <div class="status-step">
-              <div class="status-dot"><i class="fa-solid fa-house"></i></div>
-              <span class="status-label">Delivered</span>
-            </div>
-          </div>
+          ${timelineHtml}
 
           <div class="order-details">
             <div class="detail-section">
@@ -457,7 +493,7 @@
               </div>
               <div class="detail-row">
                 <span class="label">Status</span>
-                <span class="value" style="color:var(--success);text-transform:capitalize;">${order.status}</span>
+                <span class="value" style="color:${order.status === 'cancelled' ? 'var(--sale-red)' : 'var(--success)'};text-transform:capitalize;">${order.status}</span>
               </div>
               <div class="detail-row">
                 <span class="label">Est. Delivery</span>

@@ -1253,35 +1253,29 @@ document.addEventListener('DOMContentLoaded', () => {
     resetForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = document.getElementById('reset-id').value;
-      const newPassword = document.getElementById('reset-password').value;
       const err = document.getElementById('reset-error');
       const btn = resetForm.querySelector('button');
-      
-      btn.textContent = 'Updating...';
+
+      btn.textContent = 'Sending...';
       btn.disabled = true;
-      
+
       try {
-        const res = await fetch(`${API_BASE}/auth/reset-password`, {
+        const res = await fetch(`${API_BASE}/auth/forgot-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, newPassword })
+          body: JSON.stringify({ id })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to reset password');
-        
+        if (!res.ok) throw new Error(data.error || 'Failed to send reset link');
+
         err.style.color = 'var(--success)';
-        err.textContent = 'Password updated successfully! Please log in.';
-        setTimeout(() => {
-          backToLoginLink.click();
-          err.textContent = '';
-          err.style.color = 'var(--sale-red)';
-          resetForm.reset();
-        }, 2000);
+        err.textContent = 'If an account exists for that ID, a password reset link has been emailed to it.';
+        resetForm.reset();
       } catch (error) {
         err.style.color = 'var(--sale-red)';
         err.textContent = error.message;
       } finally {
-        btn.textContent = 'Update Password';
+        btn.textContent = 'Send Reset Link';
         btn.disabled = false;
       }
     });
@@ -1300,6 +1294,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
+      const user = JSON.parse(localStorage.getItem('brushUser') || 'null');
+      if (user && user.token) {
+        fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        }).catch(() => {}); // best-effort - local logout proceeds regardless
+      }
       localStorage.removeItem('brushUser');
       closeProfileModal();
       showToast('Logged out');
@@ -1340,7 +1341,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     orderList.innerHTML = '<p>Loading orders...</p>';
     try {
-      const res = await fetch(`${API_BASE}/orders/user/${user.userId}`);
+      const res = await fetch(`${API_BASE}/orders/user/${user.userId}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
       if(res.ok) {
         const orders = await res.json();
         if(orders.length === 0) {
@@ -1383,7 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const res = await fetch(`${API_BASE}/auth/profile/${user.userId}`, {
           method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
+          headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}`},
           body: JSON.stringify({name, phone, address})
         });
         if(res.ok) {
@@ -1411,18 +1414,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentUser = JSON.parse(localStorage.getItem('brushUser'));
       if (!currentUser) return;
       
+      const currentPassword = document.getElementById('current-profile-password').value;
       const newPassword = document.getElementById('new-profile-password').value;
       const msg = document.getElementById('change-password-msg');
       const btn = changePasswordForm.querySelector('button');
-      
+
       btn.textContent = 'Updating...';
       btn.disabled = true;
-      
+
       try {
-        const res = await fetch(`${API_BASE}/auth/reset-password`, {
+        const res = await fetch(`${API_BASE}/auth/change-password`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentUser.userId, newPassword })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUser.token}` },
+          body: JSON.stringify({ currentPassword, newPassword })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to update password');

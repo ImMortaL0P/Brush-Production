@@ -1044,15 +1044,12 @@
     <!-- Reset Password Form -->
     <form class="auth-form" id="reset-form">
       <h3>Reset Password</h3>
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px;">Enter the email you signed up with and we'll send you a link to reset your password.</p>
       <div class="form-group">
         <label for="reset-id">Email or Phone</label>
         <input type="text" id="reset-id" required>
       </div>
-      <div class="form-group">
-        <label for="reset-password">New Password</label>
-        <input type="password" id="reset-password" autocomplete="new-password" required>
-      </div>
-      <button type="submit" class="auth-submit-btn">Update Password</button>
+      <button type="submit" class="auth-submit-btn">Send Reset Link</button>
       <div class="auth-error" id="reset-error"></div>
       <div style="text-align: center; margin-top: 15px;">
         <a href="javascript:void(0)" id="back-to-login-link" style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;">Back to Log In</a>
@@ -1117,6 +1114,10 @@
       
       <form id="change-password-form" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
         <h4>Change Password</h4>
+        <div class="form-group">
+          <label for="current-profile-password">Current Password</label>
+          <input type="password" id="current-profile-password" autocomplete="current-password" required>
+        </div>
         <div class="form-group">
           <label for="new-profile-password">New Password</label>
           <input type="password" id="new-profile-password" autocomplete="new-password" required>
