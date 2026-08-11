@@ -85,10 +85,17 @@ const app = express();
 // wasn't told to trust. `1` trusts exactly one hop, matching Render's setup.
 app.set('trust proxy', 1);
 let activeAdminToken = null; // Legacy single token
-const activeAdminTokens = new Map(); // Store tokens and roles in memory
-const activeUserTokens = new Map(); // token -> userId, issued at customer login/signup
+const activeAdminTokens = new Map(); // token -> { username, role, expiresAt }
+const activeUserTokens = new Map(); // token -> { userId, expiresAt }
 const passwordResetTokens = new Map(); // token -> { userId, expiresAt }
 const port = process.env.PORT || 5500;
+
+// Sessions previously never expired - a token stayed valid until the
+// process restarted, so a leaked admin or user token was a standing
+// compromise with no time limit. Admin gets the shorter window since
+// that's the higher-privilege account.
+const ADMIN_SESSION_MS = 12 * 60 * 60 * 1000; // 12 hours
+const USER_SESSION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // MongoDB interprets a query field set to an object (e.g. `{"$ne": null}`)
 // as an operator, not a literal match - so any field that flows from
@@ -127,7 +134,7 @@ async function verifyPassword(password, storedHash) {
 
 function issueUserToken(userId) {
   const token = crypto.randomBytes(24).toString('hex');
-  activeUserTokens.set(token, userId);
+  activeUserTokens.set(token, { userId, expiresAt: Date.now() + USER_SESSION_MS });
   return token;
 }
 
@@ -137,9 +144,13 @@ const requireUser = (req, res, next) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Please log in.' });
   }
-  const userId = activeUserTokens.get(authHeader.split(' ')[1]);
-  if (!userId) return res.status(401).json({ error: 'Session expired. Please log in again.' });
-  req.userId = userId;
+  const token = authHeader.split(' ')[1];
+  const session = activeUserTokens.get(token);
+  if (!session || session.expiresAt < Date.now()) {
+    activeUserTokens.delete(token);
+    return res.status(401).json({ error: 'Session expired. Please log in again.' });
+  }
+  req.userId = session.userId;
   next();
 };
 
@@ -742,7 +753,7 @@ app.post('/api/admin/login', authLimiter, async (req, res) => {
       // Generate a simple session token
       const token = crypto.randomBytes(16).toString('hex');
       const role = adminData.role || 'superadmin';
-      activeAdminTokens.set(token, { username, role });
+      activeAdminTokens.set(token, { username, role, expiresAt: Date.now() + ADMIN_SESSION_MS });
       res.json({ success: true, token, role, username });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
@@ -762,7 +773,8 @@ const requireAdmin = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   const session = activeAdminTokens.get(token);
 
-  if (!session) {
+  if (!session || session.expiresAt < Date.now()) {
+    activeAdminTokens.delete(token);
     if (activeAdminToken && token === activeAdminToken) {
       req.adminSession = { username: 'legacy', role: 'superadmin' };
       return next();
