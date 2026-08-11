@@ -8,12 +8,15 @@ initializeApp({ credential: cert(serviceAccount) });
 const db = getFirestore();
 
 async function setupAdmin() {
-  const username = 'admin12';
-  const password = 'Moon404@';
-  
-  // Basic SHA-256 hash for security
+  const username = process.env.SETUP_ADMIN_USERNAME;
+  const password = process.env.SETUP_ADMIN_PASSWORD;
+  if (!username || !password) {
+    console.error('Set SETUP_ADMIN_USERNAME and SETUP_ADMIN_PASSWORD before running this script.');
+    process.exit(1);
+  }
+
   const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-  
+
   const adminsRef = db.collection('admins');
   await adminsRef.doc(username).set({
     username: username,

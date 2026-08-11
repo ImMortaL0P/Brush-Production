@@ -13,9 +13,16 @@ initializeApp({
 const db = getFirestore();
 
 async function main() {
-  const stockerHash = crypto.createHash('sha256').update('stocker#7').digest('hex');
-  const mangalamHash = crypto.createHash('sha256').update('Kukku404#').digest('hex');
-  const wajihaHash = crypto.createHash('sha256').update('Wajiha@24').digest('hex');
+  const required = ['STOCKER_PASSWORD', 'MANGALAM_PASSWORD', 'WAJIHA_PASSWORD'];
+  const missing = required.filter((k) => !process.env[k]);
+  if (missing.length) {
+    console.error(`Set ${missing.join(', ')} before running this script.`);
+    process.exit(1);
+  }
+
+  const stockerHash = crypto.createHash('sha256').update(process.env.STOCKER_PASSWORD).digest('hex');
+  const mangalamHash = crypto.createHash('sha256').update(process.env.MANGALAM_PASSWORD).digest('hex');
+  const wajihaHash = crypto.createHash('sha256').update(process.env.WAJIHA_PASSWORD).digest('hex');
 
   await db.collection('admins').doc('stocker').set({
     username: 'stocker',
