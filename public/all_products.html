@@ -217,7 +217,55 @@
       cursor: not-allowed;
       border: 1px solid var(--border-color);
     }
-    
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .page-nav-btn,
+    .page-num-btn {
+      min-width: 40px;
+      height: 40px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .page-nav-btn:hover:not(:disabled),
+    .page-num-btn:hover:not(.active) {
+      border-color: var(--accent);
+    }
+
+    .page-nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .page-num-btn.active {
+      background: var(--accent);
+      color: var(--on-accent);
+      border-color: var(--accent);
+    }
+
+    .page-ellipsis {
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+
     @media (max-width: 992px) {
       .all-products-container {
         grid-template-columns: 1fr;
@@ -328,6 +376,10 @@
       <div class="list-items-container" id="list-items-container">
         <!-- Injected via JS -->
       </div>
+
+      <nav class="pagination-controls" id="pagination-controls" aria-label="Product pages">
+        <!-- Injected via JS -->
+      </nav>
     </main>
   </div>
 
@@ -626,39 +678,101 @@
   <script src="cart.js"></script>
   <script>
     let allProductsData = [];
+    // A 170-item catalog rendered as one single-column list was ~60,000px
+    // of scroll with no way to jump ahead — paginating client-side (the
+    // full set is already fetched in one call) keeps each page's DOM/paint
+    // cost bounded without needing a second API round trip per page.
+    const PAGE_SIZE = 24;
+    let currentFiltered = [];
+    let currentPage = 1;
 
     function applyFilters() {
       try {
         const searchInput = document.getElementById('search-input');
         const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
         const checkedCats = Array.from(document.querySelectorAll('.cat-cb:checked')).map(cb => cb.value.toLowerCase());
-        
+
         const filtered = allProductsData.filter(p => {
           const cat = p.category ? p.category.toLowerCase() : '';
           const name = p.name ? p.name.toLowerCase() : '';
           const desc = p.description ? p.description.toLowerCase() : '';
           const keywordsStr = p.keywords ? p.keywords.toLowerCase() : '';
-          
+
           // Keyword match
           const matchesKeyword = !keyword || (
-            name.includes(keyword) || 
-            cat.includes(keyword) || 
+            name.includes(keyword) ||
+            cat.includes(keyword) ||
             desc.includes(keyword) ||
             keywordsStr.includes(keyword)
           );
-          
+
           // Category match - check name and desc too because the DB currently has all categories set to 'Posters'
-          const matchesCat = checkedCats.length === 0 || checkedCats.some(c => 
+          const matchesCat = checkedCats.length === 0 || checkedCats.some(c =>
             cat.includes(c) || name.includes(c) || desc.includes(c) || keywordsStr.includes(c)
           );
-          
+
           return matchesKeyword && matchesCat;
         });
-        
-        renderProducts(filtered);
+
+        currentFiltered = filtered;
+        currentPage = 1;
+        renderPage();
       } catch (err) {
         console.error("Filter error:", err);
       }
+    }
+
+    function renderPage() {
+      const totalPages = Math.max(1, Math.ceil(currentFiltered.length / PAGE_SIZE));
+      currentPage = Math.min(Math.max(1, currentPage), totalPages);
+      const start = (currentPage - 1) * PAGE_SIZE;
+      renderProducts(currentFiltered.slice(start, start + PAGE_SIZE));
+      renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+      const el = document.getElementById('pagination-controls');
+      if (!el) return;
+      if (totalPages <= 1) {
+        el.innerHTML = '';
+        return;
+      }
+
+      // Windowed page numbers (current ± 2) instead of all N buttons, so
+      // this stays usable at any catalog size instead of just this one.
+      const pages = [];
+      for (let p = 1; p <= totalPages; p++) {
+        if (p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2) pages.push(p);
+        else if (pages[pages.length - 1] !== '…') pages.push('…');
+      }
+
+      el.innerHTML = `
+        <button class="page-nav-btn" id="page-prev" aria-label="Previous page" ${currentPage === 1 ? 'disabled' : ''}>
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        ${pages.map(p => p === '…'
+          ? `<span class="page-ellipsis">…</span>`
+          : `<button class="page-num-btn ${p === currentPage ? 'active' : ''}" data-page="${p}" aria-label="Page ${p}" ${p === currentPage ? 'aria-current="page"' : ''}>${p}</button>`
+        ).join('')}
+        <button class="page-nav-btn" id="page-next" aria-label="Next page" ${currentPage === totalPages ? 'disabled' : ''}>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      `;
+
+      document.getElementById('page-prev')?.addEventListener('click', () => { currentPage--; renderPage(); scrollToListTop(); });
+      document.getElementById('page-next')?.addEventListener('click', () => { currentPage++; renderPage(); scrollToListTop(); });
+      el.querySelectorAll('.page-num-btn').forEach(btn => {
+        btn.addEventListener('click', () => { currentPage = parseInt(btn.dataset.page, 10); renderPage(); scrollToListTop(); });
+      });
+    }
+
+    function scrollToListTop() {
+      const header = document.querySelector('.list-view-header');
+      if (!header) return;
+      const navHeight = document.getElementById('navbar')?.offsetHeight || 0;
+      const targetPos = header.getBoundingClientRect().top + window.scrollY - navHeight - 20;
+      if (window.lenis) window.lenis.scrollTo(targetPos);
+      else window.scrollTo({ top: targetPos, behavior: 'smooth' });
     }
     
     // Search Functionality
@@ -707,8 +821,11 @@
     
     function renderProducts(products) {
       const container = document.getElementById('list-items-container');
-      document.getElementById('results-count').textContent = `Showing ${products.length} results`;
-      
+      const total = currentFiltered.length;
+      document.getElementById('results-count').textContent = total === products.length
+        ? `Showing ${total} results`
+        : `Showing ${products.length} of ${total} results`;
+
       if (products.length === 0) {
         container.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);"><i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 1rem;"></i><p>No products found matching your search.</p></div>';
         return;
