@@ -207,7 +207,25 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false
 }));
-app.use(cors());
+// Was app.use(cors()) - reflected any Access-Control-Allow-Origin. Auth
+// here is Bearer-token based (no cookies), so this was never classic
+// CSRF-exploitable, but an open CORS policy still lets any website script
+// requests against this API on a visitor's behalf (scraping at scale,
+// riding a visitor's copy-pasted token if one ever leaked into a script,
+// etc.) with no way to tell that traffic apart from the real frontend.
+// Locked to the actual deployed origin plus local dev.
+const ALLOWED_ORIGINS = [
+  'https://immortal0p.github.io',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500'
+];
+app.use(cors({
+  origin(origin, callback) {
+    // No Origin header at all (curl, server-to-server, same-origin) - allow.
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  }
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
