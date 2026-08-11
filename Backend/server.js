@@ -14,6 +14,7 @@ const { getStorage } = require('firebase-admin/storage');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const Razorpay = require('razorpay');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
@@ -95,6 +96,34 @@ const port = process.env.PORT || 5500;
 // actual string first, or a crafted JSON body could bypass the intended
 // lookup entirely (classic NoSQL injection).
 const isNonEmptyString = (v) => typeof v === 'string' && v.length > 0;
+
+// Password hashing: bcrypt for anything written from here on, with
+// backward-compatible verification against the plain-SHA256 hashes that
+// were stored before this change. SHA256 is a fast hash - designed for
+// speed, which is exactly wrong for passwords, since it makes brute-forcing
+// a leaked hash cheap. bcrypt is deliberately slow and salted per-hash.
+//
+// There's no migration script - existing rows still hold sha256 hex
+// digests. hashPassword() is for every NEW hash going forward.
+// verifyPassword() checks bcrypt hashes directly, but falls back to the
+// legacy sha256 comparison when the stored hash isn't a bcrypt hash, and
+// reports that back via needsRehash so the caller can transparently
+// upgrade the stored hash to bcrypt on that successful login - no forced
+// password reset, no downtime, existing users are migrated lazily as they
+// log in.
+const isBcryptHash = (hash) => typeof hash === 'string' && /^\$2[aby]\$/.test(hash);
+const legacySha256 = (password) => crypto.createHash('sha256').update(password).digest('hex');
+
+async function hashPassword(password) {
+  return bcrypt.hash(password, 12);
+}
+
+async function verifyPassword(password, storedHash) {
+  if (isBcryptHash(storedHash)) {
+    return { valid: await bcrypt.compare(password, storedHash), needsRehash: false };
+  }
+  return { valid: legacySha256(password) === storedHash, needsRehash: true };
+}
 
 function issueUserToken(userId) {
   const token = crypto.randomBytes(24).toString('hex');
@@ -248,7 +277,7 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    const hash = crypto.createHash('sha256').update(password).digest('hex');
+    const hash = await hashPassword(password);
 
     const newUser = {
       _id: id,
@@ -279,10 +308,12 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const hash = crypto.createHash('sha256').update(password).digest('hex');
-
-    if (user.passwordHash !== hash) {
+    const { valid, needsRehash } = await verifyPassword(password, user.passwordHash);
+    if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    if (needsRehash) {
+      await usersRef.updateOne({ _id: id }, { $set: { passwordHash: await hashPassword(password) } });
     }
 
     const token = issueUserToken(id);
@@ -345,8 +376,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'This reset link is invalid or has expired. Please request a new one.' });
     }
 
-    const hash = crypto.createHash('sha256').update(newPassword).digest('hex');
-    await usersRef.updateOne({ _id: entry.userId }, { $set: { passwordHash: hash } });
+    await usersRef.updateOne({ _id: entry.userId }, { $set: { passwordHash: await hashPassword(newPassword) } });
     passwordResetTokens.delete(token);
 
     res.json({ success: true, message: 'Password updated successfully' });
@@ -366,8 +396,8 @@ app.post('/api/auth/change-password', requireUser, async (req, res) => {
     const user = await usersRef.findOne({ _id: req.userId });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const currentHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
-    if (currentHash !== user.passwordHash) {
+    const { valid } = await verifyPassword(currentPassword, user.passwordHash);
+    if (!valid) {
       // 400, not 401: the session itself (Bearer token, checked by requireUser
       // above) is valid - only the current-password check failed. Keeping 401
       // reserved exclusively for "your session is invalid" lets the frontend
@@ -375,8 +405,7 @@ app.post('/api/auth/change-password', requireUser, async (req, res) => {
       return res.status(400).json({ error: 'Current password is incorrect' });
     }
 
-    const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
-    await usersRef.updateOne({ _id: req.userId }, { $set: { passwordHash: newHash } });
+    await usersRef.updateOne({ _id: req.userId }, { $set: { passwordHash: await hashPassword(newPassword) } });
 
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
@@ -704,9 +733,12 @@ app.post('/api/admin/login', authLimiter, async (req, res) => {
     const adminData = await adminsRef.findOne({ _id: username });
     if (!adminData) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const inputHash = crypto.createHash('sha256').update(password).digest('hex');
+    const { valid, needsRehash } = await verifyPassword(password, adminData.passwordHash);
 
-    if (adminData.passwordHash === inputHash) {
+    if (valid) {
+      if (needsRehash) {
+        await adminsRef.updateOne({ _id: username }, { $set: { passwordHash: await hashPassword(password) } });
+      }
       // Generate a simple session token
       const token = crypto.randomBytes(16).toString('hex');
       const role = adminData.role || 'superadmin';
