@@ -19,6 +19,7 @@ const Razorpay = require('razorpay');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 const { buildOrderStatusEmail } = require('./orderEmailTemplate');
 const { drawInvoice } = require('./invoiceTemplate');
 
@@ -164,6 +165,48 @@ const requireOwnUser = (req, res, next) => {
   next();
 };
 
+// CSP built from the site's actual external resource usage (checked every
+// public/*.html for src=/href=/fetch() targets) rather than a generic
+// template - a mismatched CSP just breaks the page silently, so it's only
+// worth shipping if it matches what's really loaded.
+//
+// 'unsafe-inline' stays in script-src and style-src: this is a vanilla-JS
+// site with real inline <script> blocks and inline style= attributes on
+// every page, not a bundled app. Dropping it would break the whole site,
+// not just tighten it - the other directives (frame-ancestors, object-src,
+// base-uri, the explicit external allowlist) still meaningfully shrink the
+// attack surface without that risk.
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://checkout.razorpay.com', 'https://cdnjs.cloudflare.com', 'https://kit.fontawesome.com', 'https://unpkg.com'],
+      // Separate from script-src: governs inline onclick="" etc attributes,
+      // which admin.html and index.html both use extensively. Helmet
+      // defaults this to 'none' independently of script-src's own
+      // 'unsafe-inline' - confirmed by actually running this config
+      // through a request before shipping it, not just assuming.
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
+      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'https://kit.fontawesome.com'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https://storage.googleapis.com'],
+      connectSrc: ["'self'", 'https://brush-production.onrender.com', 'https://checkout.razorpay.com', 'https://kit.fontawesome.com'],
+      frameSrc: ['https://checkout.razorpay.com'],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'self'"]
+    }
+  },
+  // Both left off rather than guessed at: Razorpay's checkout can involve
+  // a popup/redirect flow, and helmet's default Cross-Origin-Opener-Policy
+  // (same-origin) severs window.opener between this page and that popup,
+  // which would silently break payment completion if Razorpay's flow
+  // depends on it. Same caution for COEP and any third-party embed. Not
+  // worth the risk of a payment-flow regression I can't test live to
+  // verify - the CSP above is doing the real work in this phase.
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
