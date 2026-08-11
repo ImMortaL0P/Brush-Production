@@ -150,6 +150,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Close on Escape - same convention as the cart drawer's own Escape
+  // handler below; this one and the product modal's were missing it.
+  if (searchOverlay) {
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchOverlay.classList.contains('open')) {
+        searchOverlay.classList.remove('open');
+      }
+    });
+  }
+
   if (globalSearchForm) {
     globalSearchForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -984,6 +994,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeProductModal);
   if (productModalOverlay) productModalOverlay.addEventListener('click', closeProductModal);
 
+  // Close on Escape - same convention as the cart drawer's own Escape handler.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && productModal.classList.contains('open')) {
+      closeProductModal();
+    }
+  });
+
   function updateModalPrice() {
     if (!currentProduct) return;
     
@@ -1352,6 +1369,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const ordersCloseBtn = document.getElementById('orders-close-btn');
   if(ordersCloseBtn) ordersCloseBtn.addEventListener('click', closeOrdersModal);
   if(ordersModalOverlay) ordersModalOverlay.addEventListener('click', closeOrdersModal);
+
+  // Close on Escape - same convention as the cart drawer, search overlay,
+  // and product modal. None of these three had it either.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (authModal && authModal.classList.contains('open')) closeAuthModal();
+    if (profileModal && profileModal.classList.contains('open')) closeProfileModal();
+    if (ordersModal && ordersModal.classList.contains('open')) closeOrdersModal();
+  });
 
   async function openOrdersModal(user) {
     if(ordersModal) ordersModal.classList.add('open');
