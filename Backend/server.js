@@ -76,6 +76,13 @@ async function getNextInvoiceNumber() {
 }
 
 const app = express();
+// Render sits in front of this app as a reverse proxy, so the real client
+// IP arrives via X-Forwarded-For rather than the socket address. Without
+// this, express-rate-limit either keys every request off Render's proxy IP
+// (making the limiters useless - one shared bucket for all users) or, on
+// v8+, refuses the request outright when it sees a forwarded header it
+// wasn't told to trust. `1` trusts exactly one hop, matching Render's setup.
+app.set('trust proxy', 1);
 let activeAdminToken = null; // Legacy single token
 const activeAdminTokens = new Map(); // Store tokens and roles in memory
 const activeUserTokens = new Map(); // token -> userId, issued at customer login/signup
@@ -130,6 +137,18 @@ const orderLookupLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many order lookups from this device. Please try again later.' }
+});
+
+// Caps login/signup/password-reset attempts per IP so credentials can't be
+// brute-forced or credential-stuffed at scale. Applies to both customer and
+// admin auth - a compromised admin account is a much bigger blast radius
+// than a customer one, so it gets the same limiter, not a looser one.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many attempts from this device. Please try again later.' }
 });
 
 const razorpay = new Razorpay({
@@ -219,7 +238,7 @@ function stripId(doc) {
 // AUTH & USER ENDPOINTS
 // ==========================================
 
-app.post('/api/auth/signup', async (req, res) => {
+app.post('/api/auth/signup', authLimiter, async (req, res) => {
   try {
     const { id, password, name, phone, address } = req.body;
     if (!isNonEmptyString(id) || !isNonEmptyString(password)) return res.status(400).json({ error: 'ID and password required' });
@@ -250,7 +269,7 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     const { id, password } = req.body;
     if (!isNonEmptyString(id) || !isNonEmptyString(password)) return res.status(400).json({ error: 'ID and password required' });
@@ -285,7 +304,7 @@ app.post('/api/auth/logout', (req, res) => {
 // Step 1 of self-service password reset: never reveals whether an account
 // exists (same response either way). Only emails a link when the account's
 // id is an email address - phone-only accounts have no address to send to.
-app.post('/api/auth/forgot-password', async (req, res) => {
+app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
   try {
     const { id } = req.body;
     if (!isNonEmptyString(id)) return res.status(400).json({ error: 'ID required' });
@@ -677,7 +696,7 @@ app.get('/api/orders/:orderId/invoice', orderLookupLimiter, async (req, res) => 
 // --- ADMIN APIs ---
 
 // Admin Login
-app.post('/api/admin/login', async (req, res) => {
+app.post('/api/admin/login', authLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!isNonEmptyString(username) || !isNonEmptyString(password)) return res.status(400).json({ error: 'Username and password required' });
