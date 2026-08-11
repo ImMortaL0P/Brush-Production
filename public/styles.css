@@ -3245,6 +3245,15 @@ body.custom-cursor-active * {
   border: 1px solid var(--border);
   background: var(--bg-card);
   padding: 1.5rem;
+  /* The source JPG is a flat illustration on a solid white canvas (no
+     transparency), which in dark mode reads as a stray light panel dropped
+     into an otherwise dark, photographic page. multiply blends that white
+     canvas into --bg-card (white is the multiply identity, so it
+     disappears into whatever's behind it) while the illustration's dark
+     linework and color accents stay put — no new asset needed. In light
+     mode --bg-card is already a near-white cream, so multiply is a no-op
+     there and nothing changes. */
+  mix-blend-mode: multiply;
 }
 
 @media (max-width: 900px) {
