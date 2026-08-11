@@ -82,6 +82,13 @@ const activeUserTokens = new Map(); // token -> userId, issued at customer login
 const passwordResetTokens = new Map(); // token -> { userId, expiresAt }
 const port = process.env.PORT || 5500;
 
+// MongoDB interprets a query field set to an object (e.g. `{"$ne": null}`)
+// as an operator, not a literal match - so any field that flows from
+// req.body into a findOne()/query filter must be confirmed to be an
+// actual string first, or a crafted JSON body could bypass the intended
+// lookup entirely (classic NoSQL injection).
+const isNonEmptyString = (v) => typeof v === 'string' && v.length > 0;
+
 function issueUserToken(userId) {
   const token = crypto.randomBytes(24).toString('hex');
   activeUserTokens.set(token, userId);
@@ -215,7 +222,7 @@ function stripId(doc) {
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { id, password, name, phone, address } = req.body;
-    if (!id || !password) return res.status(400).json({ error: 'ID and password required' });
+    if (!isNonEmptyString(id) || !isNonEmptyString(password)) return res.status(400).json({ error: 'ID and password required' });
 
     const existing = await usersRef.findOne({ _id: id });
     if (existing) {
@@ -246,7 +253,7 @@ app.post('/api/auth/signup', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { id, password } = req.body;
-    if (!id || !password) return res.status(400).json({ error: 'ID and password required' });
+    if (!isNonEmptyString(id) || !isNonEmptyString(password)) return res.status(400).json({ error: 'ID and password required' });
 
     const user = await usersRef.findOne({ _id: id });
     if (!user) {
@@ -281,7 +288,7 @@ app.post('/api/auth/logout', (req, res) => {
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { id } = req.body;
-    if (!id) return res.status(400).json({ error: 'ID required' });
+    if (!isNonEmptyString(id)) return res.status(400).json({ error: 'ID required' });
 
     const genericResponse = { success: true, message: 'If an account exists for that ID and has an email on file, a reset link has been sent.' };
 
@@ -673,7 +680,7 @@ app.get('/api/orders/:orderId/invoice', orderLookupLimiter, async (req, res) => 
 app.post('/api/admin/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+    if (!isNonEmptyString(username) || !isNonEmptyString(password)) return res.status(400).json({ error: 'Username and password required' });
 
     const adminData = await adminsRef.findOne({ _id: username });
     if (!adminData) return res.status(401).json({ error: 'Invalid credentials' });
