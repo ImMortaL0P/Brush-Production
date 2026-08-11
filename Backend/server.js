@@ -187,10 +187,15 @@ app.use(helmet({
       // 'unsafe-inline' - confirmed by actually running this config
       // through a request before shipping it, not just assuming.
       scriptSrcAttr: ["'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
-      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'https://kit.fontawesome.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', 'https://ka-f.fontawesome.com'],
+      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'https://kit.fontawesome.com', 'https://ka-f.fontawesome.com'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https://storage.googleapis.com'],
-      connectSrc: ["'self'", 'https://brush-production.onrender.com', 'https://checkout.razorpay.com', 'https://kit.fontawesome.com'],
+      // The kit.fontawesome.com loader script fetches its actual CSS/font
+      // manifest from ka-f.fontawesome.com at runtime (confirmed via a live
+      // console check — every fetch to it was being silently blocked here,
+      // which is why every fa-* icon on the site was rendering as an empty
+      // circle/box: the glyph font never loaded, not a markup bug).
+      connectSrc: ["'self'", 'https://brush-production.onrender.com', 'https://checkout.razorpay.com', 'https://kit.fontawesome.com', 'https://ka-f.fontawesome.com'],
       frameSrc: ['https://checkout.razorpay.com'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
