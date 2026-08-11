@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="theme.js"></script>
+  <title>About Us — Brush</title>
+  <link rel="icon" href="assets/misc/Brush%20Text%20Arial.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles.css?v=10">
+  <style>
+    .about-header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      padding: 100px 0 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .about-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3rem);
+      margin-bottom: 14px;
+      text-wrap: balance;
+    }
+    .about-header p {
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin: 0 auto;
+      text-wrap: pretty;
+    }
+    .about-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 24px;
+    }
+    .about-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .about-brand p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      line-height: 1.8;
+      max-width: 640px;
+      margin: 1.2rem 0 1.6rem;
+    }
+    .about-contact {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      text-align: center;
+    }
+    .about-contact-item i {
+      color: var(--accent);
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .about-contact-item a,
+    .about-contact-item span {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    @media (max-width: 640px) {
+      .about-contact {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
+      <img src="assets/misc/Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 32px; width: auto;">
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html">Home</a>
+      <a href="all_products.html">All Products</a>
+      <a href="policies.html">Policies</a>
+    </div>
+    <div class="nav-actions">
+      <a href="index.html#bestsellers" class="nav-action-btn" aria-label="Shop">
+        <i class="fa-solid fa-shop"></i>
+      </a>
+    </div>
+  </nav>
+
+  <header class="about-header">
+    <div class="container">
+      <h1>About Brush</h1>
+      <p>Premium poster prints, curated and shipped from Patna, Bihar.</p>
+    </div>
+  </header>
+
+  <main class="about-container">
+    <div class="about-brand">
+      <img src="assets/misc/Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 44px; width: auto;">
+      <p>At Brush, we're not just selling products — we're sharing our lifelong friendship, creativity, and commitment to delivering exceptional art to your doorstep.</p>
+      <div class="footer-social">
+        <a href="https://twitter.com/lost_storiess" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="https://github.com/ImMortaL0P" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+        <a href="https://www.instagram.com/lost.storiess/" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://www.linkedin.com/in/kumar-mangalam-362a77176/" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+      </div>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-item">
+        <span class="feature-icon"><i class="fa-solid fa-truck-fast"></i></span>
+        <h4>Free Shipping</h4>
+        <p>On all orders above ₹500</p>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon"><i class="fa-solid fa-rotate-left"></i></span>
+        <h4>Easy Returns</h4>
+        <p>Hassle-free exchange & refund</p>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon"><i class="fa-solid fa-award"></i></span>
+        <h4>Premium Quality</h4>
+        <p>300 GSM matte-finish prints</p>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon"><i class="fa-solid fa-palette"></i></span>
+        <h4>Wide Variety</h4>
+        <p>500+ designs across collections</p>
+      </div>
+    </div>
+
+    <div class="about-contact" style="margin-top: 3.5rem;">
+      <div class="about-contact-item">
+        <i class="fa-solid fa-phone"></i>
+        <a href="tel:+919234755686">+91-9234755686</a>
+      </div>
+      <div class="about-contact-item">
+        <i class="fa-solid fa-envelope"></i>
+        <a href="mailto:admin@brush.ind.in">admin@brush.ind.in</a>
+      </div>
+      <div class="about-contact-item">
+        <i class="fa-solid fa-location-dot"></i>
+        <span>Patna, Bihar, IN</span>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" style="padding: 2rem 0; text-align: center; border-top: 1px solid var(--border-color);">
+    <div class="container">
+      <p>© 2024 Brush. All rights reserved.</p>
+      <div style="margin-top: 10px; display: flex; justify-content: center; gap: 15px;">
+        <a href="index.html" style="color: var(--text-secondary); text-decoration: none;">Home</a>
+        <a href="policies.html" style="color: var(--text-secondary); text-decoration: none;">Policies</a>
+        <a href="mailto:admin@brush.ind.in" style="color: var(--text-secondary); text-decoration: none;">Contact Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/lenis@1.3.25/dist/lenis.min.js"></script>
+  <script src="scroll.js"></script>
+  <script src="navbar-scroll.js"></script>
+  <script src="micro-interactions.js"></script>
+</body>
+</html>

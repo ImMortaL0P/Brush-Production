@@ -1124,6 +1124,18 @@ app.post('/api/orders/:orderId/send-update', requireAdmin, async (req, res) => {
 
 
 
+// Catch-all for anything that didn't match an API route or a static file
+// above - previously fell through to Express's bare "Cannot GET /..." page,
+// an unbranded dead end with no nav and no way back. JSON for API paths
+// (so client-side error handling that expects JSON doesn't break), the
+// branded page for everything else.
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
+});
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something broke!' });

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="theme.js"></script>
+  <title>Page Not Found — Brush</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/misc/Brush%20Text%20Arial.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles.css?v=10">
+  <style>
+    .not-found-main {
+      min-height: calc(100dvh - 70px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 100px 24px;
+    }
+
+    .not-found-code {
+      font-family: var(--font-heading);
+      font-size: clamp(4rem, 14vw, 8rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      color: transparent;
+      -webkit-text-stroke: 2px var(--border-light);
+      text-stroke: 2px var(--border-light);
+    }
+
+    .not-found-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 700;
+      margin: 12px 0 10px;
+    }
+
+    .not-found-text {
+      color: var(--text-secondary);
+      max-width: 440px;
+      margin: 0 0 32px;
+      text-wrap: pretty;
+    }
+
+    .not-found-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .not-found-actions .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-weight: 600;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
+    }
+
+    .not-found-actions .btn-ghost:hover {
+      border-color: var(--accent);
+      background: var(--bg-card);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
+      <img src="assets/misc/Brush%20Text%20Arial.png" alt="Brush Logo" style="height: 32px; width: auto;">
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html">Home</a>
+      <a href="all_products.html">All Products</a>
+      <a href="about_us.html">About</a>
+    </div>
+    <div class="nav-actions">
+      <a href="index.html#bestsellers" class="nav-action-btn" aria-label="Shop">
+        <i class="fa-solid fa-shop"></i>
+      </a>
+    </div>
+  </nav>
+
+  <main class="not-found-main">
+    <div class="not-found-code">404</div>
+    <h1 class="not-found-title">This page took a wrong turn</h1>
+    <p class="not-found-text">The page you're looking for doesn't exist, moved, or the link's just plain broken. Let's get you back on track.</p>
+    <div class="not-found-actions">
+      <a href="index.html" class="hero-cta">Back to Home →</a>
+      <a href="all_products.html" class="btn-ghost">Browse Posters</a>
+    </div>
+  </main>
+
+  <footer class="site-footer" style="padding: 2rem 0; text-align: center; border-top: 1px solid var(--border-color);">
+    <div class="container">
+      <p>© 2024 Brush. All rights reserved.</p>
+      <div style="margin-top: 10px; display: flex; justify-content: center; gap: 15px;">
+        <a href="index.html" style="color: var(--text-secondary); text-decoration: none;">Home</a>
+        <a href="mailto:admin@brush.ind.in" style="color: var(--text-secondary); text-decoration: none;">Contact Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="navbar-scroll.js"></script>
+  <script src="micro-interactions.js"></script>
+</body>
+</html>
