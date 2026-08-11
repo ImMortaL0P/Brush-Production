@@ -199,6 +199,14 @@ html {
      native scroll rather than fight Lenis for control. */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* body already declares overflow-x: hidden, but that only reliably
+     becomes the viewport's own scroll behavior when html has no overflow
+     of its own — with html left at the default (visible), some elements
+     that overflow their container (the marquee tracks, mainly) were still
+     reachable via a real ~100px horizontal scroll/swipe on phones despite
+     body's rule, confirmed with window.scrollTo in a live check. Setting
+     it here too removes the ambiguity instead of relying on propagation. */
+  overflow-x: hidden;
 }
 
 body {
@@ -2615,8 +2623,11 @@ body.custom-cursor-active * {
 }
 
 .selector-group select {
-  padding: 0.75rem;
-  background: var(--bg-primary);
+  padding: 0.75rem 2.2rem 0.75rem 0.75rem;
+  /* background-color, not the background shorthand — the shorthand resets
+     background-image too, which silently deleted the custom chevron the
+     global `select` rule sets (arrow just vanished, no error anywhere). */
+  background-color: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -2893,6 +2904,35 @@ body.custom-cursor-active * {
 
   .product-quick-actions {
     display: none;
+  }
+
+  /* Nav-actions never had a phone-width rule: 5 icon buttons (40px + 20px
+     gap each) plus the hamburger toggle add up to ~300px on top of the
+     brand logo and navbar padding — wider than the viewport itself on
+     every real phone (iPhone SE at 375px up through most Android devices),
+     so the cart button was pushed off-screen and unreachable. Shrinking
+     the buttons and gap here, rather than hiding any of them, keeps every
+     action reachable instead of trading functionality for fit. */
+  .navbar {
+    padding: 0 16px;
+  }
+
+  .nav-actions {
+    gap: 2px;
+  }
+
+  .nav-action-btn,
+  .menu-toggle {
+    width: 32px;
+    height: 32px;
+  }
+
+  .nav-action-btn {
+    font-size: 1rem;
+  }
+
+  .menu-toggle {
+    padding: 6px;
   }
 }
 
