@@ -242,6 +242,15 @@ img {
   height: auto;
 }
 
+/* Orphan control: keeps headings from leaving a single word stranded on
+   the last line. Unsupported browsers just ignore the property, so this
+   is a pure enhancement. Component-specific heading classes below set
+   their own text-wrap where they need something more specific (pretty
+   for body copy); this is just the site-wide floor for h1-h3. */
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
 button {
   cursor: pointer;
   border: none;
@@ -683,6 +692,7 @@ a:focus-visible {
   max-width: 550px;
   margin-left: auto;
   margin-right: auto;
+  text-wrap: pretty;
 }
 
 .hero-cta {
@@ -959,6 +969,7 @@ a:focus-visible {
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
+  text-wrap: pretty;
 }
 
 /* Animated Logo — Infinite Blur Pulse */
@@ -2538,6 +2549,25 @@ body.custom-cursor-active * {
 #modal-original-price {
   text-decoration: line-through;
   color: var(--text-secondary);
+}
+
+/* Tabular figures wherever a price renders — proportional digits make a
+   struck-through original price and the discounted price beside it drift
+   out of alignment purely because "1" is narrower than "8". Listed by
+   class/id across every page that shows a ₹ amount (product cards, modal,
+   cart drawer, checkout summary, wall-setup packs). */
+#modal-price,
+#modal-original-price,
+.item-price,
+.list-item-price,
+.price-breakdown,
+.price-row,
+.ws-old-price,
+.ws-new-price,
+#cart-subtotal,
+#cart-total,
+#cart-shipping {
+  font-variant-numeric: tabular-nums;
 }
 
 .modal-description {
