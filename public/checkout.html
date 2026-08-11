@@ -655,8 +655,21 @@
 
       const currentUser = localStorage.getItem('brushUser');
       if (!currentUser) {
-        alert('Please log in or sign up to continue to checkout.');
-        window.location.href = 'index.html';
+        // Was a blocking window.alert() + immediate redirect - jarring on
+        // any browser and especially ugly on mobile, and it's the one
+        // spot on this page that didn't follow the inline-message pattern
+        // already used for the empty-cart state right below. index.html
+        // is where the actual login modal lives (checkout.html doesn't
+        // load script.js), so this links there with ?login=1, which
+        // script.js's auth init checks for and opens the modal on arrival.
+        document.getElementById('checkout-layout').innerHTML = `
+          <div class="empty-checkout">
+            <i class="fa-solid fa-user-lock"></i>
+            <h2>Log in to continue</h2>
+            <p>You'll need an account to check out - it's quick, and lets you track this order afterwards.</p>
+            <a href="index.html?login=1" class="hero-cta">Log In →</a>
+          </div>
+        `;
         return;
       }
       const user = JSON.parse(currentUser);

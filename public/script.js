@@ -1142,6 +1142,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial call on page load
   updateAuthUI();
 
+  // Arrived here via checkout.html's "log in to continue" link (checkout
+  // doesn't load this script, so it can't open the modal itself) - open
+  // straight into it instead of leaving the visitor to find the account
+  // icon on their own, then drop the param so a refresh doesn't reopen it.
+  if (new URLSearchParams(window.location.search).get('login') === '1' && !localStorage.getItem('brushUser')) {
+    openAuthModal();
+    history.replaceState(null, '', window.location.pathname + window.location.hash);
+  }
+
   function openAuthModal() {
     if(authModal) authModal.classList.add('open');
     if(authModalOverlay) authModalOverlay.classList.add('open');

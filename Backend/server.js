@@ -180,7 +180,14 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://checkout.razorpay.com', 'https://cdnjs.cloudflare.com', 'https://kit.fontawesome.com', 'https://unpkg.com'],
+      // checkout.razorpay.com's own SDK loads a secondary risk-detection
+      // bundle from cdn.razorpay.com (a different subdomain) at runtime,
+      // and its payment iframe/API calls go to api.razorpay.com — all
+      // three confirmed via a live checkout run that surfaced each one as
+      // a separate CSP violation (same shape of gap as the Font Awesome
+      // kit fix above: a loader script pulling from a sibling domain the
+      // allowlist didn't cover).
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://checkout.razorpay.com', 'https://cdn.razorpay.com', 'https://cdnjs.cloudflare.com', 'https://kit.fontawesome.com', 'https://unpkg.com'],
       // Separate from script-src: governs inline onclick="" etc attributes,
       // which admin.html and index.html both use extensively. Helmet
       // defaults this to 'none' independently of script-src's own
@@ -195,8 +202,8 @@ app.use(helmet({
       // console check — every fetch to it was being silently blocked here,
       // which is why every fa-* icon on the site was rendering as an empty
       // circle/box: the glyph font never loaded, not a markup bug).
-      connectSrc: ["'self'", 'https://brush-production.onrender.com', 'https://checkout.razorpay.com', 'https://kit.fontawesome.com', 'https://ka-f.fontawesome.com'],
-      frameSrc: ['https://checkout.razorpay.com'],
+      connectSrc: ["'self'", 'https://brush-production.onrender.com', 'https://checkout.razorpay.com', 'https://api.razorpay.com', 'https://lumberjack.razorpay.com', 'https://kit.fontawesome.com', 'https://ka-f.fontawesome.com'],
+      frameSrc: ['https://checkout.razorpay.com', 'https://api.razorpay.com'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
       frameAncestors: ["'self'"]
