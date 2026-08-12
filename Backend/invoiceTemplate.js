@@ -7,6 +7,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { formatVariantLine } = require('./productTypes');
 
 const LOGO_PATH = path.join(__dirname, '../public/assets/misc/Brush Text Arial.png');
 const SIGNATURE_IMAGE_PATH = path.join(__dirname, 'assets/signature.png');
@@ -109,7 +110,7 @@ function drawInvoice(pdfDoc, order) {
   order.items.forEach(item => {
     pdfDoc.fillColor('#2d3748').text(item.quantity.toString(), 60, y + 5);
     pdfDoc.font('Helvetica-Bold').text(item.name, 100, y + 5, { width: 220 });
-    pdfDoc.font('Helvetica').fillColor('#718096').text(`Size: ${item.size || 'A4'} | Paper: ${item.gsm || '80'} GSM`, 100, y + 17);
+    pdfDoc.font('Helvetica').fillColor('#718096').text(formatVariantLine(item), 100, y + 17);
     pdfDoc.fillColor('#2d3748').text(money(item.price), 330, y + 5, { width: 70, align: 'right' });
     pdfDoc.text('0.00%', 400, y + 5, { width: 60, align: 'right' });
     pdfDoc.text(money(item.subtotal), 470, y + 5, { width: 70, align: 'right' });

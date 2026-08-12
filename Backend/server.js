@@ -22,6 +22,7 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const { buildOrderStatusEmail } = require('./orderEmailTemplate');
 const { drawInvoice } = require('./invoiceTemplate');
+const { getProductType, priceWithVariants } = require('./productTypes');
 
 const SITE_URL = process.env.SITE_URL || 'https://immortal0p.github.io/Brush-Production';
 
@@ -682,18 +683,16 @@ app.post('/api/orders', async (req, res) => {
         return res.status(400).json({ error: `Insufficient stock for product ${product.name}. Only ${currentStock} left.` });
       }
 
-      // Calculate dynamic price based on variants
-      let finalPrice = product.price;
-
-      // Size pricing logic
-      if (item.size === 'A3') finalPrice += 50;
-      if (item.size === 'A5') finalPrice -= 20; // A4 is base
-
-      // GSM pricing logic
-      if (item.gsm === '140') finalPrice += 40; // 80 is base
-
-      // Ensure price doesn't go below reasonable minimum
-      if (finalPrice < 10) finalPrice = 10;
+      // Calculate dynamic price server-side from the product's own type
+      // (poster/plate/wallpaper) — never trusts a client-submitted price.
+      // Accepts the new `variants` object as well as the flat `size`/`gsm`
+      // shape older cached frontend JS (any browser tab that loaded the
+      // site before this deploy) still sends, so neither shape silently
+      // falls back to base pricing mid-rollout.
+      const productType = product.productType || getProductType(product.category);
+      const submittedVariants = item.variants || (item.size || item.gsm ? { size: item.size, gsm: item.gsm } : undefined);
+      const { price: rawPrice, resolvedVariants } = priceWithVariants(product.price, productType, submittedVariants);
+      const finalPrice = Math.max(10, rawPrice);
 
       const itemSubtotal = finalPrice * item.quantity;
       subtotal += itemSubtotal;
@@ -704,8 +703,8 @@ app.post('/api/orders', async (req, res) => {
         image: product.image,
         price: finalPrice,
         originalBasePrice: product.price,
-        size: item.size || 'A4',
-        gsm: item.gsm || '80',
+        productType,
+        variants: resolvedVariants,
         quantity: item.quantity,
         subtotal: itemSubtotal
       });
@@ -995,7 +994,10 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     if (price !== undefined) updateData.price = Number(price);
     if (badge !== undefined) updateData.badge = badge;
     if (stockQuantity !== undefined) updateData.stockQuantity = Number(stockQuantity);
-    if (category !== undefined) updateData.category = category;
+    if (category !== undefined) {
+      updateData.category = category;
+      updateData.productType = getProductType(category);
+    }
     if (keywords !== undefined) updateData.keywords = keywords;
     if (sku !== undefined) updateData.sku = sku;
     if (showInBestsellers !== undefined) updateData.showInBestsellers = Boolean(showInBestsellers);
@@ -1085,11 +1087,13 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       imageUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
     }
 
+    const resolvedCategory = category || 'Miscellaneous';
     const newProduct = {
       _id: newId,
       id: newId,
       name,
-      category: category || 'Miscellaneous',
+      category: resolvedCategory,
+      productType: getProductType(resolvedCategory),
       price: Number(price),
       originalPrice: Number(originalPrice || price),
       badge: badge || '',

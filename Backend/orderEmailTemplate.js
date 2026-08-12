@@ -2,6 +2,8 @@
 // standard e-commerce order-update emails (progress tracker, delivery box,
 // itemized list) and populated from the real order document.
 
+const { formatVariantLine } = require('./productTypes');
+
 const STATUS_STEPS = ['confirmed', 'packed', 'shipped', 'delivered'];
 
 const STATUS_META = {
@@ -113,7 +115,7 @@ function renderItemsRows(items, siteUrl) {
       </td>
       <td style="padding:14px 0 14px 14px;border-bottom:1px solid ${BORDER};font-family:Arial,Helvetica,sans-serif;">
         <div style="font-size:14px;font-weight:600;color:${TEXT_PRIMARY};">${escapeHtml(item.name)}</div>
-        <div style="font-size:12px;color:${TEXT_MUTED};margin-top:2px;">Size: ${escapeHtml(item.size || 'A4')} &middot; ${escapeHtml(item.gsm || '80')}GSM &middot; Qty: ${escapeHtml(item.quantity)}</div>
+        <div style="font-size:12px;color:${TEXT_MUTED};margin-top:2px;">${escapeHtml(formatVariantLine(item))} &middot; Qty: ${escapeHtml(item.quantity)}</div>
       </td>
       <td align="right" style="padding:14px 0;border-bottom:1px solid ${BORDER};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;color:${TEXT_PRIMARY};white-space:nowrap;">
         ${money(item.subtotal)}

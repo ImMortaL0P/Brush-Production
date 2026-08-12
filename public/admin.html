@@ -557,7 +557,21 @@
 
   <script>
     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
-    
+
+    // Order items now carry a generic `variants` object (poster/plate/
+    // wallpaper all have different variant groups) instead of the old
+    // flat `size`/`gsm` fields — this reads either shape so historical
+    // orders placed before that change still display correctly.
+    function formatVariantLine(item) {
+      if (item.variants && typeof item.variants === 'object' && Object.keys(item.variants).length) {
+        return Object.values(item.variants).filter(Boolean).join(' | ') || 'N/A';
+      }
+      if (item.size || item.gsm) {
+        return `${item.size || 'A4'} | ${item.gsm || '80'} GSM`;
+      }
+      return 'N/A';
+    }
+
     // Auth State
     let adminToken = sessionStorage.getItem('brush_admin_token');
     
@@ -751,7 +765,7 @@
                       ${o.items.map(i => `
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                           <td style="padding: 0.5rem 0;">${i.name}</td>
-                          <td style="padding: 0.5rem 0; font-size: 0.85rem; color: var(--text-secondary);">${i.size || 'N/A'} | ${i.gsm || 'N/A'} GSM</td>
+                          <td style="padding: 0.5rem 0; font-size: 0.85rem; color: var(--text-secondary);">${formatVariantLine(i)}</td>
                           <td style="padding: 0.5rem 0; text-align:right;">${i.quantity}</td>
                           <td style="padding: 0.5rem 0; text-align:right;">₹${(i.price * i.quantity).toFixed(2)}</td>
                         </tr>
