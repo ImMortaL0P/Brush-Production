@@ -974,10 +974,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      // reset selectors
-      document.getElementById('size-selector').value = 'A4';
-      document.getElementById('gsm-selector').value = '80';
-      
+      // reset swatch selectors to their first option
+      setActiveSwatch(document.getElementById('size-selector'), 'A4');
+      setActiveSwatch(document.getElementById('gsm-selector'), '80');
+
       updateModalPrice();
       renderReviews();
     } catch (err) {
@@ -1005,27 +1005,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  function setActiveSwatch(group, value) {
+    group.querySelectorAll('.swatch-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.value === value);
+    });
+  }
+
+  function getActiveSwatch(group) {
+    return group.querySelector('.swatch-btn.active') || group.querySelector('.swatch-btn');
+  }
+
   function updateModalPrice() {
     if (!currentProduct) return;
-    
+
     let basePrice = currentProduct.price;
     const sizeSelect = document.getElementById('size-selector');
     const gsmSelect = document.getElementById('gsm-selector');
-    
-    const sizeExtra = parseInt(sizeSelect.options[sizeSelect.selectedIndex].dataset.price);
-    const gsmExtra = parseInt(gsmSelect.options[gsmSelect.selectedIndex].dataset.price);
-    
+
+    const sizeExtra = parseInt(getActiveSwatch(sizeSelect).dataset.price);
+    const gsmExtra = parseInt(getActiveSwatch(gsmSelect).dataset.price);
+
     let finalPrice = basePrice + sizeExtra + gsmExtra;
     if (finalPrice < 10) finalPrice = 10;
-    
+
     document.getElementById('modal-price').textContent = `₹${finalPrice}`;
     document.getElementById('modal-btn-price').textContent = `₹${finalPrice}`;
   }
 
   const sizeSelector = document.getElementById('size-selector');
   const gsmSelector = document.getElementById('gsm-selector');
-  if (sizeSelector) sizeSelector.addEventListener('change', updateModalPrice);
-  if (gsmSelector) gsmSelector.addEventListener('change', updateModalPrice);
+  if (sizeSelector) {
+    sizeSelector.addEventListener('click', (e) => {
+      const btn = e.target.closest('.swatch-btn');
+      if (!btn) return;
+      setActiveSwatch(sizeSelector, btn.dataset.value);
+      updateModalPrice();
+    });
+  }
+  if (gsmSelector) {
+    gsmSelector.addEventListener('click', (e) => {
+      const btn = e.target.closest('.swatch-btn');
+      if (!btn) return;
+      setActiveSwatch(gsmSelector, btn.dataset.value);
+      updateModalPrice();
+    });
+  }
 
   const modalAddToCartBtn = document.getElementById('modal-add-to-cart');
   if (modalAddToCartBtn) {
@@ -1036,8 +1060,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       
-      const size = sizeSelector.value;
-      const gsm = gsmSelector.value;
+      const size = getActiveSwatch(sizeSelector).dataset.value;
+      const gsm = getActiveSwatch(gsmSelector).dataset.value;
       const finalPrice = parseInt(document.getElementById('modal-price').textContent.replace('₹', ''));
 
       // Capture the modal's poster position before closeProductModal() starts

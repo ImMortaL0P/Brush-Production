@@ -586,19 +586,19 @@
         
         <div class="variant-selectors">
           <div class="selector-group">
-            <label for="size-selector">Size</label>
-            <select id="size-selector">
-              <option value="A4" data-price="0">A4 (Base)</option>
-              <option value="A5" data-price="-20">A5 (-₹20)</option>
-              <option value="A3" data-price="50">A3 (+₹50)</option>
-            </select>
+            <label id="size-selector-label">Size</label>
+            <div class="swatch-group" id="size-selector" role="group" aria-labelledby="size-selector-label">
+              <button type="button" class="swatch-btn active" data-value="A4" data-price="0">A4</button>
+              <button type="button" class="swatch-btn" data-value="A5" data-price="-20">A5 <small>-₹20</small></button>
+              <button type="button" class="swatch-btn" data-value="A3" data-price="50">A3 <small>+₹50</small></button>
+            </div>
           </div>
           <div class="selector-group">
-            <label for="gsm-selector">Paper Quality</label>
-            <select id="gsm-selector">
-              <option value="80" data-price="0">80 GSM (Standard)</option>
-              <option value="140" data-price="40">140 GSM Premium (+₹40)</option>
-            </select>
+            <label id="gsm-selector-label">Paper Quality</label>
+            <div class="swatch-group" id="gsm-selector" role="group" aria-labelledby="gsm-selector-label">
+              <button type="button" class="swatch-btn active" data-value="80" data-price="0">80 GSM</button>
+              <button type="button" class="swatch-btn" data-value="140" data-price="40">140 GSM <small>+₹40</small></button>
+            </div>
           </div>
         </div>
 
