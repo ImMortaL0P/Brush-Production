@@ -1756,6 +1756,25 @@ body.preloader-active .hero-content .hero-trust-badges {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
   padding: 80px 0 30px;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Footer gets its own glow rather than reusing .bg-layered's default
+   two-glow placement: this section is dense (4 link columns), so both
+   glows are pulled up to the top edge instead of into the content area
+   - just enough warmth right under the border to feel like a
+   continuation of the section above, not another spotlight competing
+   with the link columns. */
+.site-footer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(560px circle at 10% 0%, rgba(var(--accent-rgb), 0.08), transparent 55%),
+    radial-gradient(480px circle at 90% 0%, rgba(var(--accent-rgb), 0.05), transparent 50%);
 }
 
 .footer-grid {
