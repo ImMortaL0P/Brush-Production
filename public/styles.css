@@ -234,6 +234,51 @@ body::after {
   background-size: 120px 120px;
 }
 
+/* ====================================================================
+   AMBIENT BACKGROUND LAYERS
+   Most full-bleed sections (.features-strip, .categories-section,
+   .testimonials-section, .faq-section, etc.) were a single flat
+   background-color and nothing else - the grain above sits on EVERY
+   section already, but grain alone doesn't give a section depth, just
+   texture. This adds one reusable layer for that: soft, asymmetric,
+   accent-tinted radial-gradient glows behind a section's content.
+
+   Deliberately one hue (--accent) across every use, not a different
+   color per section - variety comes from position/size instead, so
+   this reads as one considered lighting system across the site rather
+   than a different accent color arguing for attention in every section.
+
+   Implementation notes:
+   - Lives on ::before, not the section itself, so it never has to touch
+     background-color (still owned by whichever section applies this).
+   - z-index: -1 + isolation: isolate on the section: the glow stays
+     behind that section's own content without needing to bump every
+     child's z-index to compensate (no existing markup changes needed
+     wherever this class gets added).
+   - Plain radial-gradient, no filter: blur - the soft falloff is baked
+     into the gradient stops, so this is one cheap composited paint, not
+     a per-frame blur repaint.
+   - --glow-pos-1/2 let each section place its two glows without
+     redeclaring the whole background; sections that don't override them
+     get the default top-left / bottom-right placement below. */
+.bg-layered {
+  position: relative;
+  isolation: isolate;
+}
+
+.bg-layered::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  --glow-pos-1: 15% 20%;
+  --glow-pos-2: 85% 80%;
+  background:
+    radial-gradient(600px circle at var(--glow-pos-1), rgba(var(--accent-rgb), 0.10), transparent 60%),
+    radial-gradient(520px circle at var(--glow-pos-2), rgba(var(--accent-rgb), 0.07), transparent 55%);
+}
+
 a {
   text-decoration: none;
   color: inherit;
