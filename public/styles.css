@@ -1311,16 +1311,49 @@ body.preloader-active .hero-content .hero-trust-badges {
 
 .product-quick-actions {
   position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 12px 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  z-index: 4;
+  transform: translateY(20px);
   opacity: 0;
   transition: transform var(--transition-med), opacity var(--transition-med);
 }
 
 .product-card:hover .product-quick-actions {
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
   opacity: 1;
+}
+
+/* The second information layer Dessine Art's card hover surfaces (spec
+   copy, not just a CTA) — shown above the Add to Cart button so hover
+   answers "why buy" before the click, not just "this is clickable". */
+.product-card-specs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.product-card-specs span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.product-card-specs i {
+  color: var(--accent);
+  font-size: 0.68rem;
 }
 
 .quick-add-btn {

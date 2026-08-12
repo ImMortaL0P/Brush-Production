@@ -586,6 +586,10 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <span class="product-badge" ${badgeStyle}>${p.badge || badge}</span>
               <div class="product-quick-actions">
+                <div class="product-card-specs">
+                  <span><i class="fa-solid fa-gem"></i> 300 GSM Matte</span>
+                  <span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>
+                </div>
                 <button class="quick-add-btn" ${isOut ? 'disabled style="background: rgba(0,0,0,0.8); color: var(--text-muted); cursor: not-allowed;"' : ''}>
                   ${isOut ? 'Out of Stock' : 'Add to Cart'}
                 </button>
