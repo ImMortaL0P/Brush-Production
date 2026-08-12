@@ -7,10 +7,77 @@ const Cart = (() => {
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
   let listeners = [];
 
+  // Canonical per-product-type variant config — must stay in sync with
+  // Backend/productTypes.js (browser code can't require that Node module
+  // without a bundler). Server recomputes price from this same shape
+  // independently and never trusts what the client sends; this copy only
+  // drives the UI (swatch options shown, cart line labels, client-side
+  // price preview before checkout).
+  const PRODUCT_TYPES = {
+    poster: {
+      label: 'Poster',
+      variantGroups: [
+        { key: 'size', label: 'Size', options: [
+          { value: 'A4', label: 'A4', priceDelta: 0 },
+          { value: 'A5', label: 'A5', priceDelta: -20 },
+          { value: 'A3', label: 'A3', priceDelta: 50 }
+        ]},
+        { key: 'gsm', label: 'Paper Quality', options: [
+          { value: '80', label: '80 GSM', priceDelta: 0 },
+          { value: '140', label: '140 GSM', priceDelta: 40 }
+        ]}
+      ]
+    },
+    plate: {
+      label: 'Decorative Plate',
+      variantGroups: [
+        { key: 'size', label: 'Plate Size', options: [
+          { value: '8in', label: '8" Round', priceDelta: 0 },
+          { value: '10in', label: '10" Round', priceDelta: 80 },
+          { value: '12in', label: '12" Round', priceDelta: 150 }
+        ]}
+      ]
+    },
+    wallpaper: {
+      label: 'Wallpaper',
+      variantGroups: [
+        { key: 'roll', label: 'Roll Size', options: [
+          { value: '1x3m', label: '1m × 3m Roll', priceDelta: 0 },
+          { value: '1.5x3m', label: '1.5m × 3m Roll', priceDelta: 300 }
+        ]}
+      ]
+    }
+  };
+
+  function typeConfigFor(productType) {
+    return PRODUCT_TYPES[productType] || PRODUCT_TYPES.poster;
+  }
+
+  function defaultVariants(productType) {
+    const variants = {};
+    typeConfigFor(productType).variantGroups.forEach(group => {
+      variants[group.key] = group.options[0].value;
+    });
+    return variants;
+  }
+
   // ---- State ----
   function getCart() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const cart = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      // Migrates items added before multi-product-type support (flat
+      // `size`/`gsm`, no `variants`/`productType`) so every downstream
+      // consumer only ever has to handle one shape.
+      let migrated = false;
+      cart.forEach(item => {
+        if (!item.variants) {
+          item.productType = item.productType || 'poster';
+          item.variants = { size: item.size || 'A4', gsm: item.gsm || '80' };
+          migrated = true;
+        }
+      });
+      if (migrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+      return cart;
     } catch {
       return [];
     }
@@ -27,12 +94,18 @@ const Cart = (() => {
   }
 
   // ---- Public API ----
-  function addItem(product, qty = 1, size = 'A4', gsm = '80', finalPrice = null) {
+  // `variants` is a plain object keyed by that product type's variant
+  // groups, e.g. {size:'A3', gsm:'140'} for a poster or {size:'10in'} for
+  // a plate — pass null/omit to use the type's first (base-price) option
+  // in every group, same as before for the quick-add-from-card path.
+  function addItem(product, qty = 1, variants = null, finalPrice = null) {
     const cart = getCart();
-    const cartId = `${product.id}_${size}_${gsm}`;
+    const productType = product.productType || 'poster';
+    const resolvedVariants = variants || defaultVariants(productType);
+    const cartId = `${product.id}_${Object.values(resolvedVariants).join('_')}`;
     const priceToUse = finalPrice !== null ? finalPrice : product.price;
     const existing = cart.find(item => item.cartId === cartId);
-    
+
     if (existing) {
       existing.quantity = Math.min(existing.quantity + qty, existing.stockQuantity || 50);
     } else {
@@ -44,8 +117,8 @@ const Cart = (() => {
         originalPrice: product.originalPrice || product.price,
         image: product.image,
         quantity: qty,
-        size,
-        gsm,
+        productType,
+        variants: resolvedVariants,
         stockQuantity: product.stockQuantity !== undefined ? product.stockQuantity : 50
       });
     }
@@ -121,11 +194,10 @@ const Cart = (() => {
     const orderPayload = {
       customer: customerData,
       userId: userId,
-      items: cart.map(item => ({ 
-        productId: item.id, 
+      items: cart.map(item => ({
+        productId: item.id,
         quantity: item.quantity,
-        size: item.size || 'A4',
-        gsm: item.gsm || '80'
+        variants: item.variants
       })),
       paymentMethod: paymentMethod,
       razorpay_order_id: rzpOrderId,
@@ -159,6 +231,7 @@ const Cart = (() => {
   return {
     getCart, addItem, removeItem, updateQuantity, clear,
     getItemCount, getSubtotal, getSavings, getShipping, getDiscount, getTotal,
-    onChange, placeOrder, getOrder
+    onChange, placeOrder, getOrder,
+    PRODUCT_TYPES, typeConfigFor, defaultVariants
   };
 })();

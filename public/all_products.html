@@ -922,7 +922,7 @@
         const isOut = stockQty <= 0;
         
         return `
-          <div class="list-item product-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
+          <div class="list-item product-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
             <div class="list-item-img-wrapper">
               ${p.badge ? `<span class="list-item-badge">${p.badge}</span>` : ''}
               <div class="mockup-wrapper">

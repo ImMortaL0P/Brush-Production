@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isOut = stockQty <= 0;
         
         return `
-          <div class="product-card scale-in ${delayClass}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}">
+          <div class="product-card scale-in ${delayClass}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
             <div class="product-card-image">
               <div class="mockup-wrapper">
                 <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame" loading="lazy">
@@ -748,6 +748,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  // One-line variant description for a cart line item, e.g. "A4 · 80 GSM"
+  // or "10" Round" — reads Cart's shared PRODUCT_TYPES config so labels
+  // stay in sync with whatever the modal actually offered.
+  function formatCartVariantLine(item) {
+    if (!item.variants) return '';
+    const typeConfig = Cart.typeConfigFor(item.productType || 'poster');
+    return typeConfig.variantGroups
+      .filter(group => item.variants[group.key] !== undefined)
+      .map(group => {
+        const option = group.options.find(o => o.value === item.variants[group.key]);
+        return option ? option.label : item.variants[group.key];
+      })
+      .join(' · ');
+  }
+
   // ---- Render cart drawer ----
   function renderCartDrawer() {
     const items = Cart.getCart();
@@ -792,7 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="cart-item-details">
           <h4>${item.name}</h4>
-          ${item.size ? `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">Size: ${item.size} | Paper: ${item.gsm} GSM</div>` : ''}
+          ${formatCartVariantLine(item) ? `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">${formatCartVariantLine(item)}</div>` : ''}
           <div class="cart-item-price">
             <strong>₹${item.price}</strong> × ${item.quantity} = ₹${item.price * item.quantity}
           </div>
@@ -873,7 +888,8 @@ document.addEventListener('DOMContentLoaded', () => {
       price: parseInt(card.dataset.price),
       originalPrice: parseInt(card.dataset.original),
       image: card.dataset.image,
-      stockQuantity: parseInt(card.dataset.stock) || 0
+      stockQuantity: parseInt(card.dataset.stock) || 0,
+      productType: card.dataset.productType || 'poster'
     };
 
     if (!product.id || !product.name) return;
@@ -1092,7 +1108,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // under a getBoundingClientRect() read.
       flyToCart(document.querySelector('.modal-image-col .mockup-poster'));
 
-      Cart.addItem(currentProduct, 1, size, gsm, finalPrice);
+      Cart.addItem(currentProduct, 1, { size, gsm }, finalPrice);
       showToast(`${currentProduct.name} added to cart!`);
       closeProductModal();
       openCart();
