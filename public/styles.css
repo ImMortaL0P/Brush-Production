@@ -159,6 +159,17 @@ body.preloader-active {
   --mockup-left: 25.60%;
   --mockup-width: 48.80%;
   --mockup-height: 44.00%;
+
+  /* Ambient background-layer glow opacity (see .bg-layered below).
+     Tokenized rather than hardcoded in the gradient itself because dark
+     and light mode need different values for the same visual weight:
+     adding a light accent onto a near-black background raises luminance
+     (reads as a glow), but the same math in reverse - a darkened accent
+     over cream - lowers luminance instead, which reads as a faint dirty
+     patch, not a glow, at the same opacity. Light mode overrides these
+     up rather than reusing the dark-mode figures as-is. */
+  --glow-opacity-1: 0.10;
+  --glow-opacity-2: 0.07;
 }
 
 /* ====================================================================
@@ -190,6 +201,26 @@ body.preloader-active {
   --success: var(--brand-tan); /* dark green reads fine directly against a light bg, no lightening needed */
   --success-rgb: 26, 77, 46;
   --overlay: rgba(0, 0, 0, 0.5);
+  /* Bumped up from the dark-mode default - see the --glow-opacity-1/2
+     comment where they're declared for why light mode needs more. */
+  --glow-opacity-1: 0.18;
+  --glow-opacity-2: 0.13;
+}
+
+/* The "Brush" wordmark PNG (navbar, footer, preloader - every page uses
+   the same asset) is solid white artwork on a transparent background.
+   Nothing accounted for light mode: it was rendering nearly invisible
+   against the light navbar/footer, on every page, found while checking
+   the ambient-glow work above in light mode. Attribute selector, not a
+   class, so this covers every current usage (and any future one) without
+   editing markup in each of the ~7 pages that reference this file. */
+:root[data-theme="light"] img[src*="Brush%20Text%20Arial.png"] {
+  /* invert(1) alone flips the accent dot in this logo from orange to
+     blue (its RGB complement) along with the white wordmark - the
+     standard fix is hue-rotate(180deg) after the invert, which rotates
+     the (now-blue) dot's hue back round to roughly its original orange
+     while black has no hue to rotate, so the wordmark stays black. */
+  filter: invert(1) hue-rotate(180deg);
 }
 
 html {
@@ -275,8 +306,8 @@ body::after {
   --glow-pos-1: 15% 20%;
   --glow-pos-2: 85% 80%;
   background:
-    radial-gradient(600px circle at var(--glow-pos-1), rgba(var(--accent-rgb), 0.10), transparent 60%),
-    radial-gradient(520px circle at var(--glow-pos-2), rgba(var(--accent-rgb), 0.07), transparent 55%);
+    radial-gradient(600px circle at var(--glow-pos-1), rgba(var(--accent-rgb), var(--glow-opacity-1)), transparent 60%),
+    radial-gradient(520px circle at var(--glow-pos-2), rgba(var(--accent-rgb), var(--glow-opacity-2)), transparent 55%);
 }
 
 /* Same system, viewport-fixed variant for long, section-less scrolling
@@ -297,8 +328,8 @@ body.page-layered::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(700px circle at 6% 10%, rgba(var(--accent-rgb), 0.07), transparent 55%),
-    radial-gradient(600px circle at 96% 90%, rgba(var(--accent-rgb), 0.05), transparent 50%);
+    radial-gradient(700px circle at 6% 10%, rgba(var(--accent-rgb), calc(var(--glow-opacity-1) * 0.75)), transparent 55%),
+    radial-gradient(600px circle at 96% 90%, rgba(var(--accent-rgb), calc(var(--glow-opacity-2) * 0.7)), transparent 50%);
 }
 
 a {
@@ -1795,8 +1826,8 @@ body.preloader-active .hero-content .hero-trust-badges {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(560px circle at 10% 0%, rgba(var(--accent-rgb), 0.08), transparent 55%),
-    radial-gradient(480px circle at 90% 0%, rgba(var(--accent-rgb), 0.05), transparent 50%);
+    radial-gradient(560px circle at 10% 0%, rgba(var(--accent-rgb), calc(var(--glow-opacity-1) * 0.8)), transparent 55%),
+    radial-gradient(480px circle at 90% 0%, rgba(var(--accent-rgb), calc(var(--glow-opacity-2) * 0.7)), transparent 50%);
 }
 
 .footer-grid {
