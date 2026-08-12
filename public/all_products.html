@@ -105,8 +105,60 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      transition: opacity 0.15s ease;
     }
-    
+
+    .list-items-container.is-loading {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* Shown immediately on page load (static markup, not JS-injected) so
+       there's something on screen the instant a shopper scrolls down,
+       before the /api/products fetch — which can take a couple seconds
+       on a cold Render backend — has resolved. */
+    .list-item-skeleton {
+      display: flex;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      height: 220px;
+    }
+
+    .skeleton-block {
+      background: linear-gradient(100deg, var(--bg-card) 30%, var(--border-color) 50%, var(--bg-card) 70%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.4s ease-in-out infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes skeleton-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-img { width: 250px; min-width: 250px; border-radius: 0; }
+    .skeleton-details { flex: 1; padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 0.9rem; }
+    .skeleton-line { height: 1rem; }
+    .skeleton-line.w-60 { width: 60%; height: 1.4rem; }
+    .skeleton-line.w-30 { width: 30%; }
+    .skeleton-line.w-90 { width: 90%; }
+    .skeleton-line.w-70 { width: 70%; }
+    .skeleton-action { width: 250px; min-width: 250px; padding: 2rem 1.5rem; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; gap: 0.75rem; }
+    .skeleton-action .skeleton-line { height: 1.8rem; }
+    .skeleton-action .skeleton-btn { height: 2.6rem; margin-top: 0.5rem; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .skeleton-block { animation: none; }
+    }
+
+    @media (max-width: 768px) {
+      .list-item-skeleton { height: auto; flex-direction: column; }
+      .skeleton-img { width: 100%; height: 180px; }
+      .skeleton-action { width: 100%; border-left: none; border-top: 1px solid var(--border-color); }
+    }
+
     .list-item {
       display: flex;
       background: var(--bg-secondary);
@@ -403,7 +455,12 @@
       <p class="catalog-intro fade-in" id="catalog-intro">Every poster on Brush is printed to order on 300 GSM matte stock and shipped from our Patna studio. Browse by category in the sidebar, or search by title — filters and search combine, so you can narrow a category down further by keyword.</p>
 
       <div class="list-items-container" id="list-items-container">
-        <!-- Injected via JS -->
+        <!-- Static skeleton shown until the first real render() call
+             overwrites this innerHTML — see loadAllProducts(). -->
+        <div class="list-item-skeleton"><div class="skeleton-block skeleton-img"></div><div class="skeleton-details"><div class="skeleton-block skeleton-line w-60"></div><div class="skeleton-block skeleton-line w-30"></div><div class="skeleton-block skeleton-line w-90"></div><div class="skeleton-block skeleton-line w-70"></div></div><div class="skeleton-action"><div class="skeleton-block skeleton-line"></div><div class="skeleton-block skeleton-btn"></div></div></div>
+        <div class="list-item-skeleton"><div class="skeleton-block skeleton-img"></div><div class="skeleton-details"><div class="skeleton-block skeleton-line w-60"></div><div class="skeleton-block skeleton-line w-30"></div><div class="skeleton-block skeleton-line w-90"></div><div class="skeleton-block skeleton-line w-70"></div></div><div class="skeleton-action"><div class="skeleton-block skeleton-line"></div><div class="skeleton-block skeleton-btn"></div></div></div>
+        <div class="list-item-skeleton"><div class="skeleton-block skeleton-img"></div><div class="skeleton-details"><div class="skeleton-block skeleton-line w-60"></div><div class="skeleton-block skeleton-line w-30"></div><div class="skeleton-block skeleton-line w-90"></div><div class="skeleton-block skeleton-line w-70"></div></div><div class="skeleton-action"><div class="skeleton-block skeleton-line"></div><div class="skeleton-block skeleton-btn"></div></div></div>
+        <div class="list-item-skeleton"><div class="skeleton-block skeleton-img"></div><div class="skeleton-details"><div class="skeleton-block skeleton-line w-60"></div><div class="skeleton-block skeleton-line w-30"></div><div class="skeleton-block skeleton-line w-90"></div><div class="skeleton-block skeleton-line w-70"></div></div><div class="skeleton-action"><div class="skeleton-block skeleton-line"></div><div class="skeleton-block skeleton-btn"></div></div></div>
       </div>
 
       <nav class="pagination-controls" id="pagination-controls" aria-label="Product pages">
@@ -835,11 +892,26 @@
         </button>
       `;
 
-      document.getElementById('page-prev')?.addEventListener('click', () => { currentPage--; renderPage(); scrollToListTop(); });
-      document.getElementById('page-next')?.addEventListener('click', () => { currentPage++; renderPage(); scrollToListTop(); });
+      document.getElementById('page-prev')?.addEventListener('click', () => goToPage(currentPage - 1));
+      document.getElementById('page-next')?.addEventListener('click', () => goToPage(currentPage + 1));
       el.querySelectorAll('.page-num-btn').forEach(btn => {
-        btn.addEventListener('click', () => { currentPage = parseInt(btn.dataset.page, 10); renderPage(); scrollToListTop(); });
+        btn.addEventListener('click', () => goToPage(parseInt(btn.dataset.page, 10)));
       });
+    }
+
+    // Brief loading state on page change — the catalog is already fetched
+    // in memory so this isn't waiting on a real request, but a page of 24
+    // new cards swapping in instantly with no transition read as a glitch
+    // rather than a page change; this dim-then-render gives it a beat.
+    function goToPage(pageNum) {
+      const container = document.getElementById('list-items-container');
+      container.classList.add('is-loading');
+      setTimeout(() => {
+        currentPage = pageNum;
+        renderPage();
+        container.classList.remove('is-loading');
+        scrollToListTop();
+      }, 150);
     }
 
     function scrollToListTop() {
