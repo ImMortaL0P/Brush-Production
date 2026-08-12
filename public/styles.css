@@ -279,6 +279,28 @@ body::after {
     radial-gradient(520px circle at var(--glow-pos-2), rgba(var(--accent-rgb), 0.07), transparent 55%);
 }
 
+/* Same system, viewport-fixed variant for long, section-less scrolling
+   pages (All Products' 170-item list, checkout's form) where there's no
+   natural per-section boundary to hang .bg-layered off of. One ambient
+   pair of glows anchored to the viewport instead of the page, so it
+   stays put as a soft frame around the edges while content scrolls past
+   underneath - same technique the sitewide grain layer already uses
+   (position: fixed), so this is proven cheap on these exact pages. */
+body.page-layered {
+  isolation: isolate;
+}
+
+body.page-layered::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(700px circle at 6% 10%, rgba(var(--accent-rgb), 0.07), transparent 55%),
+    radial-gradient(600px circle at 96% 90%, rgba(var(--accent-rgb), 0.05), transparent 50%);
+}
+
 a {
   text-decoration: none;
   color: inherit;
