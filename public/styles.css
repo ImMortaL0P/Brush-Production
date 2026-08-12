@@ -2697,6 +2697,36 @@ body.custom-cursor-active * {
   box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }
 
+/* Lets a shopper browse straight to the next poster without closing the
+   modal and re-opening one from the grid — scoped to whichever product
+   cards are actually on screen (a carousel section, or the current
+   filtered/paginated page), not the full catalog. */
+.modal-next-btn {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.6rem 1.1rem;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.modal-next-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translateX(3px);
+}
+
 .modal-info-col {
   display: flex;
   flex-direction: column;

@@ -907,12 +907,33 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
+    const nextBtn = e.target.closest('.modal-next-btn');
+    if (nextBtn) {
+      e.preventDefault();
+      openProductModal(nextBtn.dataset.nextId);
+      return;
+    }
+
     const card = e.target.closest('.product-card');
     if (card) {
       e.preventDefault();
       openProductModal(card.dataset.id);
     }
   });
+
+  // Finds the product after `currentId` among whichever product cards are
+  // actually on screen right now (a homepage carousel, or the current
+  // filtered/paginated All Products page) — not the full catalog, so
+  // "Next" always matches what the shopper was just browsing.
+  function getNextProductId(currentId) {
+    const ids = [...document.querySelectorAll('.product-card[data-id]')]
+      .map(el => el.dataset.id)
+      .filter((id, i, arr) => arr.indexOf(id) === i);
+    if (ids.length < 2) return null;
+    const idx = ids.indexOf(String(currentId));
+    if (idx === -1) return null;
+    return ids[(idx + 1) % ids.length];
+  }
 
 
   // ========================================
@@ -938,11 +959,13 @@ document.addEventListener('DOMContentLoaded', () => {
       currentProduct = await res.json();
       
       const modalImageCol = document.querySelector('.modal-image-col');
+      const nextId = getNextProductId(productId);
       modalImageCol.innerHTML = `
         <div class="mockup-wrapper">
           <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
           <img src="${currentProduct.image}" class="mockup-poster" alt="${currentProduct.name}">
           <img src="${currentProduct.image}" class="mockup-hover" alt="${currentProduct.name}">
+          ${nextId ? `<button class="modal-next-btn" id="modal-next-btn" data-next-id="${nextId}">Next Poster <i class="fa-solid fa-arrow-right"></i></button>` : ''}
         </div>
       `;
       
