@@ -1295,6 +1295,19 @@ body.preloader-active .hero-content .hero-trust-badges {
   opacity: 0;
 }
 
+/* Plain product photo for non-poster types (plate, wallpaper) — no
+   picture-frame mockup, since that would misrepresent the product. */
+.plain-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.product-card:hover .plain-product-image {
+  transform: scale(1.05);
+}
+
 .product-badge {
   position: absolute;
   top: 12px;
@@ -1497,6 +1510,34 @@ body.preloader-active .hero-content .hero-trust-badges {
 .category-card-overlay p {
   font-size: 0.8rem;
   color: var(--on-photo-secondary); /* sits on a fixed dark gradient over the poster photo, not the page bg — stays light in both themes */
+}
+
+/* Plates/Wallpaper have no real product photography yet — an icon tile
+   in the same card shell (same size, same title/overlay treatment) reads
+   as "new category, coming soon" rather than a broken or faked photo. */
+.category-card-icon-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--bg-secondary), var(--bg-primary));
+}
+
+.category-card-icon-bg i {
+  font-size: 4rem;
+  color: var(--accent);
+  opacity: 0.8;
+  transition: transform var(--transition-med);
+}
+
+.category-card-icon:hover .category-card-icon-bg i {
+  transform: scale(1.08);
+}
+
+.category-card-title-icon {
+  color: var(--accent);
+  text-shadow: none;
 }
 
 .category-card-overlay .cat-arrow {
@@ -2695,6 +2736,23 @@ body.custom-cursor-active * {
 .modal-image-col .mockup-wrapper {
   border-radius: 8px;
   box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* Non-poster product types (plate, wallpaper) skip the picture-frame
+   mockup — just the plain photo, same treatment (radius/shadow) as the
+   poster mockup wrapper so the modal layout doesn't shift between types. */
+.modal-plain-image-wrapper {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.modal-plain-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
 }
 
 /* Lets a shopper browse straight to the next poster without closing the

@@ -382,6 +382,8 @@
         <label class="filter-label"><input type="checkbox" value="Mythological" checked class="cat-cb"> Mythological</label>
         <label class="filter-label"><input type="checkbox" value="Original Movie Posters" checked class="cat-cb"> Original Movie Posters</label>
         <label class="filter-label"><input type="checkbox" value="Pop Culture" checked class="cat-cb"> Pop Culture</label>
+        <label class="filter-label"><input type="checkbox" value="Plates" checked class="cat-cb"> Plates</label>
+        <label class="filter-label"><input type="checkbox" value="Wallpaper" checked class="cat-cb"> Wallpaper</label>
       </div>
       <div class="filter-group">
         <h4>Price</h4>
@@ -394,11 +396,11 @@
     <!-- Main List -->
     <main>
       <div class="list-view-header fade-in">
-        <h2>All Products</h2>
+        <h2 id="collection-title">All Products</h2>
         <span style="color: var(--text-secondary); font-size: 0.9rem;" id="results-count">Loading...</span>
       </div>
 
-      <p class="catalog-intro fade-in">Every poster on Brush is printed to order on 300 GSM matte stock and shipped from our Patna studio. Browse by category in the sidebar, or search by title — filters and search combine, so you can narrow a category down further by keyword.</p>
+      <p class="catalog-intro fade-in" id="catalog-intro">Every poster on Brush is printed to order on 300 GSM matte stock and shipped from our Patna studio. Browse by category in the sidebar, or search by title — filters and search combine, so you can narrow a category down further by keyword.</p>
 
       <div class="list-items-container" id="list-items-container">
         <!-- Injected via JS -->
@@ -410,7 +412,7 @@
 
       <section class="catalog-faq fade-in">
         <h2 class="catalog-faq-title">Before you order</h2>
-        <div class="faq-accordion-col">
+        <div class="faq-accordion-col" id="catalog-faq-list">
           <div class="faq-item">
             <button class="faq-question">
               <span class="faq-q-text"><i class="fa-solid fa-ruler-combined"></i> What do A4, A5 and A3 actually measure?</span>
@@ -857,6 +859,73 @@
       cb.addEventListener('change', applyFilters);
     });
     
+    // Curated per-category framing for this same catalog engine — title,
+    // intro and FAQ swap based on ?category=, like Dessine Art's separate
+    // collection pages, without duplicating this whole page per category.
+    const DEFAULT_COLLECTION_COPY = {
+      title: 'All Products',
+      intro: 'Every poster on Brush is printed to order on 300 GSM matte stock and shipped from our Patna studio. Browse by category in the sidebar, or search by title — filters and search combine, so you can narrow a category down further by keyword.',
+      faq: [
+        { icon: 'fa-ruler-combined', q: 'What do A4, A5 and A3 actually measure?', a: 'A5 is 14.8 × 21 cm, A4 is 21 × 29.7 cm, and A3 is 29.7 × 42 cm. A4 is the base size on every listing; A5 and A3 are offered as size swatches on the product itself, with the price difference shown right on the swatch.' },
+        { icon: 'fa-gem', q: "What's the difference between 80 GSM and 140 GSM paper?", a: '80 GSM is our standard matte stock — light, affordable, and the default on every product. 140 GSM is a noticeably thicker, premium matte paper that holds color better and feels closer to a gallery print; it\'s a paid upgrade selectable on the product page.' },
+        { icon: 'fa-clock', iconStyle: 'fa-regular', q: 'How long does an order take to arrive?', a: 'Every poster is print-on-demand, so orders are printed, packed and dispatched within 1-2 business days. After dispatch, metros and Tier 1 cities typically take 3-5 business days, while Tier 2/3 and remote areas take 5-10 business days.' },
+        { icon: 'fa-box-open', q: 'What if my poster arrives damaged or wrong?', a: 'Since every piece is custom printed, we don\'t offer standard change-of-mind returns — but if your order arrives damaged or incorrect, we\'ll replace it once you share an unboxing video. See our <a href="policies.html#cancellation-returns">full returns policy</a> for details.' }
+      ]
+    };
+
+    const COLLECTION_COPY = {
+      plates: {
+        title: 'Plates',
+        intro: 'Decorative wall plates, hand-finished and printed to order — a rounder, more sculptural alternative to a framed print for the same wall.',
+        faq: [
+          { icon: 'fa-ruler-combined', q: 'What sizes do plates come in?', a: 'Every plate is offered in three sizes: 8" (Small), 10" (Medium) and 12" (Large), selectable directly on the product page with the price difference shown on the swatch.' },
+          { icon: 'fa-box-open', q: 'What if my plate arrives damaged or wrong?', a: 'Since every piece is made to order, we don\'t offer standard change-of-mind returns — but if your order arrives damaged or incorrect, we\'ll replace it once you share an unboxing video. See our <a href="policies.html#cancellation-returns">full returns policy</a> for details.' }
+        ]
+      },
+      wallpaper: {
+        title: 'Wallpaper',
+        intro: 'Peel-and-stick wallpaper rolls printed to order — the same art direction as our posters, sized to cover a wall rather than frame a moment on one.',
+        faq: [
+          { icon: 'fa-ruler-combined', q: 'What roll sizes are available?', a: 'Every wallpaper design is offered as a 1m × 3m roll or a 1.5m × 3m roll, selectable directly on the product page with the price difference shown on the swatch.' },
+          { icon: 'fa-box-open', q: 'What if my wallpaper arrives damaged or wrong?', a: 'Since every roll is made to order, we don\'t offer standard change-of-mind returns — but if your order arrives damaged or incorrect, we\'ll replace it once you share an unboxing video. See our <a href="policies.html#cancellation-returns">full returns policy</a> for details.' }
+        ]
+      }
+    };
+
+    function applyCollectionCopy(categoryParam) {
+      const key = categoryParam ? categoryParam.toLowerCase() : '';
+      const copy = COLLECTION_COPY[key] || DEFAULT_COLLECTION_COPY;
+
+      document.getElementById('collection-title').textContent = copy.title;
+      document.title = copy.title === 'All Products' ? document.title : `${copy.title} | Brush`;
+      document.getElementById('catalog-intro').textContent = copy.intro;
+
+      const faqList = document.getElementById('catalog-faq-list');
+      faqList.innerHTML = copy.faq.map(item => `
+        <div class="faq-item">
+          <button class="faq-question">
+            <span class="faq-q-text"><i class="${item.iconStyle || 'fa-solid'} ${item.icon}"></i> ${item.q}</span>
+            <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner"><p>${item.a}</p></div>
+          </div>
+        </div>
+      `).join('');
+
+      // The FAQ accordion listeners (script.js) bind once on page load, before
+      // this innerHTML swap creates new .faq-question buttons — re-run the
+      // same wiring here so a curated collection's FAQ is clickable too.
+      faqList.querySelectorAll('.faq-question').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const faqItem = btn.parentElement;
+          const isActive = faqItem.classList.contains('active');
+          faqList.querySelectorAll('.faq-item').forEach(item => item.classList.remove('active'));
+          if (!isActive) faqItem.classList.add('active');
+        });
+      });
+    }
+
     async function loadAllProducts() {
       const container = document.getElementById('list-items-container');
       try {
@@ -867,7 +936,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         const categoryParam = urlParams.get('category');
         const searchParam = urlParams.get('search');
-        
+
+        applyCollectionCopy(categoryParam);
+
         if (categoryParam) {
           // Uncheck all except the one from URL
           document.querySelectorAll('.cat-cb').forEach(cb => {

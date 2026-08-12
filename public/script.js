@@ -572,23 +572,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const delayClass = delayIndex > 0 ? `fade-in-delay-${delayIndex}` : '';
         const badgeStyle = badgeBg ? `style="background: ${badgeBg}; color: var(--bg-primary);"` : '';
         const discountPercentage = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
-        
+
         const stockQty = p.stockQuantity !== undefined ? p.stockQuantity : 50;
         const isOut = stockQty <= 0;
-        
+        // The picture-frame-on-wall mockup only makes sense for posters —
+        // a plate or wallpaper roll photographed "framed on a wall" would
+        // misrepresent the product, so those types just show the plain photo.
+        const isPoster = (p.productType || 'poster') === 'poster';
+        const specLine = isPoster
+          ? `<span><i class="fa-solid fa-gem"></i> 300 GSM Matte</span><span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>`
+          : `<span><i class="fa-solid fa-gem"></i> Premium Quality</span><span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>`;
+
         return `
           <div class="product-card scale-in ${delayClass}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
             <div class="product-card-image">
-              <div class="mockup-wrapper">
-                <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame" loading="lazy">
-                <img src="${p.image}" class="mockup-poster" alt="${p.name}" loading="lazy">
-                <img src="${p.image}" class="mockup-hover" alt="${p.name}" loading="lazy">
-              </div>
+              ${isPoster ? `
+                <div class="mockup-wrapper">
+                  <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame" loading="lazy">
+                  <img src="${p.image}" class="mockup-poster" alt="${p.name}" loading="lazy">
+                  <img src="${p.image}" class="mockup-hover" alt="${p.name}" loading="lazy">
+                </div>
+              ` : `
+                <img src="${p.image}" class="plain-product-image" alt="${p.name}" loading="lazy">
+              `}
               <span class="product-badge" ${badgeStyle}>${p.badge || badge}</span>
               <div class="product-quick-actions">
                 <div class="product-card-specs">
-                  <span><i class="fa-solid fa-gem"></i> 300 GSM Matte</span>
-                  <span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>
+                  ${specLine}
                 </div>
                 <button class="quick-add-btn" ${isOut ? 'disabled style="background: rgba(0,0,0,0.8); color: var(--text-muted); cursor: not-allowed;"' : ''}>
                   ${isOut ? 'Out of Stock' : 'Add to Cart'}
@@ -976,12 +986,20 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const modalImageCol = document.querySelector('.modal-image-col');
       const nextId = getNextProductId(productId);
-      modalImageCol.innerHTML = `
+      const modalProductType = currentProduct.productType || 'poster';
+      const isPosterModal = modalProductType === 'poster';
+      const nextBtnHtml = nextId ? `<button class="modal-next-btn" id="modal-next-btn" data-next-id="${nextId}">Next ${isPosterModal ? 'Poster' : Cart.typeConfigFor(modalProductType).label} <i class="fa-solid fa-arrow-right"></i></button>` : '';
+      modalImageCol.innerHTML = isPosterModal ? `
         <div class="mockup-wrapper">
           <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
           <img src="${currentProduct.image}" class="mockup-poster" alt="${currentProduct.name}">
           <img src="${currentProduct.image}" class="mockup-hover" alt="${currentProduct.name}">
-          ${nextId ? `<button class="modal-next-btn" id="modal-next-btn" data-next-id="${nextId}">Next Poster <i class="fa-solid fa-arrow-right"></i></button>` : ''}
+          ${nextBtnHtml}
+        </div>
+      ` : `
+        <div class="modal-plain-image-wrapper">
+          <img src="${currentProduct.image}" class="modal-plain-image" alt="${currentProduct.name}">
+          ${nextBtnHtml}
         </div>
       `;
       
@@ -1123,7 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Capture the modal's poster position before closeProductModal() starts
       // its own close transition, which would otherwise move/fade it out from
       // under a getBoundingClientRect() read.
-      flyToCart(document.querySelector('.modal-image-col .mockup-poster'));
+      flyToCart(document.querySelector('.modal-image-col .mockup-poster, .modal-image-col .modal-plain-image'));
 
       Cart.addItem(currentProduct, 1, variants, finalPrice);
       showToast(`${currentProduct.name} added to cart!`);
