@@ -1096,40 +1096,62 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
         <p class="review-text">${r.comment}</p>
+        ${r.photo ? `<img class="review-photo" src="${r.photo}" alt="Photo from ${r.user}'s review" loading="lazy">` : ''}
       </div>
     `).join('');
   }
 
   const reviewForm = document.getElementById('review-form');
+  const reviewPhotoInput = document.getElementById('review-photo');
+  const reviewPhotoPreview = document.getElementById('review-photo-preview');
+  const reviewPhotoLabelText = document.getElementById('review-photo-label-text');
+
+  if (reviewPhotoInput) {
+    reviewPhotoInput.addEventListener('change', () => {
+      const file = reviewPhotoInput.files[0];
+      if (!file) {
+        reviewPhotoPreview.hidden = true;
+        reviewPhotoLabelText.textContent = 'Add a photo (optional)';
+        return;
+      }
+      reviewPhotoPreview.src = URL.createObjectURL(file);
+      reviewPhotoPreview.hidden = false;
+      reviewPhotoLabelText.textContent = file.name;
+    });
+  }
+
   if (reviewForm) {
     reviewForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentProduct) return;
-      
+
       const btn = reviewForm.querySelector('button');
       btn.textContent = 'Submitting...';
       btn.disabled = true;
-      
-      const payload = {
-        user: document.getElementById('review-name').value,
-        rating: document.getElementById('review-rating').value,
-        comment: document.getElementById('review-comment').value
-      };
-      
+
+      const payload = new FormData();
+      payload.append('user', document.getElementById('review-name').value);
+      payload.append('rating', document.getElementById('review-rating').value);
+      payload.append('comment', document.getElementById('review-comment').value);
+      if (reviewPhotoInput && reviewPhotoInput.files[0]) {
+        payload.append('photo', reviewPhotoInput.files[0]);
+      }
+
       try {
         const res = await fetch(`${API_BASE}/products/${currentProduct.id}/reviews`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: payload
         });
-        
+
         if (!res.ok) throw new Error('Failed to submit review');
-        
+
         const newReview = await res.json();
         if (!currentProduct.reviews) currentProduct.reviews = [];
         currentProduct.reviews.push(newReview);
-        
+
         reviewForm.reset();
+        reviewPhotoPreview.hidden = true;
+        reviewPhotoLabelText.textContent = 'Add a photo (optional)';
         renderReviews();
         showToast('Review submitted successfully!');
       } catch (err) {

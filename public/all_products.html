@@ -621,6 +621,11 @@
               <option value="1">★☆☆☆☆ (1 Star)</option>
             </select>
             <textarea id="review-comment" placeholder="What did you think?" required></textarea>
+            <label class="review-photo-label" for="review-photo">
+              <i class="fa-solid fa-camera"></i> <span id="review-photo-label-text">Add a photo (optional)</span>
+            </label>
+            <input type="file" id="review-photo" accept="image/*" hidden>
+            <img class="review-photo-preview" id="review-photo-preview" alt="Review photo preview" hidden>
             <button type="submit">Submit Review</button>
           </form>
         </div>

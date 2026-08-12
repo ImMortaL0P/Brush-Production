@@ -2903,6 +2903,16 @@ body.custom-cursor-active * {
   margin: 0;
 }
 
+.review-photo {
+  display: block;
+  margin-top: 0.75rem;
+  max-width: 140px;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
 .review-form {
   display: flex;
   flex-direction: column;
@@ -2944,6 +2954,40 @@ body.custom-cursor-active * {
 
 .review-form button:hover {
   opacity: 0.9;
+}
+
+.review-photo-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.7rem 0.9rem;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.review-photo-label:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.review-photo-preview {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+/* The site-wide `img { display: block }` rule outranks the UA [hidden]
+   stylesheet (author styles always beat UA styles), so the attribute
+   alone doesn't hide this element without an explicit override. */
+.review-photo-preview[hidden] {
+  display: none;
 }
 
 @media (max-width: 768px) {

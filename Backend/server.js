@@ -273,6 +273,16 @@ const razorpay = new Razorpay({
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+// Review photos are submitted by unauthenticated shoppers, unlike the
+// admin-gated product image upload above — cap size and restrict to
+// images so the endpoint can't be used to push arbitrary large files
+// into Firebase Storage.
+const uploadReviewPhoto = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith('image/'))
+});
+
 // ==========================================
 // FIREBASE STORAGE (images only — the DB itself lives in MongoDB now)
 // ==========================================
@@ -563,7 +573,7 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-app.post('/api/products/:id/reviews', async (req, res) => {
+app.post('/api/products/:id/reviews', uploadReviewPhoto.single('photo'), async (req, res) => {
   try {
     const { user, rating, comment } = req.body;
     if (!user || !rating || !comment) return res.status(400).json({ error: 'Missing review fields' });
@@ -572,10 +582,28 @@ app.post('/api/products/:id/reviews', async (req, res) => {
     const product = await productsRef.findOne({ id: productId });
     if (!product) return res.status(404).json({ error: 'Product not found' });
 
+    let photoUrl = '';
+    if (req.file) {
+      if (!bucket) {
+        return res.status(503).json({ error: 'Photo uploads are unavailable — Firebase Storage is not configured.' });
+      }
+      const ext = path.extname(req.file.originalname) || '.jpg';
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const filename = `reviews/review-${uniqueSuffix}${ext}`;
+
+      const fileUpload = bucket.file(filename);
+      await fileUpload.save(req.file.buffer, {
+        metadata: { contentType: req.file.mimetype }
+      });
+      await fileUpload.makePublic();
+      photoUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+    }
+
     const newReview = {
       user,
       rating: parseInt(rating),
       comment,
+      photo: photoUrl,
       date: new Date().toISOString()
     };
 
