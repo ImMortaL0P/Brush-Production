@@ -1013,10 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      // reset swatch selectors to their first option
-      setActiveSwatch(document.getElementById('size-selector'), 'A4');
-      setActiveSwatch(document.getElementById('gsm-selector'), '80');
-
+      renderVariantSelectors(currentProduct.productType || 'poster');
       updateModalPrice();
       renderReviews();
     } catch (err) {
@@ -1054,40 +1051,61 @@ document.addEventListener('DOMContentLoaded', () => {
     return group.querySelector('.swatch-btn.active') || group.querySelector('.swatch-btn');
   }
 
+  // Builds the modal's variant swatch groups from whatever this product's
+  // type actually offers (poster: Size + Paper Quality, plate: Plate Size,
+  // wallpaper: Roll Size) — reads Cart's shared PRODUCT_TYPES config so a
+  // new type only has to be added in one place (cart.js) to show up here.
+  const variantSelectorsEl = document.getElementById('variant-selectors');
+  function renderVariantSelectors(productType) {
+    if (!variantSelectorsEl) return;
+    const typeConfig = Cart.typeConfigFor(productType);
+    variantSelectorsEl.innerHTML = typeConfig.variantGroups.map(group => `
+      <div class="selector-group">
+        <label id="variant-label-${group.key}">${group.label}</label>
+        <div class="swatch-group" data-group-key="${group.key}" role="group" aria-labelledby="variant-label-${group.key}">
+          ${group.options.map((opt, i) => `
+            <button type="button" class="swatch-btn ${i === 0 ? 'active' : ''}" data-value="${opt.value}" data-price="${opt.priceDelta}">
+              ${opt.label}${opt.priceDelta ? ` <small>${opt.priceDelta > 0 ? `+₹${opt.priceDelta}` : `-₹${Math.abs(opt.priceDelta)}`}</small>` : ''}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
   function updateModalPrice() {
-    if (!currentProduct) return;
+    if (!currentProduct || !variantSelectorsEl) return;
 
-    let basePrice = currentProduct.price;
-    const sizeSelect = document.getElementById('size-selector');
-    const gsmSelect = document.getElementById('gsm-selector');
-
-    const sizeExtra = parseInt(getActiveSwatch(sizeSelect).dataset.price);
-    const gsmExtra = parseInt(getActiveSwatch(gsmSelect).dataset.price);
-
-    let finalPrice = basePrice + sizeExtra + gsmExtra;
+    let finalPrice = currentProduct.price;
+    variantSelectorsEl.querySelectorAll('.swatch-group').forEach(group => {
+      finalPrice += parseInt(getActiveSwatch(group).dataset.price);
+    });
     if (finalPrice < 10) finalPrice = 10;
 
     document.getElementById('modal-price').textContent = `₹${finalPrice}`;
     document.getElementById('modal-btn-price').textContent = `₹${finalPrice}`;
   }
 
-  const sizeSelector = document.getElementById('size-selector');
-  const gsmSelector = document.getElementById('gsm-selector');
-  if (sizeSelector) {
-    sizeSelector.addEventListener('click', (e) => {
+  // One delegated listener handles every group regardless of how many the
+  // current product type has — the swatch markup itself is rebuilt per
+  // product by renderVariantSelectors(), so per-group listeners would need
+  // re-attaching on every modal open.
+  if (variantSelectorsEl) {
+    variantSelectorsEl.addEventListener('click', (e) => {
       const btn = e.target.closest('.swatch-btn');
       if (!btn) return;
-      setActiveSwatch(sizeSelector, btn.dataset.value);
+      setActiveSwatch(btn.closest('.swatch-group'), btn.dataset.value);
       updateModalPrice();
     });
   }
-  if (gsmSelector) {
-    gsmSelector.addEventListener('click', (e) => {
-      const btn = e.target.closest('.swatch-btn');
-      if (!btn) return;
-      setActiveSwatch(gsmSelector, btn.dataset.value);
-      updateModalPrice();
+
+  function getSelectedVariants() {
+    const variants = {};
+    if (!variantSelectorsEl) return variants;
+    variantSelectorsEl.querySelectorAll('.swatch-group').forEach(group => {
+      variants[group.dataset.groupKey] = getActiveSwatch(group).dataset.value;
     });
+    return variants;
   }
 
   const modalAddToCartBtn = document.getElementById('modal-add-to-cart');
@@ -1098,9 +1116,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Sorry, this product is currently out of stock.');
         return;
       }
-      
-      const size = getActiveSwatch(sizeSelector).dataset.value;
-      const gsm = getActiveSwatch(gsmSelector).dataset.value;
+
+      const variants = getSelectedVariants();
       const finalPrice = parseInt(document.getElementById('modal-price').textContent.replace('₹', ''));
 
       // Capture the modal's poster position before closeProductModal() starts
@@ -1108,7 +1125,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // under a getBoundingClientRect() read.
       flyToCart(document.querySelector('.modal-image-col .mockup-poster'));
 
-      Cart.addItem(currentProduct, 1, { size, gsm }, finalPrice);
+      Cart.addItem(currentProduct, 1, variants, finalPrice);
       showToast(`${currentProduct.name} added to cart!`);
       closeProductModal();
       openCart();

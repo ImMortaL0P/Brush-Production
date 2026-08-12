@@ -664,22 +664,11 @@
         <p id="modal-stock-status" style="margin-top: 5px; font-weight: 600; font-size: 0.9rem;"></p>
         <p class="modal-description" id="modal-description">Product description goes here.</p>
         
-        <div class="variant-selectors">
-          <div class="selector-group">
-            <label id="size-selector-label">Size</label>
-            <div class="swatch-group" id="size-selector" role="group" aria-labelledby="size-selector-label">
-              <button type="button" class="swatch-btn active" data-value="A4" data-price="0">A4</button>
-              <button type="button" class="swatch-btn" data-value="A5" data-price="-20">A5 <small>-₹20</small></button>
-              <button type="button" class="swatch-btn" data-value="A3" data-price="50">A3 <small>+₹50</small></button>
-            </div>
-          </div>
-          <div class="selector-group">
-            <label id="gsm-selector-label">Paper Quality</label>
-            <div class="swatch-group" id="gsm-selector" role="group" aria-labelledby="gsm-selector-label">
-              <button type="button" class="swatch-btn active" data-value="80" data-price="0">80 GSM</button>
-              <button type="button" class="swatch-btn" data-value="140" data-price="40">140 GSM <small>+₹40</small></button>
-            </div>
-          </div>
+        <div class="variant-selectors" id="variant-selectors">
+          <!-- Populated per-product by renderVariantSelectors() in script.js
+               — a poster gets Size/Paper Quality, a plate gets Plate Size,
+               a wallpaper gets Roll Size, all from the same shared config
+               Cart.js and the server both read (Backend/productTypes.js). -->
         </div>
 
         <button class="modal-add-to-cart" id="modal-add-to-cart">Add to Cart - <span id="modal-btn-price">₹0</span></button>
