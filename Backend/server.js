@@ -172,6 +172,19 @@ const requireOwnUser = (req, res, next) => {
   next();
 };
 
+// For routes that work for both guests and logged-in users (checkout) but
+// still need to know which real account, if any, to attach the result to.
+// Returns the session's own userId when a valid Bearer token is present,
+// null otherwise — never trusts a userId supplied in the request body,
+// which would otherwise let anyone attach an order to any other account.
+function getAuthenticatedUserId(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const session = activeUserTokens.get(authHeader.split(' ')[1]);
+  if (!session || session.expiresAt < Date.now()) return null;
+  return session.userId;
+}
+
 // CSP built from the site's actual external resource usage (checked every
 // public/*.html for src=/href=/fetch() targets) rather than a generic
 // template - a mismatched CSP just breaks the page silently, so it's only
@@ -779,7 +792,12 @@ app.post('/api/payment/create-order', paymentOrderLimiter, async (req, res) => {
 app.post('/api/orders', orderCreateLimiter, async (req, res) => {
   const session = mongoClient.startSession();
   try {
-    const { customer, items, paymentMethod, razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
+    const { customer, items, paymentMethod, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    // Never trust a client-supplied userId — that would let anyone attach
+    // a fabricated order to any other account, which then shows up in that
+    // victim's real order history (GET /api/orders/user/:id is correctly
+    // ownership-checked, but had no way to know this write was forged).
+    const userId = getAuthenticatedUserId(req);
 
     // Validation
     if (!customer || !customer.name || !customer.email || !customer.phone || !customer.address || !customer.city || !customer.state || !customer.pincode) {
@@ -842,7 +860,7 @@ app.post('/api/orders', orderCreateLimiter, async (req, res) => {
       id: orderId,
       orderId: orderId,
       invoiceNumber,
-      userId: userId || null,
+      userId,
       customer,
       items: enrichedItems,
       paymentMethod,

@@ -185,15 +185,18 @@ const Cart = (() => {
     const cart = getCart();
     if (cart.length === 0) throw new Error('Cart is empty');
 
-    let userId = null;
+    // The server derives userId from this Bearer token itself (never from
+    // a client-supplied value in the body) — a logged-in user's orders
+    // still land in their real account, but nothing here can attach an
+    // order to someone else's account by just naming their userId.
+    let token = null;
     try {
       const u = JSON.parse(localStorage.getItem('brushUser'));
-      if(u) userId = u.userId;
-    } catch(e) {}
+      if (u) token = u.token;
+    } catch (e) {}
 
     const orderPayload = {
       customer: customerData,
-      userId: userId,
       items: cart.map(item => ({
         productId: item.id,
         quantity: item.quantity,
@@ -207,7 +210,10 @@ const Cart = (() => {
 
     const response = await fetch(`${API_BASE}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       body: JSON.stringify(orderPayload)
     });
 
