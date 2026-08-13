@@ -90,6 +90,13 @@ let activeAdminToken = null; // Legacy single token
 const activeAdminTokens = new Map(); // token -> { username, role, expiresAt }
 const activeUserTokens = new Map(); // token -> { userId, expiresAt }
 const passwordResetTokens = new Map(); // token -> { userId, expiresAt }
+// Razorpay order id (real or the demo "order_mock_" fallback) -> the
+// server-computed paise amount that order is *for*, plus creation time.
+// /api/orders checks a submitted razorpay_order_id against this map before
+// confirming an order — closes both the payment-bypass and price-tampering
+// gaps described where it's used below. Single-use: deleted once consumed.
+const pendingPayments = new Map(); // orderId -> { amountPaise, createdAt }
+const PENDING_PAYMENT_TTL_MS = 60 * 60 * 1000; // 1 hour
 const port = process.env.PORT || 5500;
 
 // Sessions previously never expired - a token stayed valid until the
@@ -351,6 +358,58 @@ function stripId(doc) {
   if (!doc) return doc;
   const { _id, ...rest } = doc;
   return rest;
+}
+
+class OrderValidationError extends Error {}
+
+// Single source of truth for turning a client-submitted `items` array into
+// authoritative pricing — used by both /api/payment/create-order (to know
+// what to actually charge) and /api/orders (to confirm what was charged
+// matches what's being fulfilled). Never trusts a client-submitted price.
+async function computeOrderPricing(items) {
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    throw new OrderValidationError('Order must contain at least one item');
+  }
+
+  let subtotal = 0;
+  const enrichedItems = [];
+
+  for (const item of items) {
+    const product = await productsRef.findOne({ id: item.productId });
+    if (!product) throw new OrderValidationError(`Product with ID ${item.productId} not found`);
+    if (!item.quantity || item.quantity < 1) throw new OrderValidationError(`Invalid quantity for product ${item.productId}`);
+
+    const currentStock = product.stockQuantity !== undefined ? product.stockQuantity : 0;
+    if (currentStock < item.quantity) {
+      throw new OrderValidationError(`Insufficient stock for product ${product.name}. Only ${currentStock} left.`);
+    }
+
+    const productType = product.productType || getProductType(product.category);
+    const submittedVariants = item.variants || (item.size || item.gsm ? { size: item.size, gsm: item.gsm } : undefined);
+    const { price: rawPrice, resolvedVariants } = priceWithVariants(product.price, productType, submittedVariants);
+    const finalPrice = Math.max(10, rawPrice);
+
+    const itemSubtotal = finalPrice * item.quantity;
+    subtotal += itemSubtotal;
+
+    enrichedItems.push({
+      productId: product.id,
+      name: product.name,
+      image: product.image,
+      price: finalPrice,
+      originalBasePrice: product.price,
+      productType,
+      variants: resolvedVariants,
+      quantity: item.quantity,
+      subtotal: itemSubtotal
+    });
+  }
+
+  const shipping = subtotal > 500 ? 0 : 49;
+  const discount = subtotal > 1000 ? subtotal * 0.1 : 0;
+  const total = subtotal + shipping - discount;
+
+  return { subtotal, shipping, discount, total, enrichedItems };
 }
 
 
@@ -623,18 +682,38 @@ app.get('/api/config/razorpay', (req, res) => {
 
 app.post('/api/payment/create-order', async (req, res) => {
   try {
-    const { amount } = req.body;
+    // Amount is computed here, server-side, from the actual cart contents —
+    // never taken from the client — so what the shopper is asked to pay
+    // (and what /api/orders later requires the payment to match) can't be
+    // manipulated by sending a smaller `amount` for the same items.
+    const { total } = await computeOrderPricing(req.body.items);
+    const amountPaise = Math.round(total * 100);
+
     const options = {
-      amount: amount * 100, // Convert to paise
+      amount: amountPaise,
       currency: "INR",
       receipt: "rcpt_" + Date.now()
     };
-    const order = await razorpay.orders.create(options);
+
+    let order;
+    try {
+      order = await razorpay.orders.create(options);
+    } catch (rzpError) {
+      console.error('Razorpay Order Error:', rzpError);
+      // Demo/degraded-mode fallback when Razorpay itself is unreachable or
+      // misconfigured — the id is still tracked in pendingPayments below,
+      // so /api/orders still enforces the amount match for this path too.
+      order = { id: 'order_mock_' + Date.now(), amount: amountPaise, currency: 'INR' };
+    }
+
+    pendingPayments.set(order.id, { amountPaise, createdAt: Date.now() });
     res.json(order);
   } catch (error) {
-    console.error('Razorpay Order Error:', error);
-    // Return a mock order if keys are invalid for demo purposes
-    res.json({ id: 'order_mock_' + Date.now(), amount: req.body.amount * 100, currency: 'INR' });
+    if (error instanceof OrderValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    console.error('Payment order creation error:', error);
+    res.status(500).json({ error: 'Failed to initiate payment' });
   }
 });
 
@@ -643,77 +722,51 @@ app.post('/api/orders', async (req, res) => {
   try {
     const { customer, items, paymentMethod, razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
 
-    // Verify Payment Signature if online payment
-    if ((paymentMethod === 'upi' || paymentMethod === 'card') && razorpay_payment_id && !razorpay_order_id.startsWith('order_mock_')) {
-      const key_secret = process.env.RAZORPAY_KEY_SECRET || 'YOUR_SECRET';
-      const body = razorpay_order_id + "|" + razorpay_payment_id;
-      const expectedSignature = crypto.createHmac('sha256', key_secret).update(body.toString()).digest('hex');
-      if (expectedSignature !== razorpay_signature) {
-        return res.status(400).json({ error: 'Invalid payment signature' });
-      }
-    }
-
     // Validation
     if (!customer || !customer.name || !customer.email || !customer.phone || !customer.address || !customer.city || !customer.state || !customer.pincode) {
       return res.status(400).json({ error: 'Missing required customer details' });
-    }
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Order must contain at least one item' });
     }
     if (!['cod', 'upi', 'card'].includes(paymentMethod)) {
       return res.status(400).json({ error: 'Invalid payment method' });
     }
 
-    let subtotal = 0;
-    const enrichedItems = [];
+    const { subtotal, shipping, discount, total, enrichedItems } = await computeOrderPricing(items);
 
-    // Process items against MongoDB products
-    for (const item of items) {
-      const product = await productsRef.findOne({ id: item.productId });
-      if (!product) {
-        return res.status(400).json({ error: `Product with ID ${item.productId} not found` });
+    // Payment verification for online methods. Every real Razorpay payment
+    // AND the demo "order_mock_" fallback must resolve to a razorpay_order_id
+    // this server actually issued via /api/payment/create-order (checked
+    // against pendingPayments) — an attacker can no longer skip verification
+    // by simply inventing an "order_mock_..." string, which is what the
+    // previous `!razorpay_order_id.startsWith('order_mock_')` check allowed.
+    // Real orders additionally require a valid HMAC signature, proving an
+    // actual payment completed; both paths require the amount that was
+    // authorized to equal what's about to be charged here.
+    if (paymentMethod === 'upi' || paymentMethod === 'card') {
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        return res.status(400).json({ error: 'Payment verification required' });
       }
 
-      if (!item.quantity || item.quantity < 1) {
-        return res.status(400).json({ error: `Invalid quantity for product ${item.productId}` });
+      const pending = pendingPayments.get(razorpay_order_id);
+      if (!pending || Date.now() - pending.createdAt > PENDING_PAYMENT_TTL_MS) {
+        return res.status(400).json({ error: 'Payment session not found or expired — please retry checkout.' });
       }
 
-      const currentStock = product.stockQuantity !== undefined ? product.stockQuantity : 0;
-      if (currentStock < item.quantity) {
-        return res.status(400).json({ error: `Insufficient stock for product ${product.name}. Only ${currentStock} left.` });
+      if (!razorpay_order_id.startsWith('order_mock_')) {
+        const key_secret = process.env.RAZORPAY_KEY_SECRET;
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSignature = crypto.createHmac('sha256', key_secret).update(body.toString()).digest('hex');
+        if (expectedSignature !== razorpay_signature) {
+          return res.status(400).json({ error: 'Invalid payment signature' });
+        }
       }
 
-      // Calculate dynamic price server-side from the product's own type
-      // (poster/plate/wallpaper) — never trusts a client-submitted price.
-      // Accepts the new `variants` object as well as the flat `size`/`gsm`
-      // shape older cached frontend JS (any browser tab that loaded the
-      // site before this deploy) still sends, so neither shape silently
-      // falls back to base pricing mid-rollout.
-      const productType = product.productType || getProductType(product.category);
-      const submittedVariants = item.variants || (item.size || item.gsm ? { size: item.size, gsm: item.gsm } : undefined);
-      const { price: rawPrice, resolvedVariants } = priceWithVariants(product.price, productType, submittedVariants);
-      const finalPrice = Math.max(10, rawPrice);
+      if (pending.amountPaise !== Math.round(total * 100)) {
+        return res.status(400).json({ error: 'Payment amount does not match order total — please retry checkout.' });
+      }
 
-      const itemSubtotal = finalPrice * item.quantity;
-      subtotal += itemSubtotal;
-
-      enrichedItems.push({
-        productId: product.id,
-        name: product.name,
-        image: product.image,
-        price: finalPrice,
-        originalBasePrice: product.price,
-        productType,
-        variants: resolvedVariants,
-        quantity: item.quantity,
-        subtotal: itemSubtotal
-      });
+      // Single-use: this authorization is now consumed either way.
+      pendingPayments.delete(razorpay_order_id);
     }
-
-    // Calculations
-    const shipping = subtotal > 500 ? 0 : 49;
-    const discount = subtotal > 1000 ? subtotal * 0.1 : 0;
-    const total = subtotal + shipping - discount;
 
     // Order lookup (order-confirmation page, invoice, status emails) is
     // unauthenticated by design - guest checkout has no account to check
@@ -765,6 +818,9 @@ app.post('/api/orders', async (req, res) => {
     // to see their order confirmation page.
     sendOrderEmail(order);
   } catch (error) {
+    if (error instanceof OrderValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
     console.error('Order creation error:', error);
     res.status(500).json({ error: 'Failed to create order' });
   } finally {
