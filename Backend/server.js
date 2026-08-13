@@ -638,6 +638,11 @@ app.post('/api/products/:id/reviews', uploadReviewPhoto.single('photo'), async (
     const { user, rating, comment } = req.body;
     if (!user || !rating || !comment) return res.status(400).json({ error: 'Missing review fields' });
 
+    const ratingNum = parseInt(rating);
+    if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+      return res.status(400).json({ error: 'Rating must be an integer from 1 to 5' });
+    }
+
     const productId = parseInt(req.params.id);
     const product = await productsRef.findOne({ id: productId });
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -661,7 +666,7 @@ app.post('/api/products/:id/reviews', uploadReviewPhoto.single('photo'), async (
 
     const newReview = {
       user,
-      rating: parseInt(rating),
+      rating: ratingNum,
       comment,
       photo: photoUrl,
       date: new Date().toISOString()

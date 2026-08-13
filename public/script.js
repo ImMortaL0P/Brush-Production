@@ -5,6 +5,19 @@
 document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
 
+  // Anything rendered via innerHTML that ultimately came from another
+  // shopper (review author/comment, most notably) must go through this
+  // first — reviews are the one piece of user-generated content every
+  // visitor to a product renders unauthenticated.
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // Shared across every decorative-motion feature below (hero parallax already
   // gates itself via window.lenis; category tilt and the carousel's internal
   // parallax gate directly on this).
@@ -1154,25 +1167,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const list = document.getElementById('reviews-list');
     const count = document.getElementById('review-count');
     const reviews = currentProduct.reviews || [];
-    
+
     count.textContent = reviews.length;
-    
+
     if (reviews.length === 0) {
       list.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">No reviews yet. Be the first to review!</p>';
       return;
     }
-    
-    list.innerHTML = reviews.map(r => `
+
+    list.innerHTML = reviews.map(r => {
+      // Reviews come from unauthenticated shoppers, so `user`/`comment` must
+      // never reach innerHTML unescaped — an attacker submitting a review
+      // is the site's single largest stored-XSS surface otherwise, hit by
+      // every visitor who opens that product. Rating is also clamped:
+      // 'x'.repeat() throws on a negative count, which would break the
+      // whole reviews list for a malformed/malicious rating value.
+      const stars = Math.max(0, Math.min(5, Math.round(Number(r.rating)) || 0));
+      const safeUser = escapeHtml(r.user);
+      return `
       <div class="review-item">
         <div class="review-header">
-          <span class="review-author">${r.user}</span>
+          <span class="review-author">${safeUser}</span>
           <span class="review-date">${new Date(r.date).toLocaleDateString()}</span>
         </div>
-        <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
-        <p class="review-text">${r.comment}</p>
-        ${r.photo ? `<img class="review-photo" src="${r.photo}" alt="Photo from ${r.user}'s review" loading="lazy">` : ''}
+        <div class="review-stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</div>
+        <p class="review-text">${escapeHtml(r.comment)}</p>
+        ${r.photo ? `<img class="review-photo" src="${escapeHtml(r.photo)}" alt="Photo from ${safeUser}'s review" loading="lazy">` : ''}
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   const reviewForm = document.getElementById('review-form');

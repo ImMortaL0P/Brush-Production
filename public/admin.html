@@ -565,6 +565,20 @@
   <script>
     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
 
+    // Every value rendered into innerHTML below that ultimately came from
+    // an unauthenticated shopper (checkout customer fields, review text,
+    // order-derived admin-log details) must go through this first — an
+    // admin viewing Orders/Products/Logs runs whatever HTML is in there
+    // with the admin's own session token.
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     // Order items now carry a generic `variants` object (poster/plate/
     // wallpaper all have different variant groups) instead of the old
     // flat `size`/`gsm` fields — this reads either shape so historical
@@ -714,8 +728,8 @@
               <td><strong>${o.orderId}</strong></td>
               <td>${date}</td>
               <td>
-                ${o.customer.name}<br>
-                <small style="color:var(--text-secondary)">${o.customer.city}</small>
+                ${escapeHtml(o.customer.name)}<br>
+                <small style="color:var(--text-secondary)">${escapeHtml(o.customer.city)}</small>
               </td>
               <td>₹${o.total.toFixed(2)}</td>
               <td style="text-transform:uppercase; font-size:0.85rem; font-weight:600;">${o.paymentMethod}</td>
@@ -755,10 +769,10 @@
                 <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
                   <div style="flex: 1; min-width: 250px;">
                     <h4 style="margin-top:0; color:var(--accent); font-family: 'Outfit', sans-serif;">Customer Details</h4>
-                    <p style="margin: 0.3rem 0;"><strong>Name:</strong> ${o.customer.name}</p>
-                    <p style="margin: 0.3rem 0;"><strong>Email/ID:</strong> ${o.customer.email || o.customer.id || 'N/A'}</p>
-                    <p style="margin: 0.3rem 0;"><strong>Phone:</strong> ${o.customer.phone || 'N/A'}</p>
-                    <p style="margin: 0.3rem 0;"><strong>Address:</strong> ${o.customer.address}, ${o.customer.city}, ${o.customer.state} - ${o.customer.pincode}</p>
+                    <p style="margin: 0.3rem 0;"><strong>Name:</strong> ${escapeHtml(o.customer.name)}</p>
+                    <p style="margin: 0.3rem 0;"><strong>Email/ID:</strong> ${escapeHtml(o.customer.email || o.customer.id || 'N/A')}</p>
+                    <p style="margin: 0.3rem 0;"><strong>Phone:</strong> ${escapeHtml(o.customer.phone || 'N/A')}</p>
+                    <p style="margin: 0.3rem 0;"><strong>Address:</strong> ${escapeHtml(o.customer.address)}, ${escapeHtml(o.customer.city)}, ${escapeHtml(o.customer.state)} - ${escapeHtml(o.customer.pincode)}</p>
                   </div>
                   <div style="flex: 2; min-width: 300px;">
                     <h4 style="margin-top:0; color:var(--accent); font-family: 'Outfit', sans-serif;">Order Items</h4>
@@ -771,7 +785,7 @@
                       </tr>
                       ${o.items.map(i => `
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                          <td style="padding: 0.5rem 0;">${i.name}</td>
+                          <td style="padding: 0.5rem 0;">${escapeHtml(i.name)}</td>
                           <td style="padding: 0.5rem 0; font-size: 0.85rem; color: var(--text-secondary);">${formatVariantLine(i)}</td>
                           <td style="padding: 0.5rem 0; text-align:right;">${i.quantity}</td>
                           <td style="padding: 0.5rem 0; text-align:right;">₹${(i.price * i.quantity).toFixed(2)}</td>
@@ -1178,9 +1192,9 @@
           return `
             <tr>
               <td>${date}</td>
-              <td style="color:var(--accent); font-weight:600;">${l.username}</td>
-              <td><span class="status-badge" style="background:var(--bg-card); color:white; border: 1px solid var(--border-color);">${l.action}</span></td>
-              <td style="color:var(--text-secondary);">${l.details}</td>
+              <td style="color:var(--accent); font-weight:600;">${escapeHtml(l.username)}</td>
+              <td><span class="status-badge" style="background:var(--bg-card); color:white; border: 1px solid var(--border-color);">${escapeHtml(l.action)}</span></td>
+              <td style="color:var(--text-secondary);">${escapeHtml(l.details)}</td>
               <td>
                 <button class="action-btn" onclick="toggleKeepLog('${l.id}', ${!l.keep})" title="${l.keep ? 'Unkeep Log' : 'Keep Log'}" style="color: ${l.keep ? 'var(--accent)' : 'var(--text-muted)'}">
                   <i class="${l.keep ? 'fa-solid' : 'fa-regular'} fa-star"></i>
