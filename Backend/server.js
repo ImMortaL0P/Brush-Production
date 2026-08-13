@@ -313,7 +313,17 @@ const razorpay = new Razorpay({
 
 // Setup multer for image uploads (Memory storage for Cloud deployment)
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+// Gated behind requireAdmin, but still had no size limit or type filter —
+// an unbounded-size, any-file memory-buffered upload is a DoS/OOM vector
+// even from a trusted role, and would publish arbitrary files under an
+// image URL. 20MB accommodates the high-res print-ready files this admin
+// form is meant for; PNG/JPEG/PDF matches the form's own accept attribute
+// (public/admin.html's "Upload Poster (PNG/JPG/PDF)" field).
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, ['image/png', 'image/jpeg', 'application/pdf'].includes(file.mimetype))
+});
 
 // Review photos are submitted by unauthenticated shoppers, unlike the
 // admin-gated product image upload above — cap size and restrict to
