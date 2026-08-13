@@ -112,6 +112,14 @@ const USER_SESSION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 // lookup entirely (classic NoSQL injection).
 const isNonEmptyString = (v) => typeof v === 'string' && v.length > 0;
 
+// Length over composition rules (NIST 800-63B) — no forced uppercase/
+// number/symbol mix, just a floor long enough to resist guessing. Applied
+// wherever a password is *set*: signup, forgot-password reset, and the
+// logged-in change-password flow (previously only checked non-empty, so a
+// 1-character password was accepted server-side at every one of them).
+const MIN_PASSWORD_LENGTH = 8;
+const isStrongEnoughPassword = (v) => isNonEmptyString(v) && v.length >= MIN_PASSWORD_LENGTH;
+
 // Password hashing: bcrypt for anything written from here on, with
 // backward-compatible verification against the plain-SHA256 hashes that
 // were stored before this change. SHA256 is a fast hash - designed for
@@ -492,6 +500,7 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
   try {
     const { id, password, name, phone, address } = req.body;
     if (!isNonEmptyString(id) || !isNonEmptyString(password)) return res.status(400).json({ error: 'ID and password required' });
+    if (!isStrongEnoughPassword(password)) return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` });
 
     const existing = await usersRef.findOne({ _id: id });
     if (existing) {
@@ -590,6 +599,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) return res.status(400).json({ error: 'Reset token and new password required' });
+    if (!isStrongEnoughPassword(newPassword)) return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` });
 
     const entry = passwordResetTokens.get(token);
     if (!entry || entry.expiresAt < Date.now()) {
@@ -613,6 +623,7 @@ app.post('/api/auth/change-password', requireUser, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Current and new password required' });
+    if (!isStrongEnoughPassword(newPassword)) return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` });
 
     const user = await usersRef.findOne({ _id: req.userId });
     if (!user) return res.status(404).json({ error: 'User not found' });
