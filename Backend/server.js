@@ -272,6 +272,40 @@ const authLimiter = rateLimit({
   message: { error: 'Too many attempts from this device. Please try again later.' }
 });
 
+// Order creation deducts real stock and sends a real email — with no limiter
+// at all, the payment-verification fixes above are the only thing stopping
+// a scripted flood of orders (each one still individually valid: COD orders
+// need no payment step, so this is reachable without touching Razorpay).
+const orderCreateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many orders placed from this device. Please try again later.' }
+});
+
+// Reviews are unauthenticated and accept a photo upload — no limiter means
+// unlimited spam-review flooding and, combined with the upload, unbounded
+// storage-cost abuse from repeated 5MB image uploads.
+const reviewLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many reviews submitted from this device. Please try again later.' }
+});
+
+// Every call here triggers a real Razorpay API request (quota/cost) even
+// before any order exists — same class of abuse as orderLookupLimiter, just
+// on the payment-initiation step instead of the lookup step.
+const paymentOrderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many payment attempts from this device. Please try again later.' }
+});
+
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID',
   key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_SECRET'
@@ -633,7 +667,7 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-app.post('/api/products/:id/reviews', uploadReviewPhoto.single('photo'), async (req, res) => {
+app.post('/api/products/:id/reviews', reviewLimiter, uploadReviewPhoto.single('photo'), async (req, res) => {
   try {
     const { user, rating, comment } = req.body;
     if (!user || !rating || !comment) return res.status(400).json({ error: 'Missing review fields' });
@@ -685,7 +719,7 @@ app.get('/api/config/razorpay', (req, res) => {
   res.json({ key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID' });
 });
 
-app.post('/api/payment/create-order', async (req, res) => {
+app.post('/api/payment/create-order', paymentOrderLimiter, async (req, res) => {
   try {
     // Amount is computed here, server-side, from the actual cart contents —
     // never taken from the client — so what the shopper is asked to pay
@@ -722,7 +756,7 @@ app.post('/api/payment/create-order', async (req, res) => {
   }
 });
 
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', orderCreateLimiter, async (req, res) => {
   const session = mongoClient.startSession();
   try {
     const { customer, items, paymentMethod, razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
@@ -849,7 +883,7 @@ app.get('/api/orders/:orderId', orderLookupLimiter, async (req, res) => {
   }
 });
 
-app.post('/api/orders/:orderId/cancel', async (req, res) => {
+app.post('/api/orders/:orderId/cancel', orderLookupLimiter, async (req, res) => {
   try {
     const order = await ordersRef.findOne({ _id: req.params.orderId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
