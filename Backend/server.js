@@ -86,7 +86,6 @@ const app = express();
 // v8+, refuses the request outright when it sees a forwarded header it
 // wasn't told to trust. `1` trusts exactly one hop, matching Render's setup.
 app.set('trust proxy', 1);
-let activeAdminToken = null; // Legacy single token
 const activeAdminTokens = new Map(); // token -> { username, role, expiresAt }
 const activeUserTokens = new Map(); // token -> { userId, expiresAt }
 const passwordResetTokens = new Map(); // token -> { userId, expiresAt }
@@ -306,9 +305,20 @@ const paymentOrderLimiter = rateLimit({
   message: { error: 'Too many payment attempts from this device. Please try again later.' }
 });
 
+// A missing secret used to fall back to the literal string 'YOUR_SECRET' —
+// real Razorpay signatures would never validate against that, so instead
+// of failing loudly it turned into a silent, hard-to-diagnose "no order
+// ever confirms" (or worse, an easier bypass surface for the payment
+// verification in /api/orders). Fail fast at startup instead, matching
+// the MONGODB_URI check below.
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  console.error("❌ FATAL ERROR: RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET environment variables are not set.");
+  process.exit(1);
+}
+
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_SECRET'
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
 // Setup multer for image uploads (Memory storage for Cloud deployment)
@@ -726,7 +736,7 @@ app.post('/api/products/:id/reviews', reviewLimiter, uploadReviewPhoto.single('p
 });
 
 app.get('/api/config/razorpay', (req, res) => {
-  res.json({ key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID' });
+  res.json({ key_id: process.env.RAZORPAY_KEY_ID });
 });
 
 app.post('/api/payment/create-order', paymentOrderLimiter, async (req, res) => {
@@ -980,10 +990,6 @@ const requireAdmin = (req, res, next) => {
 
   if (!session || session.expiresAt < Date.now()) {
     activeAdminTokens.delete(token);
-    if (activeAdminToken && token === activeAdminToken) {
-      req.adminSession = { username: 'legacy', role: 'superadmin' };
-      return next();
-    }
     return res.status(401).json({ error: 'Unauthorized. Please login again.' });
   }
 

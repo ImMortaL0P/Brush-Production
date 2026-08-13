@@ -1,31 +1,37 @@
-const path = require('path');
-const { initializeApp, cert } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
-const crypto = require('crypto');
+require('dotenv').config();
+const { MongoClient } = require('mongodb');
+const bcrypt = require('bcryptjs');
 
-const serviceAccount = require(path.join(__dirname, 'serviceAccountKey.json'));
-initializeApp({ credential: cert(serviceAccount) });
-const db = getFirestore();
+// Previously wrote to Firestore with unsalted SHA-256 hashes — stale since
+// the admin store migrated to MongoDB (see migrate_firestore_to_mongo.js)
+// and server.js switched to bcrypt. This targets the same
+// collection/hash scheme server.js uses.
 
 async function setupAdmin() {
   const username = process.env.SETUP_ADMIN_USERNAME;
   const password = process.env.SETUP_ADMIN_PASSWORD;
-  if (!username || !password) {
-    console.error('Set SETUP_ADMIN_USERNAME and SETUP_ADMIN_PASSWORD before running this script.');
+  if (!process.env.MONGODB_URI || !username || !password) {
+    console.error('Set MONGODB_URI, SETUP_ADMIN_USERNAME and SETUP_ADMIN_PASSWORD before running this script.');
     process.exit(1);
   }
 
-  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+  const client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+  const adminsRef = client.db().collection('admins');
 
-  const adminsRef = db.collection('admins');
-  await adminsRef.doc(username).set({
-    username: username,
-    passwordHash: passwordHash,
-    role: 'superadmin'
-  });
-  
+  const passwordHash = await bcrypt.hash(password, 12);
+  await adminsRef.updateOne(
+    { _id: username },
+    { $set: { username, passwordHash, role: 'superadmin' } },
+    { upsert: true }
+  );
+
   console.log(`Admin user '${username}' created successfully.`);
+  await client.close();
   process.exit(0);
 }
 
-setupAdmin().catch(console.error);
+setupAdmin().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
