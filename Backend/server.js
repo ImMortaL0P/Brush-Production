@@ -1008,6 +1008,18 @@ app.post('/api/admin/login', authLimiter, async (req, res) => {
   }
 });
 
+// Mirrors /api/auth/logout for customers — without this, a leaked/captured
+// admin Bearer token stayed valid for its full 12-hour session lifetime
+// with no way to revoke it server-side; "logging out" only cleared it
+// client-side.
+app.post('/api/admin/logout', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    activeAdminTokens.delete(authHeader.split(' ')[1]);
+  }
+  res.json({ success: true });
+});
+
 // Middleware for admin routes
 const requireAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;

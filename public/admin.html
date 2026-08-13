@@ -613,6 +613,16 @@
     }
     
     function logout() {
+      // Best-effort server-side revocation — fire-and-forget so a network
+      // hiccup never blocks the local logout the user is waiting on. Without
+      // this call, a captured token stayed valid until its natural 12-hour
+      // expiry even after the admin who owned it had "logged out".
+      if (adminToken) {
+        fetch(`${API_BASE}/admin/logout`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        }).catch(() => {});
+      }
       sessionStorage.removeItem('brush_admin_token');
       sessionStorage.removeItem('brush_admin_role');
       sessionStorage.removeItem('brush_admin_username');
