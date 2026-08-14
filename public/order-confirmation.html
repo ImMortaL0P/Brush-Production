@@ -371,6 +371,15 @@
         .replace(/'/g, '&#39;');
     }
 
+    // Same casual-copying deterrent as script.js on the main site — not real
+    // security, just removes the one-click "Save image as" / drag-out path.
+    document.addEventListener('contextmenu', (e) => {
+      if (e.target.matches?.('.mockup-poster, .mockup-hover')) e.preventDefault();
+    });
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.matches?.('.mockup-poster, .mockup-hover')) e.preventDefault();
+    });
+
     document.addEventListener('DOMContentLoaded', async () => {
       const card = document.getElementById('confirmation-card');
       const params = new URLSearchParams(window.location.search);
