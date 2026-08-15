@@ -1,8 +1,26 @@
 node_modules/
 .env
+.env.*
+!.env.example
 .DS_Store
+
+# Secrets
 Backend/serviceAccountKey.json
 Backend/assets/
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+npm-debug.log*
+
+# Agent configs
 .agents/
 .claude/
 skills-lock.json
