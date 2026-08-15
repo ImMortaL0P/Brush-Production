@@ -7,7 +7,11 @@
     "node": "20.x"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "setup-admin": "node setupAdmin.js",
+    "seed:categories": "node scripts/seed_new_categories.js",
+    "calc:frequency": "node scripts/calc_order_frequency.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
