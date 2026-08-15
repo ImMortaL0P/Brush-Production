@@ -854,20 +854,20 @@
     <h3>Join as an Artist</h3>
     <form class="reachout-form" onsubmit="event.preventDefault(); showToast('Application submitted successfully!'); closeReachoutModals();">
       <div class="form-group">
-        <label>Name</label>
-        <input type="text" required>
+        <label for="artist-name">Name</label>
+        <input type="text" id="artist-name" required>
       </div>
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" required>
+        <label for="artist-email">Email</label>
+        <input type="email" id="artist-email" required>
       </div>
       <div class="form-group">
-        <label>Portfolio Link</label>
-        <input type="url" required>
+        <label for="artist-portfolio">Portfolio Link</label>
+        <input type="url" id="artist-portfolio" required>
       </div>
       <div class="form-group">
-        <label>Tell us about your art style</label>
-        <textarea rows="4" required></textarea>
+        <label for="artist-style">Tell us about your art style</label>
+        <textarea id="artist-style" rows="4" required></textarea>
       </div>
       <button type="submit" class="hero-cta">Submit Application</button>
     </form>
@@ -879,20 +879,20 @@
     <h3>Request a Poster</h3>
     <form class="reachout-form" onsubmit="event.preventDefault(); showToast('Request submitted! We will look into it.'); closeReachoutModals();">
       <div class="form-group">
-        <label>Name</label>
-        <input type="text" required>
+        <label for="request-name">Name</label>
+        <input type="text" id="request-name" required>
       </div>
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" required>
+        <label for="request-email">Email</label>
+        <input type="email" id="request-email" required>
       </div>
       <div class="form-group">
-        <label>Poster Theme / Idea</label>
-        <input type="text" required>
+        <label for="request-theme">Poster Theme / Idea</label>
+        <input type="text" id="request-theme" required>
       </div>
       <div class="form-group">
-        <label>Details & Suggestions</label>
-        <textarea rows="4" required></textarea>
+        <label for="request-details">Details &amp; Suggestions</label>
+        <textarea id="request-details" rows="4" required></textarea>
       </div>
       <button type="submit" class="hero-cta">Submit Request</button>
     </form>
@@ -904,20 +904,20 @@
     <h3>Collaborate as a Curator</h3>
     <form class="reachout-form" onsubmit="event.preventDefault(); showToast('Proposal sent successfully!'); closeReachoutModals();">
       <div class="form-group">
-        <label>Name</label>
-        <input type="text" required>
+        <label for="curator-name">Name</label>
+        <input type="text" id="curator-name" required>
       </div>
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" required>
+        <label for="curator-email">Email</label>
+        <input type="email" id="curator-email" required>
       </div>
       <div class="form-group">
-        <label>Social Media / Platform Link</label>
-        <input type="url" required>
+        <label for="curator-platform">Social Media / Platform Link</label>
+        <input type="url" id="curator-platform" required>
       </div>
       <div class="form-group">
-        <label>How would you like to collaborate?</label>
-        <textarea rows="4" required></textarea>
+        <label for="curator-collab">How would you like to collaborate?</label>
+        <textarea id="curator-collab" rows="4" required></textarea>
       </div>
       <button type="submit" class="hero-cta">Send Proposal</button>
     </form>
