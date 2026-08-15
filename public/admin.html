@@ -928,9 +928,9 @@
           <tr>
             <td>
               <div style="display:flex; align-items:center; gap:10px;">
-                <img src="${p.image}" class="prod-thumb">
+                <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" class="prod-thumb">
                 <div>
-                  <input type="text" id="name-${p.id}" value="${p.name}" ${isDisabled} style="width: 200px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; font-weight:600; font-family:inherit;"><br>
+                  <input type="text" id="name-${p.id}" value="${escapeHtml(p.name)}" ${isDisabled} style="width: 200px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; font-weight:600; font-family:inherit;"><br>
                   <select id="cat-${p.id}" ${isDisabled} style="width: 150px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-size: 0.85rem; margin-top: 5px;">
                     ${['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'Board Finish', 'Floral', 'Travel', 'Mythological', 'Original Movie Posters', 'Pop Culture', 'Gaming', 'Plates', 'Wallpaper', 'General'].map(c => `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
                   </select>
@@ -938,11 +938,11 @@
               </div>
             </td>
             <td>
-              <input type="text" id="sku-${p.id}" value="${p.sku || p.id}" ${isDisabled} style="width: 100px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-family:monospace;">
+              <input type="text" id="sku-${p.id}" value="${escapeHtml(p.sku || p.id)}" ${isDisabled} style="width: 100px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-family:monospace;">
             </td>
             <td>
-              <input type="text" id="badge-${p.id}" value="${p.badge || ''}" ${isDisabled} style="width: 70px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
-              <input type="text" id="keywords-${p.id}" value="${p.keywords || ''}" ${isDisabled} placeholder="Keywords" style="width: 100px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; margin-top:5px; font-size: 0.8rem;">
+              <input type="text" id="badge-${p.id}" value="${escapeHtml(p.badge || '')}" ${isDisabled} style="width: 70px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
+              <input type="text" id="keywords-${p.id}" value="${escapeHtml(p.keywords || '')}" ${isDisabled} placeholder="Keywords" style="width: 100px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; margin-top:5px; font-size: 0.8rem;">
             </td>
             <td>
               ₹<input type="number" id="price-${p.id}" value="${p.price}" ${isDisabled} style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
