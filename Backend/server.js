@@ -122,6 +122,29 @@ const port = process.env.PORT || 5500;
 const ADMIN_SESSION_MS = 12 * 60 * 60 * 1000; // 12 hours
 const USER_SESSION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+// ── Periodic session / token cleanup sweeper ───────────────────
+// Expired entries in the in-memory Maps stay resident until the process
+// restarts. This sweeper runs every 15 minutes and purges anything past
+// its TTL, preventing unbounded memory growth under sustained load.
+const SESSION_SWEEP_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+setInterval(() => {
+  const now = Date.now();
+  let swept = 0;
+  for (const [token, session] of activeAdminTokens) {
+    if (session.expiresAt && session.expiresAt < now) { activeAdminTokens.delete(token); swept++; }
+  }
+  for (const [token, session] of activeUserTokens) {
+    if (session.expiresAt && session.expiresAt < now) { activeUserTokens.delete(token); swept++; }
+  }
+  for (const [token, data] of passwordResetTokens) {
+    if (data.expiresAt && data.expiresAt < now) { passwordResetTokens.delete(token); swept++; }
+  }
+  for (const [orderId, data] of pendingPayments) {
+    if (data.createdAt && (now - data.createdAt > PENDING_PAYMENT_TTL_MS)) { pendingPayments.delete(orderId); swept++; }
+  }
+  if (swept > 0) console.log(`🧹 Session sweeper: purged ${swept} expired entries`);
+}, SESSION_SWEEP_INTERVAL_MS);
+
 // MongoDB interprets a query field set to an object (e.g. `{"$ne": null}`)
 // as an operator, not a literal match - so any field that flows from
 // req.body into a findOne()/query filter must be confirmed to be an
@@ -1335,6 +1358,30 @@ app.use((req, res) => {
     return res.status(404).json({ error: 'Not found' });
   }
   res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
+});
+
+// ── Health check endpoint ──────────────────────────────────────
+// Used by cloud providers (Render, Railway) for uptime probes,
+// and by monitoring tools to verify both the server and MongoDB
+// are reachable.
+app.get('/api/health', async (req, res) => {
+  try {
+    await db.command({ ping: 1 });
+    res.json({
+      status: 'ok',
+      uptime: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+      mongo: 'connected'
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: 'degraded',
+      uptime: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+      mongo: 'disconnected',
+      error: err.message
+    });
+  }
 });
 
 app.use((err, req, res, next) => {
