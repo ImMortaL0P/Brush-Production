@@ -1,34 +1,89 @@
-# Brush — Premium Poster E-Commerce
+# Brush — Premium Poster & Wall Art E-Commerce
 
-Welcome to **Brush**, a state-of-the-art e-commerce platform dedicated to high-quality, premium posters and wall art. 
+Welcome to **Brush**, a full-featured e-commerce platform for premium posters, decorative plates, and wallpaper, built with a decoupled static frontend and a Node.js + Express backend.
 
 ## Features
-- **Dynamic Frontend:** Fast, responsive, and beautiful user interface built with HTML, CSS, and Vanilla JavaScript.
-- **Inventory Management:** Full stock tracking. Items automatically update to "Out of Stock" across the store when inventory depletes.
-- **Admin Dashboard:** A secure admin portal to view orders, update fulfillment statuses, and instantly add new posters to the storefront.
-- **Integrated Payments:** Built-in Razorpay checkout supporting UPI, Credit Cards, and Debit Cards natively.
-- **Cloud Database:** Powered by Firebase Firestore for real-time inventory and order processing.
+
+- **Dynamic Frontend:** Fast, responsive storefront built with HTML, CSS, and Vanilla JavaScript — dark/light theme toggle, smooth scrolling (Lenis), and micro-interactions.
+- **Multi-Product Types:** Posters (multiple sizes & paper weights), decorative plates (round sizes), and wallpaper (roll dimensions) with variant-aware pricing.
+- **Inventory Management:** Real-time stock tracking with automatic out-of-stock handling across the entire store.
+- **Admin Dashboard:** Role-based admin portal (`superadmin`, `stocker`, `watcher`) for order fulfillment, PDF invoices, inventory editing, and activity logs.
+- **Integrated Payments:** Razorpay checkout supporting UPI, Credit Cards, Debit Cards, and Cash on Delivery.
+- **Cloud Database:** Powered by **MongoDB Atlas** for products, orders, users, and admin management.
+- **Image Storage:** Firebase Storage for product image uploads via the admin dashboard.
+- **Transactional Emails:** Automated order confirmation and status update emails via Nodemailer.
 
 ## Getting Started
 
-To run this project locally, you need to start both the static frontend and the Node.js backend.
+### Prerequisites
 
-### 1. Start the Backend
-The backend handles database connections, Razorpay order generation, and secure Admin authentication.
+- Node.js 20.x
+- A MongoDB Atlas cluster (or local MongoDB)
+- Firebase project (for image storage)
+- Razorpay account (for payments — optional for development, mock mode available)
+
+### 1. Configure Environment
+
+```bash
+cd Backend
+cp .env.example .env
+# Fill in your MongoDB URI, Razorpay keys, SMTP credentials, etc.
+```
+
+See [`Backend/.env.example`](Backend/.env.example) for all required and optional variables.
+
+### 2. Start the Backend
+
 ```bash
 cd Backend
 npm install
-node server.js
+npm run dev          # Development with auto-reload (--watch)
+# or
+npm start            # Production
 ```
-*Note: The backend requires a `.env` file with your `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`, as well as a Firebase `serviceAccountKey.json` to connect to Firestore.*
 
-### 2. Start the Frontend
-The frontend lives entirely inside the `public/` directory. You can serve it using any local server.
+### 3. Start the Frontend
+
+The frontend is a static SPA inside `public/`. Serve it with any local server:
+
 ```bash
-cd public
-npx http-server -p 3000
+npm run dev:frontend   # from root — serves on port 3000
 ```
+
 Then visit `http://localhost:3000` in your browser.
 
+### 4. Create an Admin Account
+
+```bash
+cd Backend
+npm run setup-admin
+```
+
+## Project Structure
+
+```
+├── Backend/
+│   ├── server.js              # Express API server (MongoDB, auth, payments, emails)
+│   ├── productTypes.js        # Product category config & variant pricing
+│   ├── invoiceTemplate.js     # PDF invoice builder (PDFKit)
+│   ├── orderEmailTemplate.js  # Transactional email templates
+│   ├── setupAdmin.js          # Admin account provisioning CLI
+│   ├── scripts/               # One-off migration, seeding & maintenance utilities
+│   └── .env.example           # Environment variable template
+├── public/
+│   ├── index.html             # Main storefront
+│   ├── all_products.html      # Product catalog with filtering & search
+│   ├── checkout.html          # Multi-step checkout with Razorpay
+│   ├── admin.html             # Admin dashboard
+│   ├── order-confirmation.html
+│   ├── styles.css             # Global design system (CSS variables, dark/light)
+│   ├── script.js              # Core frontend logic
+│   ├── cart.js                # Cart module (localStorage)
+│   └── ...
+└── README.md
+```
+
 ## Deployment
-The frontend is configured to automatically deploy to **GitHub Pages** whenever changes are pushed to the `main` branch. The backend should be hosted separately on a Node.js-compatible provider like Render, Heroku, or Railway.
+
+- **Frontend:** Automatically deploys to GitHub Pages on push to `main`.
+- **Backend:** Host on any Node.js provider — Render, Railway, Heroku, etc. Set the health check URL to `/api/health`.
