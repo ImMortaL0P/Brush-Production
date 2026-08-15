@@ -24,6 +24,23 @@ const { buildOrderStatusEmail } = require('./orderEmailTemplate');
 const { drawInvoice } = require('./invoiceTemplate');
 const { getProductType, priceWithVariants } = require('./productTypes');
 
+// ── Startup environment validation ─────────────────────────────
+// Warns loudly at boot if critical config is missing so developers
+// don't discover misconfiguration mid-request.
+const REQUIRED_ENV = ['MONGODB_URI'];
+const RECOMMENDED_ENV = ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'SMTP_USER', 'SMTP_PASS'];
+
+const missingRequired = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missingRequired.length) {
+  console.error(`\n✖  FATAL: Missing required environment variables: ${missingRequired.join(', ')}`);
+  console.error('   Copy Backend/.env.example to Backend/.env and fill in your values.\n');
+  process.exit(1);
+}
+const missingRecommended = RECOMMENDED_ENV.filter(k => !process.env[k]);
+if (missingRecommended.length) {
+  console.warn(`⚠  Warning: Missing recommended env vars: ${missingRecommended.join(', ')} — some features will be unavailable.`);
+}
+
 const SITE_URL = process.env.SITE_URL || 'https://immortal0p.github.io/Brush-Production';
 
 const transporter = nodemailer.createTransport({
