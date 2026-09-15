@@ -206,11 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (matched.length > 0) {
           suggestionsBox.innerHTML = matched.map(p => `
             <a href="all_products.html?search=${encodeURIComponent(p.name)}" class="suggestion-item">
-              <div class="mockup-wrapper" style="flex-shrink: 0;">
-                <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
-                <img src="${p.image}" class="mockup-poster" alt="${p.name}">
-                <img src="${p.image}" class="mockup-hover" alt="${p.name}">
-              </div>
+              <img src="${p.image}" class="plain-product-image" style="width: 50px; height: 75px; flex-shrink: 0; border-radius: var(--radius-sm);" alt="${p.name}">
               <div class="suggestion-item-details">
                 <span class="suggestion-title">${p.name}</span>
                 <span class="suggestion-cat">${p.category}</span>
@@ -569,6 +565,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!productList && !scrollTrack && !grossingTrack) return;
 
+    const skeletonHtml = `
+      <div class="product-card skeleton-card">
+        <div class="product-card-image" style="background: var(--border-color); min-height: 350px;"></div>
+        <div style="padding: 10px 0;">
+          <div style="height: 20px; background: var(--border-color); margin-bottom: 8px; border-radius: 2px;"></div>
+          <div style="height: 15px; width: 60%; background: var(--border-color); border-radius: 2px;"></div>
+        </div>
+      </div>
+    `;
+    const placeholders = Array(4).fill(skeletonHtml).join('');
+    if (productList) productList.innerHTML = placeholders;
+    if (scrollTrack) scrollTrack.innerHTML = placeholders;
+    if (grossingTrack) grossingTrack.innerHTML = placeholders;
+
     try {
       const res = await fetch(API_BASE + '/products');
       if (!res.ok) throw new Error('Failed to fetch products');
@@ -581,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const newArrivals = products.filter(p => p.showInNewArrivals);
       const grossingPicks = products.filter(p => p.showInGrossing);
 
-      const createProductCard = (p, delayIndex = 0, badge = 'Sale', badgeBg = '') => {
+      const createProductCard = (p, delayIndex = 0, badge = 'Sale', badgeBg = '', isEager = false) => {
         const delayClass = delayIndex > 0 ? `fade-in-delay-${delayIndex}` : '';
         const badgeStyle = badgeBg ? `style="background: ${badgeBg}; color: var(--bg-primary);"` : '';
         const discountPercentage = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
@@ -591,23 +601,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // The picture-frame-on-wall mockup only makes sense for posters —
         // a plate or wallpaper roll photographed "framed on a wall" would
         // misrepresent the product, so those types just show the plain photo.
-        const isPoster = (p.productType || 'poster') === 'poster';
+        const isPoster = (p.productType || 'poster').toLowerCase().startsWith('poster');
         const specLine = isPoster
           ? `<span><i class="fa-solid fa-gem"></i> 300 GSM Matte</span><span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>`
           : `<span><i class="fa-solid fa-gem"></i> Premium Quality</span><span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>`;
 
+        const loadAttr = isEager ? '' : 'loading="lazy"';
+        const imgAttrs = `${loadAttr} decoding="async" onload="this.classList.add('loaded')"`;
+
         return `
-          <div class="product-card scale-in ${delayClass}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
+          <div class="product-card ${delayClass}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
             <div class="product-card-image">
-              ${isPoster ? `
-                <div class="mockup-wrapper">
-                  <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame" loading="lazy">
-                  <img src="${p.image}" class="mockup-poster" alt="${p.name}" loading="lazy">
-                  <img src="${p.image}" class="mockup-hover" alt="${p.name}" loading="lazy">
-                </div>
-              ` : `
-                <img src="${p.image}" class="plain-product-image" alt="${p.name}" loading="lazy">
-              `}
+              <img src="${p.image}" class="plain-product-image" alt="${p.name}" ${imgAttrs}>
               <span class="product-badge" ${badgeStyle}>${p.badge || badge}</span>
               <div class="product-quick-actions">
                 <div class="product-card-specs">
@@ -632,25 +637,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
       toggleSection('bestsellers', bestSellers.length > 0);
       if (productList) {
-        productList.innerHTML = bestSellers.map((p, i) => createProductCard(p, i % 4, 'Trending')).join('');
+        productList.innerHTML = bestSellers.map((p, i) => createProductCard(p, i % 4, 'Trending', '', i < 4)).join('');
         observeRevealElements(productList);
       }
 
       toggleSection('newarrival', newArrivals.length > 0);
       if (scrollTrack) {
-        scrollTrack.innerHTML = newArrivals.map(p => createProductCard(p, 0, 'New', 'var(--accent)')).join('');
+        scrollTrack.innerHTML = newArrivals.map((p, i) => createProductCard(p, 0, 'New', 'var(--accent)', i < 4)).join('');
         observeRevealElements(scrollTrack);
       }
 
       toggleSection('grossing-picks', grossingPicks.length > 0);
       if (grossingTrack) {
-        grossingTrack.innerHTML = grossingPicks.map((p, i) => createProductCard(p, i % 4, 'Trending')).join('');
+        grossingTrack.innerHTML = grossingPicks.map((p, i) => createProductCard(p, i % 4, 'Trending', '', false)).join('');
         observeRevealElements(grossingTrack);
       }
 
       updateBestsellersCarousel();
       updateNewArrivalsCarousel();
       updateGrossingCarousel();
+      if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh();
 
     } catch (err) {
       console.error('Error loading products:', err);
@@ -776,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // stay in sync with whatever the modal actually offered.
   function formatCartVariantLine(item) {
     if (!item.variants) return '';
-    const typeConfig = Cart.typeConfigFor(item.productType || 'poster');
+    const typeConfig = Cart.typeConfigFor((item.productType || 'poster').toLowerCase());
     return typeConfig.variantGroups
       .filter(group => item.variants[group.key] !== undefined)
       .map(group => {
@@ -822,11 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cartBody.innerHTML = items.map(item => `
       <div class="cart-item" data-cart-id="${item.cartId || item.id}">
         <div class="cart-item-image">
-          <div class="mockup-wrapper">
-            <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
-            <img src="${item.image}" class="mockup-poster" alt="${item.name}">
-            <img src="${item.image}" class="mockup-hover" alt="${item.name}">
-          </div>
+          <img src="${item.image}" class="plain-product-image" alt="${item.name}">
         </div>
         <div class="cart-item-details">
           <h4>${item.name}</h4>
@@ -999,22 +1001,15 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const modalImageCol = document.querySelector('.modal-image-col');
       const nextId = getNextProductId(productId);
-      const modalProductType = currentProduct.productType || 'poster';
-      const isPosterModal = modalProductType === 'poster';
+      const modalProductType = (currentProduct.productType || 'poster').toLowerCase();
+      const isPosterModal = modalProductType.startsWith('poster');
       const nextBtnHtml = nextId ? `<button class="modal-next-btn" id="modal-next-btn" data-next-id="${nextId}">Next ${isPosterModal ? 'Poster' : Cart.typeConfigFor(modalProductType).label} <i class="fa-solid fa-arrow-right"></i></button>` : '';
-      modalImageCol.innerHTML = isPosterModal ? `
-        <div class="mockup-wrapper">
-          <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
-          <img src="${currentProduct.image}" class="mockup-poster" alt="${currentProduct.name}">
-          <img src="${currentProduct.image}" class="mockup-hover" alt="${currentProduct.name}">
+
+      const modalImgAttrs = `decoding="sync" onload="this.classList.add('loaded')"`; // modal images are strictly above the fold
+      modalImageCol.innerHTML = `<div class="modal-plain-image-wrapper">
+          <img src="${currentProduct.image}" class="modal-plain-image" alt="${currentProduct.name}" ${modalImgAttrs}>
           ${nextBtnHtml}
-        </div>
-      ` : `
-        <div class="modal-plain-image-wrapper">
-          <img src="${currentProduct.image}" class="modal-plain-image" alt="${currentProduct.name}">
-          ${nextBtnHtml}
-        </div>
-      `;
+        </div>`;
       
       document.getElementById('modal-title').textContent = currentProduct.name;
       document.getElementById('modal-description').textContent = currentProduct.description || 'Premium high-quality poster for your space.';
@@ -1044,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      renderVariantSelectors(currentProduct.productType || 'poster');
+      renderVariantSelectors((currentProduct.productType || 'poster').toLowerCase());
       updateModalPrice();
       renderReviews();
     } catch (err) {

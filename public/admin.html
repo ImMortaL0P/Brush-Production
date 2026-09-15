@@ -7,23 +7,39 @@
   <link rel="icon" href="assets/misc/Brush%20Text%20Arial.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="theme.js"></script>
   <style>
     :root {
-      /* Mirrors the brand palette in styles.css — keep these two files in sync. */
-      --bg-primary: #000000;
-      --bg-secondary: #140d03;
-      --bg-card: #241606;
-      --accent: #ff9f29;
-      --accent-hover: #ffb050;
-      --accent-rgb: 255, 159, 41;
-      --on-accent: #000000;
-      --text-primary: #faf3e3;
-      --text-secondary: #b7c1ad;
-      --border-color: #664010;
-      --success: #68876d;
+      /* Mirrors the brand palette in styles.css (dark default) — keep these two files in sync.
+         Accent is the portfolio #FF4C24; ground #0A0A09, ink #EFEDE8, sharp edges. */
+      --bg-primary: #0A0A09;
+      --bg-secondary: #1E0F0B;
+      --bg-card: #2C130D;
+      --accent: #FF4C24;
+      --accent-hover: #FF6C4B;
+      --accent-rgb: 255, 76, 36;
+      --on-accent: #FFFFFF;
+      --text-primary: #EFEDE8;
+      --text-secondary: #DAD9D5;
+      --border-color: #3A3935;
+      --success: #2f6b46;
+      --sale-red: #e5484d;
+    }
+    :root[data-theme="light"] {
+      --bg-primary: #EFEDE8;
+      --bg-secondary: #D9D7D2;
+      --bg-card: #FFFFFF;
+      --accent: #FF4C24;
+      --accent-hover: #D83B1A;
+      --accent-rgb: 255, 76, 36;
+      --on-accent: #FFFFFF;
+      --text-primary: #111111;
+      --text-secondary: #444444;
+      --border-color: #D4D2CD;
+      --success: #2f6b46;
       --sale-red: #e5484d;
     }
     body {
@@ -931,7 +947,10 @@
                 <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" class="prod-thumb">
                 <div>
                   <input type="text" id="name-${p.id}" value="${escapeHtml(p.name)}" ${isDisabled} style="width: 200px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; font-weight:600; font-family:inherit;"><br>
-                  <select id="cat-${p.id}" ${isDisabled} style="width: 150px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-size: 0.85rem; margin-top: 5px;">
+                  <select id="type-${p.id}" ${isDisabled} style="width: 110px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-size: 0.85rem; margin-top: 5px; margin-right: 5px;">
+                    ${['Posters', 'Collectibles', 'Wallpapers', 'Stickers'].map(t => '<option value="'+t+'" ' + (p.productType === t ? 'selected' : '') + '>'+t+'</option>').join('')}
+                  </select>
+                  <select id="cat-${p.id}" ${isDisabled} style="width: 110px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-size: 0.85rem; margin-top: 5px;">
                     ${['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'Board Finish', 'Floral', 'Travel', 'Mythological', 'Original Movie Posters', 'Pop Culture', 'Gaming', 'Plates', 'Wallpaper', 'General'].map(c => `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
                   </select>
                 </div>
@@ -987,6 +1006,7 @@
       if (role === 'superadmin') {
         payload.name = document.getElementById(`name-${id}`).value;
         payload.category = document.getElementById(`cat-${id}`).value;
+        payload.productType = document.getElementById(`type-${id}`).value;
         payload.price = parseInt(document.getElementById(`price-${id}`).value);
         payload.badge = document.getElementById(`badge-${id}`).value;
         payload.keywords = document.getElementById(`keywords-${id}`) ? document.getElementById(`keywords-${id}`).value : '';
@@ -1040,6 +1060,7 @@
                if (role === 'superadmin') {
                  payload.name = document.getElementById(`name-${id}`).value;
                  payload.category = document.getElementById(`cat-${id}`).value;
+        payload.productType = document.getElementById(`type-${id}`).value;
                  payload.price = parseInt(document.getElementById(`price-${id}`).value);
                  payload.badge = document.getElementById(`badge-${id}`).value;
                  payload.keywords = document.getElementById(`keywords-${id}`) ? document.getElementById(`keywords-${id}`).value : '';
@@ -1150,6 +1171,8 @@
       const formData = new FormData();
       formData.append('name', document.getElementById('new-prod-name').value);
       formData.append('category', document.getElementById('new-prod-cat').value);
+      formData.append('productType', document.getElementById('new-prod-type').value);
+      formData.append('productType', document.getElementById('new-prod-type').value);
       formData.append('price', document.getElementById('new-prod-price').value);
       formData.append('originalPrice', document.getElementById('new-prod-original-price').value || document.getElementById('new-prod-price').value);
       formData.append('badge', document.getElementById('new-prod-badge').value);
