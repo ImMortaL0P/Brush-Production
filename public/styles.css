@@ -84,17 +84,17 @@ body.preloader-active {
      To re-theme the whole site, edit ONLY these 4 values; every
      background, border, and text token below derives from them.
      ==================================================================== */
-  --brand-black: #000000;
-  --brand-maroon: #ff9f29; /* "maroon" is just this slot's historical name — holds whatever the accent color is */
-  --brand-tan: #1a4d2e; /* likewise: holds whatever the secondary/depth color is, currently a dark green */
-  --brand-cream: #faf3e3;
+  --brand-black: #0A0A09;   /* deep dark ground — the hard ink that the whole page is drawn on in dark mode */
+  --brand-maroon: #FF4C24;  /* "maroon" is just this slot's historical name — now carries the portfolio accent orange */
+  --brand-tan: #AAAAAA;     /* likewise: the neutral mid-tone that drives secondary/muted text */
+  --brand-cream: #EFEDE8;   /* the warm ink in dark mode / the paper in light — portfolio --ink / --ground */
 
   /* RGB triplets kept in sync with the hex values above — required
      wherever a color needs alpha transparency, e.g. rgba(var(--accent-rgb), .2) */
-  --accent-rgb: 255, 159, 41;
-  --bg-primary-rgb: 0, 0, 0;
+  --accent-rgb: 255, 76, 36;
+  --bg-primary-rgb: 10, 10, 9;
   --sale-red-rgb: 229, 72, 77;
-  --success-rgb: 104, 135, 109;
+  --success-rgb: 47, 107, 70;
 
   /* A light, theme-INVARIANT blend of cream+tan for text that sits on a
      fixed dark photo scrim (hero, category cards, CTA banner) — those
@@ -110,21 +110,37 @@ body.preloader-active {
   --bg-card-hover: color-mix(in srgb, var(--brand-black) 78%, var(--brand-maroon));
   --accent: var(--brand-maroon);
   --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
-  --on-accent: var(--brand-black); /* text/icon color placed on top of --accent — this accent is bright, so dark text reads best */
+  --on-accent: #FFFFFF; /* accent-ink — #FF4C24 carries 5.68:1 white, AA for buttons and tags */
   --text-primary: var(--brand-cream);
   --text-secondary: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-tan) 30%);
-  --text-muted: color-mix(in srgb, var(--brand-cream) 40%, var(--brand-tan) 60%);
-  --border: color-mix(in srgb, var(--brand-black) 75%, var(--brand-maroon));
-  --border-light: color-mix(in srgb, var(--brand-black) 60%, var(--brand-maroon));
+  --text-muted: color-mix(in srgb, var(--brand-cream) 38%, var(--brand-tan) 62%);
+  --border: rgba(235, 233, 228, 0.16);   /* hairline ink rule — the brutalist 1px borders */
+  --border-light: rgba(235, 233, 228, 0.09);
   --border-color: var(--border-light); /* alias — modal/form markup references this name */
   --sale-red: #e5484d;
   --sale-bg: #d6303a;
-  --success: color-mix(in srgb, var(--brand-tan) 65%, var(--brand-cream) 35%); /* brand-tan is a usable green now, so success reuses it directly */
+  --success: #2f6b46; /* readable green on the dark ground — the open-square mark reads at a glance */
   --overlay: rgba(0, 0, 0, 0.6);
 
   /* Typography */
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Typographic Scale (Neo-Grotesque) */
+  --text-huge: clamp(3rem, 6vw, 4.5rem);
+  --text-h1: clamp(2.2rem, 4vw, 3.2rem);
+  --text-h2: clamp(1.8rem, 3vw, 2.4rem);
+  --text-h3: clamp(1.4rem, 2.5vw, 1.8rem);
+  --text-large: 1.15rem;
+  --text-body: 1rem;
+  --text-small: 0.85rem;
+  --text-micro: 0.75rem;
+  
+  --tracking-tight: -0.03em;
+  --tracking-tighter: -0.04em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+  --tracking-widest: 0.1em;
+  
 
   /* Spacing */
   --section-padding: 80px 0;
@@ -144,10 +160,10 @@ body.preloader-active {
   --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-sm: 0px;  /* brutalist sharp edges — near-zero radii keep every */
+  --radius-md: 2px; /* card, button and modal crisp instead of soft-curved */
+  --radius-lg: 3px;
+  --radius-xl: 4px;
 
   /* Mockup Coordinates (assets/mockup_2.jpg, 2193x3348) - the poster's box
      within the frame photo's picture window. Re-measured: the previous
@@ -173,33 +189,61 @@ body.preloader-active {
 }
 
 /* ====================================================================
-   LIGHT MODE — same brand palette, remapped for a light surface.
-   --on-accent/--brand-* stay identical across modes on purpose (brand
-   color shouldn't change with theme); --accent is the one exception —
-   this particular accent is bright enough that it fails text-contrast
-   on a light background, so light mode darkens it (buttons keep using
-   --on-accent for contrast and are unaffected either way). Toggled by
-   theme.js via <html data-theme="light">; dark is the default (no
-   attribute) and what every fresh visit opens in.
+   DARK MODE — the historical default, now the explicit override.
+   Base :root above is light (no attribute — what every fresh visit
+   opens in); theme.js sets <html data-theme="dark"> when the visitor
+   toggles (or has a saved dark preference), which applies this block.
+   ==================================================================== */
+:root[data-theme="dark"] {
+  --bg-primary: var(--brand-black);
+  --bg-primary-rgb: 10, 10, 9;
+  --bg-secondary: color-mix(in srgb, var(--brand-black) 92%, var(--brand-maroon));
+  --bg-card: color-mix(in srgb, var(--brand-black) 86%, var(--brand-maroon));
+  --bg-card-hover: color-mix(in srgb, var(--brand-black) 78%, var(--brand-maroon));
+  --accent: var(--brand-maroon);
+  --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
+  --on-accent: #FFFFFF;
+  --text-primary: var(--brand-cream);
+  --text-secondary: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-tan) 30%);
+  --text-muted: color-mix(in srgb, var(--brand-cream) 38%, var(--brand-tan) 62%);
+  --border: rgba(235, 233, 228, 0.16);
+  --border-light: rgba(235, 233, 228, 0.09);
+  --sale-red: #e5484d;
+  --sale-bg: #d6303a;
+  --success: #2f6b46;
+  --overlay: rgba(0, 0, 0, 0.6);
+  /* Bumped DOWN from the light-mode default - see the --glow-opacity-1/2
+     comment in :root for the luminance math. */
+  --glow-opacity-1: 0.10;
+  --glow-opacity-2: 0.07;
+}
+
+/* ====================================================================
+   LIGHT MODE (legacy selector kept for safety) — the portfolio ground.
+   Dark is now the explicit <html data-theme="dark"> override above;
+   this block is preserved for any fragment that still stamps
+   data-theme="light" explicitly. The base :root also carries the
+   light semantic tokens, so on a normal page this block is a no-op.
    ==================================================================== */
 :root[data-theme="light"] {
-  --bg-primary: var(--brand-cream);
-  --bg-primary-rgb: 248, 238, 223;
-  --bg-secondary: color-mix(in srgb, var(--brand-cream) 88%, var(--brand-tan));
-  --bg-card: color-mix(in srgb, var(--brand-cream) 60%, white);
-  --bg-card-hover: color-mix(in srgb, var(--brand-cream) 45%, white);
-  --accent: color-mix(in srgb, var(--brand-maroon) 60%, black); /* darkened so accent-as-text (tags, labels, icons) stays AA-legible on the light bg */
-  --accent-rgb: 153, 95, 25;
+  --bg-primary: var(--brand-cream);   /* portfolio --ground (#EBE9E4) */
+  --bg-primary-rgb: 235, 233, 228;
+  --bg-secondary: color-mix(in srgb, var(--brand-cream) 90%, var(--brand-tan));
+  --bg-card: color-mix(in srgb, var(--brand-cream) 82%, white);
+  --bg-card-hover: color-mix(in srgb, var(--brand-cream) 92%, white);
+  --accent: #FF4C24; /* the portfolio accent is constant across themes — it only ever sits against ink or white, never as low-contrast text on the ground */
+  --accent-rgb: 255, 76, 36;
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
-  --text-primary: var(--brand-black);
-  --text-secondary: color-mix(in srgb, var(--brand-tan) 75%, var(--brand-black) 25%);
-  --text-muted: color-mix(in srgb, var(--brand-tan) 70%, var(--brand-cream) 30%);
-  --border: color-mix(in srgb, var(--brand-cream) 85%, var(--brand-black));
-  --border-light: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-black));
+  --on-accent: #FFFFFF;
+  --text-primary: #111111;            /* portfolio --ink */
+  --text-secondary: #4a4a45;
+  --text-muted: #6f6e69;
+  --border: rgba(17, 17, 17, 0.16);
+  --border-light: rgba(17, 17, 17, 0.09);
   --sale-red: #c62828;
   --sale-red-rgb: 198, 40, 40;
-  --success: var(--brand-tan); /* dark green reads fine directly against a light bg, no lightening needed */
-  --success-rgb: 26, 77, 46;
+  --success: #2f6b46;
+  --success-rgb: 47, 107, 70;
   --overlay: rgba(0, 0, 0, 0.5);
   /* Bumped up from the dark-mode default - see the --glow-opacity-1/2
      comment where they're declared for why light mode needs more. */
@@ -209,18 +253,16 @@ body.preloader-active {
 
 /* The "Brush" wordmark PNG (navbar, footer, preloader - every page uses
    the same asset) is solid white artwork on a transparent background.
-   Nothing accounted for light mode: it was rendering nearly invisible
-   against the light navbar/footer, on every page, found while checking
-   the ambient-glow work above in light mode. Attribute selector, not a
+   It sits against a LIGHT ground now (light is the default, no attribute),
+   so it needs the invert+hue-rotate treatment wherever the ground is light —
+   and only stops needing it in dark mode. Attribute selector rather than a
    class, so this covers every current usage (and any future one) without
    editing markup in each of the ~7 pages that reference this file. */
-:root[data-theme="light"] img[src*="Brush%20Text%20Arial.png"] {
-  /* invert(1) alone flips the accent dot in this logo from orange to
-     blue (its RGB complement) along with the white wordmark - the
-     standard fix is hue-rotate(180deg) after the invert, which rotates
-     the (now-blue) dot's hue back round to roughly its original orange
-     while black has no hue to rotate, so the wordmark stays black. */
+:root img[src*="Brush Text Arial.png"] {
   filter: invert(1) hue-rotate(180deg);
+}
+:root[data-theme="dark"] img[src*="Brush Text Arial.png"] {
+  filter: none;
 }
 
 html {
@@ -490,6 +532,10 @@ a:focus-visible {
 
 /* ===== ANNOUNCEMENT BAR ===== */
 .announcement-bar {
+  transition: transform var(--transition-med);
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1001;
   background: var(--accent);
   color: var(--on-accent);
   text-align: center;
@@ -516,24 +562,25 @@ a:focus-visible {
 /* ===== NAVBAR ===== */
 .navbar {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 16px;          /* floating gap */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1200px;
   z-index: 1000;
-  padding: 0 40px;
-  height: 70px;
+  padding: 0 32px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(var(--bg-primary-rgb), 0.75);
+  background: color-mix(in srgb, var(--bg-primary) 78%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  /* transform (not the JS-driven `top`) is what animates the hide/reveal
-     below — a discrete UI-chrome state change, not decorative scroll-linked
-     motion, so (like the cart drawer's own slide) it isn't gated behind
-     prefers-reduced-motion; it's just kept brief. */
-  transition: background var(--transition-med), box-shadow var(--transition-med), transform var(--transition-med);
+  border: 1px solid var(--border);
+  border-radius: 999px; /* Pill shape */
+  
+  /* transform is needed for centering. We'll use custom properties to manage scroll translation if needed */
+  transition: transform var(--transition-med), top var(--transition-med), box-shadow var(--transition-med);
 }
 
 .navbar.scrolled {
@@ -541,8 +588,11 @@ a:focus-visible {
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
-.navbar.nav-hidden {
+.announcement-bar.nav-hidden {
   transform: translateY(-100%);
+}
+.navbar.nav-hidden {
+  transform: translateY(var(--nav-hidden-offset, -100%));
 }
 
 /* Always fixed at the true top of the viewport, independent of the navbar's
@@ -561,10 +611,10 @@ a:focus-visible {
 
 .nav-brand {
   font-family: var(--font-heading);
-  font-size: 1.8rem;
+  font-size: var(--text-h3);
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: var(--tracking-tight);
 }
 
 .nav-brand span {
@@ -578,12 +628,11 @@ a:focus-visible {
 }
 
 .nav-links a {
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: var(--text-small);
+  font-weight: 600;
   color: var(--text-secondary);
-  position: relative;
-  padding: 4px 0;
   transition: color var(--transition-fast);
+  letter-spacing: -0.01em;
 }
 
 .nav-links a::after {
@@ -667,12 +716,12 @@ a:focus-visible {
   display: none;
 }
 
-:root[data-theme="light"] .theme-toggle-icon-dark {
-  display: none;
+:root[data-theme="dark"] .theme-toggle-icon-light {
+  display: inline-block;
 }
 
-:root[data-theme="light"] .theme-toggle-icon-light {
-  display: inline-block;
+:root[data-theme="dark"] .theme-toggle-icon-dark {
+  display: none;
 }
 
 .cart-count {
@@ -800,12 +849,12 @@ a:focus-visible {
 
 .hero-title {
   font-family: var(--font-heading);
-  font-size: clamp(1.8rem, 4.2vw, 3.2rem);
+  font-size: var(--text-huge);
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.05;
   margin-bottom: 16px;
-  letter-spacing: -1px;
-  color: var(--brand-cream); /* hero photo's fixed dark scrim, not the page bg — stays light in both themes */
+  letter-spacing: var(--tracking-tighter);
+  color: var(--brand-cream); 
 }
 
 .hero-subtitle {
@@ -1079,20 +1128,21 @@ a:focus-visible {
 
 .section-title {
   font-family: var(--font-heading);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: var(--text-h2);
   font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.5px;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-tight);
 }
 
 .section-subtitle {
-  font-size: 1rem;
+  font-size: var(--text-large);
   color: var(--text-secondary);
-  margin-top: 10px;
+  margin-top: 12px;
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
-  text-wrap: pretty;
+  text-wrap: balance;
+  letter-spacing: var(--tracking-normal);
 }
 
 /* Animated Logo — Infinite Blur Pulse */
@@ -1230,6 +1280,49 @@ body.preloader-active .hero-content .hero-trust-badges {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 40px rgba(var(--accent-rgb), 0.15);
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.product-card-image, .plain-product-image, .mockup-wrapper {
+  background-color: var(--bg-secondary);
+}
+
+.shimmer-skeleton, .mockup-frame, .mockup-poster, .mockup-hover, .plain-product-image {
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+.mockup-frame.loaded, .mockup-poster.loaded, .mockup-hover.loaded, .plain-product-image.loaded, .modal-plain-image.loaded {
+  opacity: 1;
+}
+
+/* Add shimmer effect to the empty wrappers before images paint */
+.mockup-wrapper::before, .product-card-image::before, .modal-plain-image-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.5s infinite;
+  z-index: 0;
+}
+
+:root[data-theme="dark"] .mockup-wrapper::before,
+:root[data-theme="dark"] .product-card-image::before {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
 .product-card-image {
   position: relative;
   aspect-ratio: 2193 / 3348;
@@ -1306,20 +1399,22 @@ body.preloader-active .hero-content .hero-trust-badges {
 
 .product-card:hover .plain-product-image {
   transform: scale(1.05);
+  filter: grayscale(100%);
 }
 
 .product-badge {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: var(--sale-bg);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 50px;
-  font-size: 0.7rem;
+  top: 16px;
+  left: 16px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  padding: 4px 10px;
+  font-size: var(--text-micro);
   font-weight: 700;
+  border-radius: var(--radius-sm);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-wide);
+  z-index: 2;
 }
 
 .product-quick-actions {
@@ -1411,9 +1506,10 @@ body.preloader-active .hero-content .hero-trust-badges {
 }
 
 .price-current {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .price-original {
@@ -1443,8 +1539,9 @@ body.preloader-active .hero-content .hero-trust-badges {
 
 .category-card {
   position: relative;
-  aspect-ratio: 2193 / 3348;
-  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  border-radius: 0;
+  background: var(--bg-card);
   overflow: hidden;
   cursor: pointer;
   isolation: isolate; /* scopes z-index of mockup layers/title so the title always wins, hover state included */
@@ -1477,19 +1574,19 @@ body.preloader-active .hero-content .hero-trust-badges {
 }
 
 .category-card-title {
-  position: absolute;
-  top: 1.5%;
-  left: 4%;
-  right: 4%;
-  z-index: 10;
-  text-align: center;
-  font-family: 'Amsterdam Signature', 'Caveat', cursive;
-  font-weight: 400;
-  font-size: 4.2rem;
-  color: var(--accent);
-  text-shadow: 0 1px 3px rgba(255,255,255,0.6);
-  pointer-events: none;
-  line-height: 1.08;
+  position: relative;
+  z-index: 2;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .category-card-overlay {
@@ -1823,10 +1920,11 @@ body.preloader-active .hero-content .hero-trust-badges {
 
 .app-content h2 {
   font-family: var(--font-heading);
-  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-size: var(--text-h1);
   font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 16px;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  letter-spacing: var(--tracking-tight);
 }
 
 .app-content p {
@@ -2474,6 +2572,7 @@ body.custom-cursor-active * {
 }
 
 .cart-item-image {
+  aspect-ratio: 4 / 5;
   width: 72px;
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -2667,14 +2766,13 @@ body.custom-cursor-active * {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(5px);
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-primary);
   z-index: 2000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s var(--ease-premium), visibility 0.3s var(--ease-premium);
+  transition: opacity 0.4s var(--ease-premium), visibility 0.4s var(--ease-premium);
 }
 
 .product-modal-overlay.open {
@@ -2684,58 +2782,83 @@ body.custom-cursor-active * {
 
 .product-modal {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -47%) scale(0.95);
-  width: 90%;
-  max-width: 900px;
-  max-height: 90vh;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-primary);
   z-index: 2001;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.35s var(--ease-premium), visibility 0.35s var(--ease-premium), transform 0.35s var(--ease-premium);
+  transform: translateY(20px);
+  transition: opacity 0.4s var(--ease-premium), visibility 0.4s var(--ease-premium), transform 0.4s var(--ease-premium);
   overflow-y: auto;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  border-radius: 0;
+  border: none;
 }
 
 .product-modal.open {
   opacity: 1;
   visibility: visible;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translateY(0);
 }
 
 .modal-close-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(255,255,255,0.1);
-  border: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
   cursor: pointer;
-  z-index: 10;
-  transition: background 0.2s ease;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .modal-close-btn:hover {
-  background: rgba(255,255,255,0.2);
+  background: var(--text-primary);
+  color: var(--bg-primary);
 }
 
 .modal-content-wrapper {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  padding: 2rem;
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+  width: 100%;
+  padding: 0;
+}
+
+.modal-image-col {
+  width: 55%;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border-color);
+  padding: 40px;
+}
+
+.modal-info-col {
+  width: 45%;
+  padding: 80px 60px;
+  background: var(--bg-primary);
 }
 
 .modal-image-col .mockup-wrapper {
-  border-radius: 8px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 60vh;
+  margin: 0 auto;
+  border-radius: 0;
 }
 
 /* Non-poster product types (plate, wallpaper) skip the picture-frame
@@ -2743,9 +2866,11 @@ body.custom-cursor-active * {
    poster mockup wrapper so the modal layout doesn't shift between types. */
 .modal-plain-image-wrapper {
   position: relative;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 70vh;
+  margin: 0 auto;
 }
 
 .modal-plain-image {
@@ -2792,9 +2917,13 @@ body.custom-cursor-active * {
 }
 
 #modal-title {
-  font-size: 2rem;
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
   margin: 0;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.1;
+  color: var(--text-primary);
 }
 
 .modal-price-wrap {
@@ -2804,9 +2933,11 @@ body.custom-cursor-active * {
 }
 
 #modal-price {
-  font-size: 1.5rem;
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
 }
 
 #modal-original-price {
@@ -3080,11 +3211,23 @@ body.custom-cursor-active * {
 
 @media (max-width: 768px) {
   .modal-content-wrapper {
-    grid-template-columns: 1fr;
-    padding: 1.5rem;
+    flex-direction: column;
+    padding: 0;
+  }
+  .modal-image-col {
+    width: 100%;
+    height: auto;
+    position: relative;
+    padding: 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .modal-info-col {
+    width: 100%;
+    padding: 30px 20px;
   }
   .product-modal {
-    width: 95%;
+    width: 100vw;
   }
 }
 
@@ -4122,4 +4265,132 @@ img {
   width: 100%;
   border: none;
   cursor: pointer;
+}
+
+/* ===== PRODUCT ACCORDIONS ===== */
+.product-accordions {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.product-accordion {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.product-accordion summary {
+  padding: 1.2rem 0;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.product-accordion summary::after {
+  content: '+';
+  font-size: 1.5rem;
+  font-weight: 400;
+  transition: transform 0.3s ease;
+}
+
+.product-accordion[open] summary::after {
+  content: '-';
+  transform: rotate(180deg);
+}
+
+.product-accordion .accordion-content {
+  padding-bottom: 1.2rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ===== SKELETON LOADER ===== */
+.shimmer-bg {
+  background: var(--bg-secondary);
+  background-image: linear-gradient(
+    90deg,
+    rgba(0,0,0, 0) 0,
+    rgba(0,0,0, 0.05) 20%,
+    rgba(0,0,0, 0.1) 60%,
+    rgba(0,0,0, 0)
+  );
+  background-size: 200% 100%;
+  animation: flipkartShimmer 1.5s infinite linear;
+}
+:root[data-theme="dark"] .shimmer-bg {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255,255,255, 0) 0,
+    rgba(255,255,255, 0.08) 20%,
+    rgba(255,255,255, 0.15) 60%,
+    rgba(255,255,255, 0)
+  );
+}
+@keyframes flipkartShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-card { pointer-events: none; }
+.skeleton-card .product-image-container { aspect-ratio: 4/5; width: 100%; }
+.skeleton-text { border-radius: 2px; }
+
+/* ===== TRUSTED BY SECTION ===== */
+.trusted-by-section {
+  padding: 60px 0;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  text-align: center;
+  overflow: hidden;
+}
+
+.trusted-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-small);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  color: var(--text-muted);
+  margin-bottom: 40px;
+  font-weight: 700;
+}
+
+.trusted-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(40px, 8vw, 100px);
+  flex-wrap: wrap;
+}
+
+.trusted-logo {
+  font-family: var(--font-heading);
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 900;
+  letter-spacing: var(--tracking-tighter);
+  color: var(--text-primary);
+  opacity: 0.3;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  cursor: default;
+}
+
+.trusted-logo:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.category-card:hover .plain-product-image { transform: scale(1.05); filter: grayscale(100%); transition: all var(--transition-med); }
+
+.list-item:hover .plain-product-image {
+  transform: scale(1.05);
+  filter: grayscale(100%);
+  transition: all var(--transition-med);
 }

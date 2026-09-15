@@ -1,6 +1,6 @@
 // ========================================
 // BRUSH — Light/Dark theme toggle
-// Dark is the default for every fresh visit; a visitor's explicit
+// Light is the default for every fresh visit; a visitor's explicit
 // choice is remembered (localStorage) so it holds across page loads.
 // ========================================
 (function () {
@@ -8,8 +8,8 @@
   var root = document.documentElement;
 
   function applyTheme(theme) {
-    if (theme === 'light') {
-      root.setAttribute('data-theme', 'light');
+    if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
     } else {
       root.removeAttribute('data-theme');
     }
@@ -18,10 +18,10 @@
   var stored = null;
   try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
   // Applied synchronously, before first paint, so there's no flash of the wrong theme.
-  applyTheme(stored === 'light' ? 'light' : 'dark');
+  applyTheme(stored === 'dark' ? 'dark' : 'light');
 
   function toggleTheme() {
-    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     applyTheme(next);
     try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
   }
