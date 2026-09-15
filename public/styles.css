@@ -92,7 +92,6 @@ body.preloader-active {
   /* RGB triplets kept in sync with the hex values above — required
      wherever a color needs alpha transparency, e.g. rgba(var(--accent-rgb), .2) */
   --accent-rgb: 255, 76, 36;
-  --bg-primary-rgb: 10, 10, 9;
   --sale-red-rgb: 229, 72, 77;
   --success-rgb: 47, 107, 70;
 
@@ -102,25 +101,37 @@ body.preloader-active {
      which flips per theme. See the elements using it below. */
   --on-photo-secondary: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-tan) 30%);
 
-  /* ===== Semantic tokens — components reference these, never the raw
-     palette above, so a re-theme never touches component CSS. ===== */
-  --bg-primary: var(--brand-black);
-  --bg-secondary: color-mix(in srgb, var(--brand-black) 92%, var(--brand-maroon));
-  --bg-card: color-mix(in srgb, var(--brand-black) 86%, var(--brand-maroon));
-  --bg-card-hover: color-mix(in srgb, var(--brand-black) 78%, var(--brand-maroon));
-  --accent: var(--brand-maroon);
-  --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
-  --on-accent: #FFFFFF; /* accent-ink — #FF4C24 carries 5.68:1 white, AA for buttons and tags */
-  --text-primary: var(--brand-cream);
-  --text-secondary: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-tan) 30%);
-  --text-muted: color-mix(in srgb, var(--brand-cream) 38%, var(--brand-tan) 62%);
-  --border: rgba(235, 233, 228, 0.16);   /* hairline ink rule — the brutalist 1px borders */
-  --border-light: rgba(235, 233, 228, 0.09);
+  /* Semantics follows: this base :root is LIGHT (the default, no
+     attribute). The dark-mode overrides live in the [data-theme="dark"]
+     block below, which wins whenever theme.js stamps that attribute.
+     Components reference the semantic tokens, never the raw palette. */
+
+  /* ===== Semantic tokens — LIGHT is the default (no attribute), so
+     these live here on the base :root. Components reference these
+     tokens, never the raw palette above, so a re-theme never touches
+     component CSS. The [data-theme="dark"] block below redeclares them
+     and wins whenever theme.js stamps the dark attribute. ===== */
+  --bg-primary: var(--brand-cream);          /* portfolio --ground (#EBE9E4) */
+  --bg-primary-rgb: 235, 233, 228;
+  --bg-secondary: color-mix(in srgb, var(--brand-cream) 90%, var(--brand-tan));
+  --bg-card: color-mix(in srgb, var(--brand-cream) 82%, white);
+  --bg-card-hover: color-mix(in srgb, var(--brand-cream) 92%, white);
+  --accent: #FF4C24; /* portfolio accent — constant across themes; it only ever sits against ink or white */
+  --accent-rgb: 255, 76, 36;
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
+  --on-accent: #FFFFFF;
+  --text-primary: #111111;                   /* portfolio --ink */
+  --text-secondary: #4a4a45;
+  --text-muted: #6f6e69;
+  --border: rgba(17, 17, 17, 0.16);          /* hairline ink rule — the brutalist 1px borders */
+  --border-light: rgba(17, 17, 17, 0.09);
   --border-color: var(--border-light); /* alias — modal/form markup references this name */
-  --sale-red: #e5484d;
+  --sale-red: #c62828;
+  --sale-red-rgb: 198, 40, 40;
   --sale-bg: #d6303a;
-  --success: #2f6b46; /* readable green on the dark ground — the open-square mark reads at a glance */
-  --overlay: rgba(0, 0, 0, 0.6);
+  --success: #2f6b46;
+  --success-rgb: 47, 107, 70;
+  --overlay: rgba(0, 0, 0, 0.5);
 
   /* Typography */
   --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -182,10 +193,10 @@ body.preloader-active {
      adding a light accent onto a near-black background raises luminance
      (reads as a glow), but the same math in reverse - a darkened accent
      over cream - lowers luminance instead, which reads as a faint dirty
-     patch, not a glow, at the same opacity. Light mode overrides these
-     up rather than reusing the dark-mode figures as-is. */
-  --glow-opacity-1: 0.10;
-  --glow-opacity-2: 0.07;
+     patch, not a glow, at the same opacity. Light (the base) pushes these
+     up; the dark block below drops them back down. */
+  --glow-opacity-1: 0.18;
+  --glow-opacity-2: 0.13;
 }
 
 /* ====================================================================
@@ -193,6 +204,8 @@ body.preloader-active {
    Base :root above is light (no attribute — what every fresh visit
    opens in); theme.js sets <html data-theme="dark"> when the visitor
    toggles (or has a saved dark preference), which applies this block.
+   Placed AFTER the base :root so its redeclarations win in source order
+   whenever the attribute is present.
    ==================================================================== */
 :root[data-theme="dark"] {
   --bg-primary: var(--brand-black);
@@ -201,6 +214,7 @@ body.preloader-active {
   --bg-card: color-mix(in srgb, var(--brand-black) 86%, var(--brand-maroon));
   --bg-card-hover: color-mix(in srgb, var(--brand-black) 78%, var(--brand-maroon));
   --accent: var(--brand-maroon);
+  --accent-rgb: 255, 76, 36;
   --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
   --on-accent: #FFFFFF;
   --text-primary: var(--brand-cream);
@@ -208,47 +222,15 @@ body.preloader-active {
   --text-muted: color-mix(in srgb, var(--brand-cream) 38%, var(--brand-tan) 62%);
   --border: rgba(235, 233, 228, 0.16);
   --border-light: rgba(235, 233, 228, 0.09);
+  --border-color: var(--border-light); /* alias — modal/form markup references this name */
   --sale-red: #e5484d;
   --sale-bg: #d6303a;
   --success: #2f6b46;
   --overlay: rgba(0, 0, 0, 0.6);
   /* Bumped DOWN from the light-mode default - see the --glow-opacity-1/2
-     comment in :root for the luminance math. */
+     comment in the :root block for the luminance math. */
   --glow-opacity-1: 0.10;
   --glow-opacity-2: 0.07;
-}
-
-/* ====================================================================
-   LIGHT MODE (legacy selector kept for safety) — the portfolio ground.
-   Dark is now the explicit <html data-theme="dark"> override above;
-   this block is preserved for any fragment that still stamps
-   data-theme="light" explicitly. The base :root also carries the
-   light semantic tokens, so on a normal page this block is a no-op.
-   ==================================================================== */
-:root[data-theme="light"] {
-  --bg-primary: var(--brand-cream);   /* portfolio --ground (#EBE9E4) */
-  --bg-primary-rgb: 235, 233, 228;
-  --bg-secondary: color-mix(in srgb, var(--brand-cream) 90%, var(--brand-tan));
-  --bg-card: color-mix(in srgb, var(--brand-cream) 82%, white);
-  --bg-card-hover: color-mix(in srgb, var(--brand-cream) 92%, white);
-  --accent: #FF4C24; /* the portfolio accent is constant across themes — it only ever sits against ink or white, never as low-contrast text on the ground */
-  --accent-rgb: 255, 76, 36;
-  --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
-  --on-accent: #FFFFFF;
-  --text-primary: #111111;            /* portfolio --ink */
-  --text-secondary: #4a4a45;
-  --text-muted: #6f6e69;
-  --border: rgba(17, 17, 17, 0.16);
-  --border-light: rgba(17, 17, 17, 0.09);
-  --sale-red: #c62828;
-  --sale-red-rgb: 198, 40, 40;
-  --success: #2f6b46;
-  --success-rgb: 47, 107, 70;
-  --overlay: rgba(0, 0, 0, 0.5);
-  /* Bumped up from the dark-mode default - see the --glow-opacity-1/2
-     comment where they're declared for why light mode needs more. */
-  --glow-opacity-1: 0.18;
-  --glow-opacity-2: 0.13;
 }
 
 /* The "Brush" wordmark PNG (navbar, footer, preloader - every page uses
