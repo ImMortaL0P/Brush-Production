@@ -297,12 +297,17 @@ app.use(helmet({
 const ALLOWED_ORIGINS = [
   'https://immortal0p.github.io',
   'http://localhost:5500',
-  'http://127.0.0.1:5500'
+  'http://127.0.0.1:5500',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
 ];
 app.use(cors({
   origin(origin, callback) {
     // No Origin header at all (curl, server-to-server, same-origin) - allow.
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    // Allow local network IP dev traffic
+    if (origin.startsWith('http://192.168.')) return callback(null, true);
+
     callback(new Error('Not allowed by CORS'));
   }
 }));
@@ -1160,7 +1165,7 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
 // Update product
 app.patch('/api/products/:id', requireAdmin, async (req, res) => {
   try {
-    const { name, price, badge, stockQuantity, category, keywords, sku, showInBestsellers, showInNewArrivals, showInGrossing } = req.body;
+    const { name, price, badge, stockQuantity, category, productType, keywords, sku, showInBestsellers, showInNewArrivals, showInGrossing } = req.body;
 
     // Role based enforcement
     if (req.adminSession.role === 'watcher') {
@@ -1169,7 +1174,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
 
     if (req.adminSession.role === 'stocker') {
        // Stocker can only update stockQuantity
-       if (name !== undefined || price !== undefined || badge !== undefined || category !== undefined || keywords !== undefined ||
+       if (name !== undefined || price !== undefined || badge !== undefined || category !== undefined || productType !== undefined || keywords !== undefined ||
            showInBestsellers !== undefined || showInNewArrivals !== undefined || showInGrossing !== undefined) {
           return res.status(403).json({ error: 'Stocker can only modify inventory quantity.' });
        }
@@ -1251,7 +1256,7 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       return res.status(403).json({ error: 'Watcher accounts have view-only access.' });
     }
 
-    const { name, category, price, originalPrice, badge, description, stockQuantity, keywords, sku } = req.body;
+    const { name, category, productType, price, originalPrice, badge, description, stockQuantity, keywords, sku } = req.body;
 
     if (!name || !price) {
       return res.status(400).json({ error: 'Name and price are required' });
@@ -1280,11 +1285,13 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
     }
 
     const resolvedCategory = category || 'Miscellaneous';
+    const resolvedType = productType || 'Posters';
     const newProduct = {
       _id: newId,
       id: newId,
       name,
       category: resolvedCategory,
+      productType: resolvedType,
       productType: getProductType(resolvedCategory),
       price: Number(price),
       originalPrice: Number(originalPrice || price),

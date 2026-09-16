@@ -5,6 +5,23 @@
 document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5500/api' : 'https://brush-production.onrender.com/api';
 
+  // One shared request for the catalog. The search box, hero counter and
+  // carousels all need it — previously each fired its own /products call
+  // (and search fired one per keystroke).
+  let productsPromise = null;
+  function getProducts() {
+    if (!productsPromise) {
+      productsPromise = fetch(`${API_BASE}/products`)
+        .then(res => (res.ok ? res.json() : Promise.reject(new Error('Failed to fetch products'))))
+        .catch(err => { productsPromise = null; throw err; });
+    }
+    return productsPromise;
+  }
+  window.BrushGetProducts = getProducts;
+
+  const keywordText = (k) => (Array.isArray(k) ? k.join(' ') : String(k || '')).toLowerCase();
+  const imgAttrsFor = (p, size) => (window.BrushImg ? BrushImg.attrs(p, size) : `src="${escapeHtml(p.image)}"`);
+
   // Anything rendered via innerHTML that ultimately came from another
   // shopper (review author/comment, most notably) must go through this
   // first — reviews are the one piece of user-generated content every
@@ -193,23 +210,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       try {
-        const res = await fetch(`${API_BASE}/products`);
-        const products = await res.json();
-        
+        const products = await getProducts();
+        if (globalSearchInput.value.trim().toLowerCase() !== query) return; // a newer keystroke owns the box
+
         const matched = products.filter(p => {
           const name = (p.name || '').toLowerCase();
           const cat = (p.category || '').toLowerCase();
-          const keys = (p.keywords || '').toLowerCase();
+          const keys = keywordText(p.keywords);
           return name.includes(query) || cat.includes(query) || keys.includes(query);
         }).slice(0, 5);
         
         if (matched.length > 0) {
           suggestionsBox.innerHTML = matched.map(p => `
             <a href="all_products.html?search=${encodeURIComponent(p.name)}" class="suggestion-item">
-              <img src="${p.image}" class="plain-product-image" style="width: 50px; height: 75px; flex-shrink: 0; border-radius: var(--radius-sm);" alt="${p.name}">
+              <img ${imgAttrsFor(p, 480)} class="plain-product-image" onload="this.classList.add('loaded')" style="width: 50px; height: 75px; flex-shrink: 0; border-radius: var(--radius-sm); object-fit: cover;" alt="${escapeHtml(p.name)}">
               <div class="suggestion-item-details">
-                <span class="suggestion-title">${p.name}</span>
-                <span class="suggestion-cat">${p.category}</span>
+                <span class="suggestion-title">${escapeHtml(p.name)}</span>
+                <span class="suggestion-cat">${escapeHtml(p.category)}</span>
               </div>
             </a>
           `).join('');
@@ -370,8 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const FALLBACK_POSTER_COUNT = 150;
     const fallbackTimer = setTimeout(() => reportPosterCount(FALLBACK_POSTER_COUNT), 4000);
 
-    fetch(API_BASE + '/products')
-      .then(res => (res.ok ? res.json() : Promise.reject(new Error('bad status'))))
+    getProducts()
       .then(products => {
         clearTimeout(fallbackTimer);
         reportPosterCount(products.length);
@@ -486,7 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
 
     scrollTopBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (window.lenis) window.lenis.scrollTo(0);
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
@@ -565,31 +582,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!productList && !scrollTrack && !grossingTrack) return;
 
-    const skeletonHtml = `
-      <div class="product-card skeleton-card">
-        <div class="product-card-image" style="background: var(--border-color); min-height: 350px;"></div>
-        <div style="padding: 10px 0;">
-          <div style="height: 20px; background: var(--border-color); margin-bottom: 8px; border-radius: 2px;"></div>
-          <div style="height: 15px; width: 60%; background: var(--border-color); border-radius: 2px;"></div>
-        </div>
-      </div>
-    `;
-    const placeholders = Array(4).fill(skeletonHtml).join('');
-    if (productList) productList.innerHTML = placeholders;
-    if (scrollTrack) scrollTrack.innerHTML = placeholders;
-    if (grossingTrack) grossingTrack.innerHTML = placeholders;
-
+    // The skeleton cards already in the HTML stay up until real cards replace them.
     try {
-      const res = await fetch(API_BASE + '/products');
-      if (!res.ok) throw new Error('Failed to fetch products');
-      const products = await res.json();
+      const products = await getProducts();
 
       reportPosterCount(products.length);
 
       // Homepage placement is admin-curated via checkboxes in the admin panel
-      const bestSellers = products.filter(p => p.showInBestsellers);
-      const newArrivals = products.filter(p => p.showInNewArrivals);
-      const grossingPicks = products.filter(p => p.showInGrossing);
+      // Real artwork first — placeholder/dummy catalog items only fill gaps.
+      const realFirst = (a, b) => (BrushImg.isDummy(a) ? 1 : 0) - (BrushImg.isDummy(b) ? 1 : 0);
+      const bestSellers = products.filter(p => p.showInBestsellers).sort(realFirst);
+      let newArrivals = products.filter(p => p.showInNewArrivals);
+      if (newArrivals.length === 0) {
+        // Nothing hand-picked yet: fall back to the newest catalog additions.
+        const stamp = p => Date.parse(p.createdAt) || 0;
+        newArrivals = products
+          .filter(p => !BrushImg.isDummy(p))
+          .sort((a, b) => (stamp(b) - stamp(a)) || ((b.id || 0) - (a.id || 0)))
+          .slice(0, 12);
+      }
+      const grossingPicks = products.filter(p => p.showInGrossing).sort(realFirst);
 
       const createProductCard = (p, delayIndex = 0, badge = 'Sale', badgeBg = '', isEager = false) => {
         const delayClass = delayIndex > 0 ? `fade-in-delay-${delayIndex}` : '';
@@ -606,14 +618,15 @@ document.addEventListener('DOMContentLoaded', () => {
           ? `<span><i class="fa-solid fa-gem"></i> 300 GSM Matte</span><span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>`
           : `<span><i class="fa-solid fa-gem"></i> Premium Quality</span><span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>`;
 
-        const loadAttr = isEager ? '' : 'loading="lazy"';
-        const imgAttrs = `${loadAttr} decoding="async" onload="this.classList.add('loaded')"`;
+        const loadAttr = isEager ? 'fetchpriority="high"' : 'loading="lazy"';
+        const imgAttrs = `${imgAttrsFor(p, 480)} ${loadAttr} decoding="async" width="480" height="600" onload="this.classList.add('loaded')"`;
+        const safeName = escapeHtml(p.name);
 
         return `
-          <div class="product-card ${delayClass}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${p.image}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
+          <div class="product-card ${delayClass}" data-id="${p.id}" data-name="${safeName}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${escapeHtml(BrushImg.original(p))}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
             <div class="product-card-image">
-              <img src="${p.image}" class="plain-product-image" alt="${p.name}" ${imgAttrs}>
-              <span class="product-badge" ${badgeStyle}>${p.badge || badge}</span>
+              <img class="plain-product-image" alt="${safeName}" ${imgAttrs}>
+              <span class="product-badge" ${badgeStyle}>${escapeHtml(p.badge || badge)}</span>
               <div class="product-quick-actions">
                 <div class="product-card-specs">
                   ${specLine}
@@ -624,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <div class="product-card-info">
-              <h3>${p.name}</h3>
+              <h3>${safeName}</h3>
               <div class="product-pricing">
                 <span class="price-current">₹${p.price}</span>
                 ${p.originalPrice > p.price ? `<span class="price-original">₹${p.originalPrice}</span>` : ''}
@@ -660,7 +673,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error('Error loading products:', err);
-      if (productList) productList.innerHTML = '<p>Failed to load products. Please try again later.</p>';
+      const msg = '<p class="products-error">Products are taking a moment to load. Please refresh in a few seconds.</p>';
+      [productList, scrollTrack, grossingTrack].forEach(t => { if (t) t.innerHTML = msg; });
     }
   }
 
@@ -775,6 +789,9 @@ document.addEventListener('DOMContentLoaded', () => {
       toast.classList.remove('visible');
     }, 2500);
   }
+  // The reach-out forms call showToast() from inline onsubmit handlers,
+  // which only see globals.
+  window.showToast = showToast;
 
 
   // One-line variant description for a cart line item, e.g. "A4 · 80 GSM"
@@ -828,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cartBody.innerHTML = items.map(item => `
       <div class="cart-item" data-cart-id="${item.cartId || item.id}">
         <div class="cart-item-image">
-          <img src="${item.image}" class="plain-product-image" alt="${item.name}">
+          <img ${window.BrushImg ? BrushImg.urlAttrs(item.image, 480) : `src="${item.image}"`} class="plain-product-image loaded" alt="${escapeHtml(item.name)}">
         </div>
         <div class="cart-item-details">
           <h4>${item.name}</h4>
@@ -1007,7 +1024,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const modalImgAttrs = `decoding="sync" onload="this.classList.add('loaded')"`; // modal images are strictly above the fold
       modalImageCol.innerHTML = `<div class="modal-plain-image-wrapper">
-          <img src="${currentProduct.image}" class="modal-plain-image" alt="${currentProduct.name}" ${modalImgAttrs}>
+          <img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>
           ${nextBtnHtml}
         </div>`;
       
@@ -1292,8 +1309,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUser = localStorage.getItem('brushUser');
     if (currentUser) {
       const user = JSON.parse(currentUser);
-      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span style="font-size: 0.8rem; margin-left: 5px;">Hi, ${user.name || user.userId}</span>`;
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span class="nav-user-greeting">Hi, ${escapeHtml(String(user.name || user.userId || '').trim().split(/\s+/)[0])}</span>`;
+      btn.classList.add('has-greeting');
     } else {
+      btn.classList.remove('has-greeting');
       btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
     }
   }

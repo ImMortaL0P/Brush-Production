@@ -240,10 +240,12 @@ body.preloader-active {
    and only stops needing it in dark mode. Attribute selector rather than a
    class, so this covers every current usage (and any future one) without
    editing markup in each of the ~7 pages that reference this file. */
-:root img[src*="Brush Text Arial.png"] {
+:root img[src*="Brush Text Arial.png"],
+:root img[src*="brush-logo.png"] {
   filter: invert(1) hue-rotate(180deg);
 }
-:root[data-theme="dark"] img[src*="Brush Text Arial.png"] {
+:root[data-theme="dark"] img[src*="Brush Text Arial.png"],
+:root[data-theme="dark"] img[src*="brush-logo.png"] {
   filter: none;
 }
 
@@ -514,10 +516,6 @@ a:focus-visible {
 
 /* ===== ANNOUNCEMENT BAR ===== */
 .announcement-bar {
-  transition: transform var(--transition-med);
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 1001;
   background: var(--accent);
   color: var(--on-accent);
   text-align: center;
@@ -544,9 +542,10 @@ a:focus-visible {
 /* ===== NAVBAR ===== */
 .navbar {
   position: fixed;
-  top: 16px;          /* floating gap */
-  left: 50%;
-  transform: translateX(-50%);
+  top: var(--nav-top, 16px);          /* floating gap; navbar-scroll.js tucks it under the announcement bar at page top */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
   width: 90%;
   max-width: 1200px;
   z-index: 1000;
@@ -555,19 +554,33 @@ a:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  isolation: isolate;
+  border-radius: 999px; /* Pill shape */
+  transition: box-shadow var(--transition-med);
+}
+
+/* The frosted pill lives on a pseudo-element: backdrop-filter / transform on
+   .navbar itself would become the containing block for the position:fixed
+   mobile menu sheet and trap it inside the 60px pill. */
+.navbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   background: color-mix(in srgb, var(--bg-primary) 78%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
-  border-radius: 999px; /* Pill shape */
-  
-  /* transform is needed for centering. We'll use custom properties to manage scroll translation if needed */
-  transition: transform var(--transition-med), top var(--transition-med), box-shadow var(--transition-med);
+  transition: background var(--transition-med);
 }
 
 .navbar.scrolled {
-  background: rgba(var(--bg-primary-rgb), 0.95);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+}
+
+.navbar.scrolled::before {
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
 }
 
 .announcement-bar.nav-hidden {
@@ -584,7 +597,10 @@ a:focus-visible {
   position: fixed;
   top: 0;
   left: 0;
-  width: 0%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  will-change: transform;
   height: 3px;
   background: var(--accent);
   z-index: 1001;
@@ -610,6 +626,7 @@ a:focus-visible {
 }
 
 .nav-links a {
+  position: relative;
   font-size: var(--text-small);
   font-weight: 600;
   color: var(--text-secondary);
@@ -725,6 +742,7 @@ a:focus-visible {
 /* Mobile menu toggle */
 .menu-toggle {
   display: none;
+  position: relative;
   flex-direction: column;
   gap: 5px;
   padding: 8px;
@@ -4375,4 +4393,116 @@ img {
   transform: scale(1.05);
   filter: grayscale(100%);
   transition: all var(--transition-med);
+}
+
+
+/* =====================================================================
+   FIXES — layout stability & category cards (Sep 2026 debugging pass)
+   ===================================================================== */
+
+/* Category cards: every card gets the same 4:5 media box, whatever the
+   source image's shape, so the four tiles line up in one clean row. */
+.category-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+}
+.category-card-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+.category-card-media > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--transition-slow), filter var(--transition-med);
+}
+.category-card:hover .category-card-media > img {
+  transform: scale(1.05);
+  filter: none;
+}
+.category-card-overlay { z-index: 1; }
+.category-card-title {
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+}
+
+/* Product imagery: never collapse, never letterbox. */
+.product-card-image > img,
+.list-item-img-wrapper > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.product-card-image > img { position: absolute; inset: 0; }
+.product-card-image .product-badge,
+.product-card-image .product-quick-actions { z-index: 2; }
+
+/* Skeletons in the carousels share the real card's footprint so nothing
+   jumps when products arrive. */
+.scroll-track .skeleton-card .product-image-container {
+  aspect-ratio: 2193 / 3348;
+}
+
+.products-error {
+  padding: 2rem 1rem;
+  color: var(--text-secondary);
+  text-align: center;
+  width: 100%;
+}
+
+/* width/height attributes are there for layout stability only. */
+.faq-image-col img,
+.app-image img { height: auto; }
+
+/* Reveal safety net: if JS never runs, nothing stays invisible. */
+.no-js .fade-in,
+.no-js .scale-in { opacity: 1; transform: none; }
+
+/* Mobile navbar sheet sits below the pill's own controls. */
+@media (max-width: 1024px) {
+  .nav-links { z-index: -1; padding-top: 110px; }
+  .nav-links.open { z-index: 1; }
+  .nav-actions { position: relative; z-index: 2; }
+  .nav-brand { position: relative; z-index: 2; }
+}
+
+@media (max-width: 640px) {
+  .category-card-title { font-size: 0.95rem; padding: 12px; }
+  .category-card-overlay { padding: 14px; }
+  .category-card-overlay p { font-size: 0.72rem; }
+}
+
+@media (max-width: 480px) {
+  .navbar { width: calc(100% - 20px); }
+}
+
+/* Signed-in greeting next to the account icon — first name only, never wraps. */
+.nav-action-btn.has-greeting {
+  width: auto;
+  padding: 0 10px 0 8px;
+  border-radius: 999px;
+  gap: 6px;
+}
+.nav-action-btn.has-greeting svg { flex-shrink: 0; width: 22px !important; height: 22px !important; }
+.nav-user-greeting {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 640px) {
+  .nav-user-greeting { display: none; }
+  .nav-action-btn.has-greeting { width: 40px; padding: 0; }
+}
+@media (max-width: 480px) {
+  .nav-action-btn.has-greeting { width: 32px; }
+  .nav-brand img { height: 26px !important; }
 }

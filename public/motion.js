@@ -1,89 +1,42 @@
 // ========================================
-// BRUSH — Motion (portfolio aesthetic)
-// GSAP + ScrollTrigger, ported from the revamped Portfolio-Final.
+// BRUSH — Motion helpers (no GSAP)
 //
-// Two additive effects, both OPT-IN so they never fight existing CSS or
-// JS motion, and both gated behind prefers-reduced-motion (native flow
-// is the correct fallback, same rule scroll.js and micro-interactions.js
-// already follow):
+// Scroll reveals are owned by ONE system: the .fade-in / .scale-in /
+// .clip-reveal classes, toggled to .visible by the IntersectionObserver in
+// script.js (which also covers product cards injected later from the API).
 //
-//   1. Hero — a staggered rise/blur-in of the hero content block on load.
-//   2. Scroll reveals — any element marked data-reveal rises into place
-//      once as it scrolls into view.
+// This file used to run GSAP `from()` tweens on those same elements. GSAP
+// reads the element's *current* opacity as the tween's end value — which is
+// 0 for a not-yet-revealed .fade-in — so it tweened 0 -> 0 and left an
+// inline `opacity: 0` behind that CSS could never override. That is what
+// made whole sections vanish. It also double-drove Lenis (a second rAF loop
+// on top of scroll.js's), which made scrolling feel jumpy.
 //
-// Lenis owns smooth scroll; this routes GSAP's ticker and ScrollTrigger
-// through it so reveal pins/triggers track the (non-native) scroll pos.
+// What remains is the stagger the GSAP version added for grids, done by
+// assigning transition-delays so the CSS reveal plays one item after another.
 // ========================================
-document.addEventListener('DOMContentLoaded', () => {
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduceMotion || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
-
-  gsap.registerPlugin(ScrollTrigger);
-
-  // Route GSAP through Lenis so ScrollTrigger measures the animated scroll.
-  if (window.lenis) {
-    window.lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add((time) => window.lenis.raf(time * 1000));
-    gsap.ticker.lagSmoothing(0);
-  }
-
-  // --- 1. Hero: staggered rise into place -------------------------------
-  const hero = document.querySelector('.hero-content');
-  if (hero) {
-    gsap.from('.hero-content > *', {
-      y: 30,
-      opacity: 0,
-      duration: 0.9,
-      stagger: 0.12,
-      ease: 'power3.out',
-      delay: 0.15
-    });
-  }
-
-
-  // --- 2. Scroll reveals: data-reveal rises in once ---------------------
-  // Staggered reveals for grids
-  const featureItems = gsap.utils.toArray('.feature-item');
-  if (featureItems.length) {
-    gsap.from(featureItems, {
-      y: 30, opacity: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out',
-      scrollTrigger: { trigger: '.features-grid', start: 'top 85%', once: true }
-    });
-  }
-
-  const trustedLogos = gsap.utils.toArray('.trusted-logo');
-  if (trustedLogos.length) {
-    gsap.from(trustedLogos, {
-      y: 20, opacity: 0, duration: 0.7, stagger: 0.1, ease: 'power3.out',
-      scrollTrigger: { trigger: '.trusted-logos', start: 'top 85%', once: true }
-    });
-  }
-
-  const categoryCards = gsap.utils.toArray('.category-card');
-  if (categoryCards.length) {
-    gsap.from(categoryCards, {
-      y: 40, opacity: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out',
-      scrollTrigger: { trigger: '.categories-grid', start: 'top 80%', once: true }
-    });
-  }
-
-  const reveals = gsap.utils.toArray('[data-reveal], .fade-in, .scale-in').filter(el => 
-    !el.classList.contains('feature-item') && !el.classList.contains('trusted-logo') && !el.classList.contains('category-card') && !el.closest('.hero-content')
-  );
-  
-  if (reveals.length) {
-    reveals.forEach((el) => {
-      gsap.from(el, {
-        y: 26,
-        opacity: 0,
-        duration: 0.7,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: el, start: 'top 86%', once: true }
+(function () {
+  function stagger(selector, step) {
+    document.querySelectorAll(selector).forEach((group) => {
+      Array.from(group.children).forEach((child, i) => {
+        if (child.classList.contains('fade-in') || child.classList.contains('scale-in')) {
+          child.style.transitionDelay = `${(i * step).toFixed(2)}s`;
+        }
       });
     });
   }
 
+  function init() {
+    stagger('.features-grid', 0.1);
+    stagger('.categories-grid', 0.08);
+    stagger('.testimonials-grid', 0.1);
+    stagger('.reachout-grid', 0.1);
+    stagger('.custom-prints-grid', 0.08);
+  }
 
-  // Re-measure triggers once images settle so nothing is pinned off-target.
-  window.addEventListener('load', () => ScrollTrigger.refresh());
-});
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
