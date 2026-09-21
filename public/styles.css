@@ -2876,8 +2876,9 @@ body.custom-cursor-active * {
 .modal-plain-image {
   display: block;
   width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
+  aspect-ratio: 297 / 420;
+  border-radius: var(--radius-md);
+  object-fit: contain;
 }
 
 /* Lets a shopper browse straight to the next poster without closing the
