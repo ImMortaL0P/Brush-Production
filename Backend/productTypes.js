@@ -55,6 +55,7 @@ const PRODUCT_TYPES = {
         ]
       }
     ]
+  },
   apparel: {
     label: 'Apparel',
     variantGroups: [
@@ -66,14 +67,6 @@ const PRODUCT_TYPES = {
           { value: 'M', label: 'Medium', priceDelta: 0 },
           { value: 'L', label: 'Large', priceDelta: 0 },
           { value: 'XL', label: 'X-Large', priceDelta: 0 }
-        ]
-      },
-      {
-        key: 'color',
-        label: 'Color',
-        options: [
-          { value: 'black', label: 'Black', priceDelta: 0 },
-          { value: 'white', label: 'White', priceDelta: 0 }
         ]
       }
     ]

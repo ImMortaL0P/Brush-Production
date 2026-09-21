@@ -365,47 +365,14 @@
       }
     }
   </style>
+  <script src="global-navbar.js"></script>
 </head>
 <body class="page-layered">
 
   <div class="scroll-progress" id="scroll-progress"></div>
 
   <!-- Navbar -->
-  <nav class="navbar" id="navbar">
-    <a href="index.html" class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
-      <img src="img/site/brush-logo.png" alt="Brush" width="124" height="32" style="height: 32px; width: auto;">
-    </a>
-
-    <div class="nav-links" id="nav-links">
-      <a href="index.html">Home</a>
-      <a href="index.html#categories">Categories</a>
-      <a href="all_products.html">Shop All</a>
-      <a href="about_us.html">About</a>
-    </div>
-
-    <div class="nav-actions">
-      <button class="nav-action-btn" id="search-btn" aria-label="Search">
-        <i class="fa-solid fa-magnifying-glass"></i>
-      </button>
-      <a href="javascript:void(0)" class="nav-action-btn" aria-label="Orders">
-        <i class="fa-solid fa-box-open"></i>
-      </a>
-      <button class="nav-action-btn" data-theme-toggle aria-label="Toggle light / dark mode">
-        <i class="fa-solid fa-moon theme-toggle-icon-dark"></i>
-        <i class="fa-solid fa-sun theme-toggle-icon-light"></i>
-      </button>
-      <a href="javascript:void(0)" class="nav-action-btn" aria-label="Account">
-        <i class="fa-regular fa-user"></i>
-      </a>
-      <a href="#" class="nav-action-btn" aria-label="Cart">
-        <i class="fa-solid fa-bag-shopping"></i>
-        <span class="cart-count">0</span>
-      </a>
-      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-  </nav>
+  <global-navbar></global-navbar>
 
   <div class="all-products-container">
     <!-- Sidebar -->
@@ -1117,12 +1084,21 @@ const typeParam = urlParams.get('type');
         const discountPercentage = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
         const stockQty = p.stockQuantity !== undefined ? p.stockQuantity : 50;
         const isOut = stockQty <= 0;
-        
+
+        let extraImgClass = '';
+        if (p.productType === 'apparel') {
+          extraImgClass = 'apparel-card-img';
+        }
+
+        const imgAttrs = (p.productType === 'apparel' && p.backImage)
+          ? window.BrushImg.urlAttrs(p.backImage, 480)
+          : window.BrushImg.attrs(p, 480);
+
         return `
           <div class="list-item product-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${escapeAttr(BrushImg.original(p))}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
             <div class="list-item-img-wrapper">
               ${p.badge ? `<span class="list-item-badge">${p.badge}</span>` : ''}
-              <img ${BrushImg.attrs(p, 480)} class="plain-product-image" alt="${escapeAttr(p.name)}" width="480" height="600" loading="lazy" decoding="async" onload="this.classList.add('loaded')">
+              <img ${imgAttrs} class="plain-product-image ${extraImgClass}" alt="${escapeAttr(p.name)}" width="480" height="600" loading="lazy" decoding="async" onload="this.classList.add('loaded')">
             </div>
             <div class="list-item-details">
               <h3 class="list-item-title">${escapeAttr(p.name)}</h3>

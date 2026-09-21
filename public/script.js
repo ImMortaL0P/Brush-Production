@@ -19,7 +19,16 @@ document.addEventListener('DOMContentLoaded', () => {
   window.BrushGetProducts = getProducts;
 
   const keywordText = (k) => (Array.isArray(k) ? k.join(' ') : String(k || '')).toLowerCase();
-  const imgAttrsFor = (p, size) => (window.BrushImg ? BrushImg.attrs(p, size) : `src="${escapeHtml(p.image)}"`);
+
+  const imgAttrsFor = (p, size, useApparelBack = false) => {
+    if (useApparelBack && p.productType === 'apparel' && p.backImage) {
+      if (window.BrushImg) {
+        return BrushImg.urlAttrs(p.backImage, size);
+      }
+      return `src="${escapeHtml(p.backImage)}"`;
+    }
+    return window.BrushImg ? BrushImg.attrs(p, size) : `src="${escapeHtml(p.image)}"`;
+  };
 
   // Anything rendered via innerHTML that ultimately came from another
   // shopper (review author/comment, most notably) must go through this
@@ -618,13 +627,18 @@ document.addEventListener('DOMContentLoaded', () => {
           : `<span><i class="fa-solid fa-gem"></i> Premium Quality</span><span><i class="fa-solid fa-truck-fast"></i> Fast Dispatch</span>`;
 
         const loadAttr = isEager ? 'fetchpriority="high"' : 'loading="lazy"';
-        const imgAttrs = `${imgAttrsFor(p, 480)} ${loadAttr} decoding="async" width="480" height="600" onload="this.classList.add('loaded')"`;
+        const imgAttrs = `${imgAttrsFor(p, 480, true)} ${loadAttr} decoding="async" width="480" height="600" onload="this.classList.add('loaded')"`;
         const safeName = escapeHtml(p.name);
+
+        let extraImgClass = '';
+        if (p.productType === 'apparel') {
+          extraImgClass = 'apparel-card-img';
+        }
 
         return `
           <div class="product-card ${delayClass}" data-id="${p.id}" data-name="${safeName}" data-price="${p.price}" data-original="${p.originalPrice || p.price}" data-image="${escapeHtml(BrushImg.original(p))}" data-stock="${stockQty}" data-product-type="${p.productType || 'poster'}">
             <div class="product-card-image">
-              <img class="plain-product-image" alt="${safeName}" ${imgAttrs}>
+              <img class="plain-product-image ${extraImgClass}" alt="${safeName}" ${imgAttrs}>
               <span class="product-badge" ${badgeStyle}>${escapeHtml(p.badge || badge)}</span>
               <div class="product-quick-actions">
                 <div class="product-card-specs">
@@ -1024,20 +1038,121 @@ document.addEventListener('DOMContentLoaded', () => {
       const modalImgAttrs = `decoding="sync" onload="this.classList.add('loaded')"`; // modal images are strictly above the fold
       let imgHtml = `<img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>`;
 
-      if (modalProductType === 'apparel' && currentProduct.backImage) {
-        // Super simple hover-to-flip for dual-image apparel (front/back)
-        imgHtml = `
-          <div class="apparel-image-flipper" style="position: relative; width: 100%; cursor: ew-resize;" onmouseenter="this.querySelector('img').src='${escapeHtml(currentProduct.backImage)}'" onmouseleave="this.querySelector('img').src='${escapeHtml(BrushImg.original(currentProduct))}'">
-            <img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>
-            <div class="flipper-hint" style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; pointer-events: none; z-index: 10;">Hover to see back</div>
-          </div>
-        `;
-      }
+      if (modalProductType === 'apparel') {
+        const frontSrc = BrushImg.original(currentProduct);
+        const backSrc = currentProduct.backImage || frontSrc;
+        const sizeChartSrc = 'assets/Tshirt designs/1788842546SizeChart1.png';
 
-      modalImageCol.innerHTML = `<div class="modal-plain-image-wrapper">
+        const images = [
+          { src: backSrc, label: 'Back Full' },
+          { src: frontSrc, label: 'Front Full' },
+          { src: sizeChartSrc, label: 'Size Chart' }
+        ];
+
+        modalImageCol.innerHTML = `
+          <div class="product-carousel" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 0;">
+            <button class="carousel-prev-btn" aria-label="Previous image" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.2s;">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="carousel-next-btn" aria-label="Next image" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.2s;">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <div class="carousel-slides-container" style="width: 100%; flex-grow: 1; display: flex; align-items: center; justify-content: center; position: relative;">
+              <!-- Magnifier Lens -->
+              <div class="zoom-magnifier" style="position: absolute; border-radius: 8px; width: 280px; height: 280px; border: 2px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.25); background-repeat: no-repeat; background-color: var(--bg-secondary); pointer-events: none; opacity: 0; transition: opacity 0.15s ease-in-out; z-index: 999; display: none;"></div>
+
+              ${images.map((img, i) => `
+                <div class="carousel-slide" style="display: ${i === 0 ? 'flex' : 'none'}; width: 100%; height: 100%; align-items: center; justify-content: center; overflow: hidden; position: absolute; inset: 0;">
+                  <img src="${escapeHtml(img.src)}" class="modal-plain-image carousel-slide-img" style="max-height: 100%; max-width: 100%; width: auto; height: auto; object-fit: contain; cursor: crosshair; transform: scale(1.65);" alt="${escapeHtml(currentProduct.name)} - ${img.label}">
+                </div>
+              `).join('')}
+            </div>
+            <div class="carousel-dots-container" style="position: absolute; bottom: 20px; left: 0; right: 0; display: flex; gap: 8px; justify-content: center; z-index: 20;">
+              ${images.map((_, i) => `<div class="carousel-dot" data-index="${i}" style="width: 10px; height: 10px; border-radius: 50%; background: ${i === 0 ? 'var(--text-primary)' : 'var(--border-color)'}; cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>`).join('')}
+            </div>
+          </div>
+          ${nextBtnHtml}
+        `;
+
+        let currentIndex = 0;
+        const slides = modalImageCol.querySelectorAll('.carousel-slide');
+        const dots = modalImageCol.querySelectorAll('.carousel-dot');
+        const prevBtn = modalImageCol.querySelector('.carousel-prev-btn');
+        const nextBtn = modalImageCol.querySelector('.carousel-next-btn');
+
+        const updateSlide = (idx) => {
+          slides.forEach((sl, i) => sl.style.display = i === idx ? 'flex' : 'none');
+          dots.forEach((dot, i) => dot.style.background = i === idx ? 'var(--text-primary)' : 'var(--border-color)');
+        };
+
+        const goPrev = (e) => {
+          if (e) e.stopPropagation();
+          currentIndex = (currentIndex > 0) ? currentIndex - 1 : images.length - 1;
+          updateSlide(currentIndex);
+        };
+
+        const goNext = (e) => {
+          if (e) e.stopPropagation();
+          currentIndex = (currentIndex < images.length - 1) ? currentIndex + 1 : 0;
+          updateSlide(currentIndex);
+        };
+
+        prevBtn.addEventListener('click', goPrev);
+        nextBtn.addEventListener('click', goNext);
+
+        dots.forEach((dot, i) => {
+          dot.addEventListener('click', (e) => {
+            if (e) e.stopPropagation();
+            currentIndex = i;
+            updateSlide(currentIndex);
+          });
+        });
+
+        const magnifier = modalImageCol.querySelector('.zoom-magnifier');
+        slides.forEach((sl) => {
+          const img = sl.querySelector('img');
+
+          img.addEventListener('mousemove', (e) => {
+            const rect = img.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            magnifier.style.display = 'block';
+            magnifier.style.opacity = '1';
+            magnifier.style.backgroundImage = `url('${img.src}')`;
+
+            const zoomLevel = 2.5;
+            magnifier.style.backgroundSize = `${rect.width * zoomLevel}px auto`;
+
+            const containerRect = sl.parentElement.getBoundingClientRect();
+            const lensX = e.clientX - containerRect.left - 140;
+            const lensY = e.clientY - containerRect.top - 140;
+
+            magnifier.style.left = lensX + 'px';
+            magnifier.style.top = lensY + 'px';
+
+            const bgX = -((x * zoomLevel) - 140);
+            const bgY = -((y * zoomLevel) - 140);
+            magnifier.style.backgroundPosition = `${bgX}px ${bgY}px`;
+          });
+
+          img.addEventListener('mouseleave', () => {
+            magnifier.style.opacity = '0';
+          });
+
+          img.addEventListener('click', goNext);
+        });
+
+        slides.forEach(sl => {
+          sl.addEventListener('click', goNext);
+        });
+
+      } else {
+        modalImageCol.innerHTML = `<div class="modal-plain-image-wrapper">
           ${imgHtml}
           ${nextBtnHtml}
         </div>`;
+      }
       
       document.getElementById('modal-title').textContent = currentProduct.name;
       document.getElementById('modal-description').textContent = currentProduct.description || 'Premium high-quality poster for your space.';

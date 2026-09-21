@@ -2836,7 +2836,7 @@ body.custom-cursor-active * {
 }
 
 .modal-image-col {
-  width: 55%;
+  width: 68%;
   position: sticky;
   top: 0;
   height: 100vh;
@@ -2845,12 +2845,12 @@ body.custom-cursor-active * {
   align-items: center;
   justify-content: center;
   border-right: 1px solid var(--border-color);
-  padding: 40px;
+  padding: 0;
 }
 
 .modal-info-col {
-  width: 45%;
-  padding: 80px 60px;
+  width: 32%;
+  padding: 50px 30px;
   background: var(--bg-primary);
 }
 
@@ -4506,4 +4506,17 @@ img {
 @media (max-width: 480px) {
   .nav-action-btn.has-greeting { width: 32px; }
   .nav-brand img { height: 26px !important; }
+}
+
+/* Hide shimmer once image loads to prevent it showing through transparent PNGs forever */
+.product-card-image:has(img.loaded)::before,
+.mockup-wrapper:has(img.loaded)::before,
+.modal-plain-image-wrapper:has(img.loaded)::before {
+  display: none !important;
+}
+
+/* Custom crop for apparel cards to show the design clearly while keeping it fully visible */
+.plain-product-image.apparel-card-img {
+  object-fit: cover;
+  object-position: center 25%;
 }
