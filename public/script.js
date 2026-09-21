@@ -951,7 +951,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`${product.name} added to cart!`);
 
     // Open cart drawer briefly
-    openCart();
+    // openCart();
   }
 
   // Attach to all "Add to Cart" / "Quick Add" buttons and Product Modals
@@ -1170,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
       Cart.addItem(currentProduct, 1, variants, finalPrice);
       showToast(`${currentProduct.name} added to cart!`);
       closeProductModal();
-      openCart();
+      // openCart();
     });
   }
 
