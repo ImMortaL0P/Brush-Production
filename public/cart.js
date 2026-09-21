@@ -45,6 +45,21 @@ const Cart = (() => {
           { value: '1.5x3m', label: '1.5m × 3m Roll', priceDelta: 300 }
         ]}
       ]
+    },
+    apparel: {
+      label: 'Apparel',
+      variantGroups: [
+        { key: 'size', label: 'Size', options: [
+          { value: 'S', label: 'Small', priceDelta: 0 },
+          { value: 'M', label: 'Medium', priceDelta: 0 },
+          { value: 'L', label: 'Large', priceDelta: 0 },
+          { value: 'XL', label: 'X-Large', priceDelta: 0 }
+        ]},
+        { key: 'color', label: 'Color', options: [
+          { value: 'black', label: 'Black', priceDelta: 0 },
+          { value: 'white', label: 'White', priceDelta: 0 }
+        ]}
+      ]
     }
   };
 

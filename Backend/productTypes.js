@@ -55,6 +55,28 @@ const PRODUCT_TYPES = {
         ]
       }
     ]
+  apparel: {
+    label: 'Apparel',
+    variantGroups: [
+      {
+        key: 'size',
+        label: 'Size',
+        options: [
+          { value: 'S', label: 'Small', priceDelta: 0 },
+          { value: 'M', label: 'Medium', priceDelta: 0 },
+          { value: 'L', label: 'Large', priceDelta: 0 },
+          { value: 'XL', label: 'X-Large', priceDelta: 0 }
+        ]
+      },
+      {
+        key: 'color',
+        label: 'Color',
+        options: [
+          { value: 'black', label: 'Black', priceDelta: 0 },
+          { value: 'white', label: 'White', priceDelta: 0 }
+        ]
+      }
+    ]
   }
 };
 
@@ -62,7 +84,8 @@ const PRODUCT_TYPES = {
 // which covers all pre-existing categories without a migration.
 const CATEGORY_PRODUCT_TYPE = {
   'Plates': 'plate',
-  'Wallpaper': 'wallpaper'
+  'Wallpaper': 'wallpaper',
+  'Apparel': 'apparel'
 };
 
 function getProductType(category) {

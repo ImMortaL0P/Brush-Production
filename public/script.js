@@ -1022,8 +1022,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const nextBtnHtml = nextId ? `<button class="modal-next-btn" id="modal-next-btn" data-next-id="${nextId}">Next ${isPosterModal ? 'Poster' : Cart.typeConfigFor(modalProductType).label} <i class="fa-solid fa-arrow-right"></i></button>` : '';
 
       const modalImgAttrs = `decoding="sync" onload="this.classList.add('loaded')"`; // modal images are strictly above the fold
+      let imgHtml = `<img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>`;
+
+      if (modalProductType === 'apparel' && currentProduct.backImage) {
+        // Super simple hover-to-flip for dual-image apparel (front/back)
+        imgHtml = `
+          <div class="apparel-image-flipper" style="position: relative; width: 100%; cursor: ew-resize;" onmouseenter="this.querySelector('img').src='${escapeHtml(currentProduct.backImage)}'" onmouseleave="this.querySelector('img').src='${escapeHtml(BrushImg.original(currentProduct))}'">
+            <img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>
+            <div class="flipper-hint" style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; pointer-events: none; z-index: 10;">Hover to see back</div>
+          </div>
+        `;
+      }
+
       modalImageCol.innerHTML = `<div class="modal-plain-image-wrapper">
-          <img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>
+          ${imgHtml}
           ${nextBtnHtml}
         </div>`;
       
