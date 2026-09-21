@@ -7,16 +7,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // One shared request for the catalog. The search box, hero counter and
   // carousels all need it — previously each fired its own /products call
   // (and search fired one per keystroke).
+  // Posters and tees are priced from the Qikink rate table shared with the
+  // server (cart.js <-> Backend/productTypes.js), not from the stored price.
+  const applyCatalogPrice = (p) => (typeof Cart !== 'undefined' && p ? { ...p, price: Cart.priceFor(p, null).price } : p);
   let productsPromise = null;
   function getProducts() {
     if (!productsPromise) {
       productsPromise = fetch(`${API_BASE}/products`)
         .then(res => (res.ok ? res.json() : Promise.reject(new Error('Failed to fetch products'))))
+        .then(list => list.map(applyCatalogPrice))
         .catch(err => { productsPromise = null; throw err; });
     }
     return productsPromise;
   }
   window.BrushGetProducts = getProducts;
+
+  // ---- Star ratings ----
+  // One renderer for every read-only rating on the site (cards, modal
+  // summary, review list): a CSS-masked star strip filled to the exact
+  // average, so 4.3 shows as 4 full stars and a third.
+  function ratingStats(p) {
+    const list = (p && p.reviews) || [];
+    const vals = list.map(r => Number(r.rating)).filter(v => v >= 1 && v <= 5);
+    if (!vals.length) return { avg: 0, count: 0 };
+    return { avg: vals.reduce((a, b) => a + b, 0) / vals.length, count: vals.length };
+  }
+  function starsHtml(value, extraClass = '') {
+    const v = Math.max(0, Math.min(5, Number(value) || 0));
+    return `<span class="stars ${extraClass}" style="--rating:${v.toFixed(2)}" role="img" aria-label="Rated ${v.toFixed(1)} out of 5"></span>`;
+  }
+  window.BrushStars = starsHtml;
 
   const keywordText = (k) => (Array.isArray(k) ? k.join(' ') : String(k || '')).toLowerCase();
 
@@ -651,6 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="product-card-info">
               <h3>${safeName}</h3>
+              ${(() => { const r = ratingStats(p); return r.count ? `<div class="card-rating">${starsHtml(r.avg, 'stars-sm')}<span>${r.avg.toFixed(1)} (${r.count})</span></div>` : ''; })()}
               <div class="product-pricing">
                 <span class="price-current">₹${p.price}</span>
                 ${p.originalPrice > p.price ? `<span class="price-original">₹${p.originalPrice}</span>` : ''}
@@ -812,7 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // stay in sync with whatever the modal actually offered.
   function formatCartVariantLine(item) {
     if (!item.variants) return '';
-    const typeConfig = Cart.typeConfigFor((item.productType || 'poster').toLowerCase());
+    const typeConfig = Cart.typeConfigFor(item.productType || 'poster');
     return typeConfig.variantGroups
       .filter(group => item.variants[group.key] !== undefined)
       .map(group => {
@@ -881,13 +902,17 @@ document.addEventListener('DOMContentLoaded', () => {
     `).join('');
 
     // Update totals
-    if (cartSubtotal) cartSubtotal.textContent = '₹' + Cart.getSubtotal();
+    // Shelf prices exclude GST and shipping; both are added once per order.
+    const charges = Cart.getCharges('prepaid');
+    const inr = (n) => '₹' + (Number.isInteger(n) ? n : n.toFixed(2));
+    if (cartSubtotal) cartSubtotal.textContent = inr(charges.subtotal);
+    const cartGst = document.getElementById('cart-gst');
+    if (cartGst) cartGst.textContent = inr(charges.gst);
     if (cartShipping) {
-      const shipping = Cart.getShipping();
-      cartShipping.textContent = shipping === 0 ? 'FREE' : '₹' + shipping;
-      cartShipping.style.color = shipping === 0 ? 'var(--success)' : '';
+      cartShipping.textContent = inr(charges.shipping);
+      cartShipping.style.color = '';
     }
-    if (cartTotal) cartTotal.textContent = '₹' + Cart.getTotal();
+    if (cartTotal) cartTotal.textContent = inr(charges.total);
 
     // Bind quantity controls
     cartBody.querySelectorAll('.qty-minus').forEach(btn => {
@@ -1015,6 +1040,217 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalCloseBtn = document.getElementById('modal-close-btn');
   let currentProduct = null;
 
+  // ---- Apparel gallery (back, front, design layout, size chart) ----
+  // Design-layout sheets live next to the mockups, named after the mockup
+  // file stem: assets/Tshirt designs/absolut_front.png ->
+  // assets/Tshirt designs/sheets/absolut_design.webp. Missing sheets are
+  // skipped automatically (the slide removes itself on load error).
+  const APPAREL_SIZE_CHART = 'assets/Tshirt designs/1788842546SizeChart1.png';
+
+  function apparelDesignSheet(p) {
+    const m = String(p.image || p.backImage || '').match(/([^/]+?)_(front|back)\.[a-z]+$/i);
+    return m ? `assets/Tshirt designs/sheets/${m[1]}_design.webp` : null;
+  }
+
+  function buildApparelGallery(p) {
+    const frontSrc = BrushImg.original(p);
+    const backSrc = p.backImage || frontSrc;
+    const slides = [
+      { src: backSrc, label: 'Back', fit: 'cover', zoom: true },
+      { src: frontSrc, label: 'Front', fit: 'cover', zoom: true },
+    ];
+    const sheet = apparelDesignSheet(p);
+    // Design sheets share the mockups' 10:7 frame, so they fill the stage
+    // edge to edge instead of floating small inside padding.
+    if (sheet) slides.push({ src: sheet, label: 'Design', fit: 'sheet', optional: true });
+    slides.push({ src: APPAREL_SIZE_CHART, label: 'Size chart', fit: 'contain' });
+
+    const name = escapeHtml(p.name);
+    // Photos go through the resized-WebP pipeline (with fallback to the
+    // original); the design sheet stays full-res so zoom stays crisp, and
+    // keeps a plain src so its error handler can drop the slide.
+    const imgFor = (sl, size) => (sl.optional || !window.BrushImg)
+      ? `src="${escapeHtml(encodeURI(sl.src))}"`
+      : BrushImg.urlAttrs(sl.src, size);
+    return `
+      <div class="apparel-gallery" tabindex="0" aria-roledescription="carousel" aria-label="${name} images">
+        <div class="ag-stage">
+          ${slides.map((sl, i) => `
+            <figure class="ag-slide ${i === 0 ? 'is-active' : ''}" data-fit="${sl.fit}" ${sl.zoom ? 'data-zoom' : ''} ${sl.optional ? 'data-optional' : ''} aria-hidden="${i === 0 ? 'false' : 'true'}">
+              <img ${imgFor(sl, 1080)} alt="${name} — ${sl.label}" draggable="false" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+            </figure>`).join('')}
+          <button class="ag-nav ag-prev" type="button" aria-label="Previous image"><i class="fa-solid fa-chevron-left"></i></button>
+          <button class="ag-nav ag-next" type="button" aria-label="Next image"><i class="fa-solid fa-chevron-right"></i></button>
+          <span class="ag-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> <span class="ag-hint-text">Hover to zoom</span></span>
+        </div>
+        <div class="ag-thumbs" role="tablist">
+          ${slides.map((sl, i) => `
+            <button class="ag-thumb ${i === 0 ? 'is-active' : ''}" type="button" role="tab" data-index="${i}" ${sl.optional ? 'data-optional' : ''} aria-selected="${i === 0}" aria-label="${sl.label}">
+              <img ${imgFor(sl, 480)} alt="" loading="lazy" decoding="async" draggable="false">
+              <span>${sl.label}</span>
+            </button>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function initApparelGallery(root) {
+    const gallery = root.querySelector('.apparel-gallery');
+    if (!gallery) return;
+    const stage = gallery.querySelector('.ag-stage');
+    const hintText = gallery.querySelector('.ag-hint-text');
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const ZOOM = 2.4;
+    let index = 0;
+
+    const slides = () => Array.from(gallery.querySelectorAll('.ag-slide'));
+    const thumbs = () => Array.from(gallery.querySelectorAll('.ag-thumb'));
+    if (!finePointer && hintText) hintText.textContent = 'Tap to zoom';
+
+    // Drop the design-sheet slide if that product has no sheet yet.
+    gallery.querySelectorAll('.ag-slide[data-optional] img').forEach((img) => {
+      img.loading = 'eager';
+      img.addEventListener('error', () => {
+        const slide = img.closest('.ag-slide');
+        const i = slides().indexOf(slide);
+        slide.remove();
+        const t = thumbs()[i];
+        if (t) t.remove();
+        thumbs().forEach((b, j) => { b.dataset.index = j; });
+        go(Math.min(index, slides().length - 1));
+      }, { once: true });
+    });
+
+    function resetZoom(slide) {
+      if (!slide) return;
+      slide.classList.remove('is-zoomed', 'is-locked');
+      const img = slide.querySelector('img');
+      img.style.transformOrigin = '';
+    }
+
+    function go(i) {
+      const all = slides();
+      if (!all.length) return;
+      resetZoom(all[index]);
+      index = (i + all.length) % all.length;
+      all.forEach((s, j) => {
+        s.classList.toggle('is-active', j === index);
+        s.setAttribute('aria-hidden', j === index ? 'false' : 'true');
+      });
+      thumbs().forEach((t, j) => {
+        t.classList.toggle('is-active', j === index);
+        t.setAttribute('aria-selected', j === index ? 'true' : 'false');
+      });
+      const activeThumb = thumbs()[index];
+      if (activeThumb) activeThumb.scrollIntoView({ block: 'nearest', inline: 'center' });
+      syncHint();
+    }
+
+    // Zoom only on the Back/Front photos, and only while the pointer is over
+    // the central part of the image — the outer band (where the arrows and
+    // edges are) never triggers it.
+    const ZONE_X = 0.2;  // ignore 20% on each side
+    const ZONE_Y = 0.12; // ignore 12% top and bottom
+    const canZoom = (slide) => !!(slide && slide.hasAttribute('data-zoom'));
+    function inZone(clientX, clientY) {
+      const r = stage.getBoundingClientRect();
+      const x = (clientX - r.left) / r.width;
+      const y = (clientY - r.top) / r.height;
+      return x >= ZONE_X && x <= 1 - ZONE_X && y >= ZONE_Y && y <= 1 - ZONE_Y;
+    }
+    function syncHint() {
+      gallery.classList.toggle('ag-no-zoom', !canZoom(slides()[index]));
+    }
+
+    function setOrigin(slide, clientX, clientY) {
+      const rect = slide.getBoundingClientRect();
+      const x = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100));
+      const y = Math.min(100, Math.max(0, ((clientY - rect.top) / rect.height) * 100));
+      slide.querySelector('img').style.transformOrigin = `${x}% ${y}%`;
+    }
+
+    gallery.querySelector('.ag-prev').addEventListener('click', (e) => { e.stopPropagation(); go(index - 1); });
+    gallery.querySelector('.ag-next').addEventListener('click', (e) => { e.stopPropagation(); go(index + 1); });
+    gallery.querySelector('.ag-thumbs').addEventListener('click', (e) => {
+      const b = e.target.closest('.ag-thumb');
+      if (b) go(parseInt(b.dataset.index, 10));
+    });
+
+    gallery.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(index - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(index + 1); }
+    });
+
+    stage.style.setProperty('--ag-zoom', ZOOM);
+    syncHint();
+
+    // Desktop: zoom follows the cursor while hovering; click locks/unlocks.
+    stage.addEventListener('mousemove', (e) => {
+      if (!finePointer) return;
+      const slide = slides()[index];
+      if (!canZoom(slide)) return;
+      const locked = slide.classList.contains('is-locked');
+      const active = !e.target.closest('.ag-nav') && inZone(e.clientX, e.clientY);
+      stage.classList.toggle('in-zoom-zone', active || locked);
+      if (active || locked) {
+        slide.classList.add('is-zoomed');
+        setOrigin(slide, e.clientX, e.clientY);
+      } else {
+        resetZoom(slide);
+      }
+    });
+    stage.addEventListener('mouseleave', () => {
+      stage.classList.remove('in-zoom-zone');
+      const slide = slides()[index];
+      if (slide && !slide.classList.contains('is-locked')) resetZoom(slide);
+    });
+
+    // Touch: tap toggles zoom at the tapped point, drag pans while zoomed,
+    // horizontal swipe (when not zoomed) changes slide.
+    let touchStart = null;
+    stage.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.ag-nav')) return;
+      const t = e.touches[0];
+      touchStart = { x: t.clientX, y: t.clientY, time: Date.now(), moved: false };
+    }, { passive: true });
+    stage.addEventListener('touchmove', (e) => {
+      if (!touchStart) return;
+      const t = e.touches[0];
+      const slide = slides()[index];
+      if (Math.abs(t.clientX - touchStart.x) > 8 || Math.abs(t.clientY - touchStart.y) > 8) touchStart.moved = true;
+      if (slide && slide.classList.contains('is-zoomed')) {
+        e.preventDefault();
+        setOrigin(slide, t.clientX, t.clientY);
+      }
+    }, { passive: false });
+    stage.addEventListener('touchend', (e) => {
+      if (!touchStart) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStart.x;
+      const slide = slides()[index];
+      const zoomed = slide && slide.classList.contains('is-zoomed');
+      if (!touchStart.moved && canZoom(slide)) {
+        if (zoomed) resetZoom(slide);
+        else { slide.classList.add('is-zoomed', 'is-locked'); setOrigin(slide, t.clientX, t.clientY); }
+      } else if (!zoomed && Math.abs(dx) > 50) {
+        go(index + (dx < 0 ? 1 : -1));
+      }
+      touchStart = null;
+    });
+
+    stage.addEventListener('click', (e) => {
+      if (!finePointer || e.target.closest('.ag-nav')) return;
+      const slide = slides()[index];
+      if (!canZoom(slide)) return;
+      if (slide.classList.contains('is-locked')) {
+        slide.classList.remove('is-locked');
+        if (!inZone(e.clientX, e.clientY)) resetZoom(slide);
+      } else if (inZone(e.clientX, e.clientY)) {
+        slide.classList.add('is-zoomed', 'is-locked');
+        setOrigin(slide, e.clientX, e.clientY);
+      }
+    });
+  }
+
   async function openProductModal(productId) {
     // Guarded the same way as openCart() — harmless in practice today (the
     // overlay blocks clicks reaching another product card while open) but
@@ -1027,7 +1263,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch(`${API_BASE}/products/${productId}`);
       if (!res.ok) throw new Error('Product not found');
-      currentProduct = await res.json();
+      currentProduct = applyCatalogPrice(await res.json());
       
       const modalImageCol = document.querySelector('.modal-image-col');
       const nextId = getNextProductId(productId);
@@ -1039,114 +1275,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let imgHtml = `<img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>`;
 
       if (modalProductType === 'apparel') {
-        const frontSrc = BrushImg.original(currentProduct);
-        const backSrc = currentProduct.backImage || frontSrc;
-        const sizeChartSrc = 'assets/Tshirt designs/1788842546SizeChart1.png';
-
-        const images = [
-          { src: backSrc, label: 'Back Full' },
-          { src: frontSrc, label: 'Front Full' },
-          { src: sizeChartSrc, label: 'Size Chart' }
-        ];
-
-        modalImageCol.innerHTML = `
-          <div class="product-carousel" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 0;">
-            <button class="carousel-prev-btn" aria-label="Previous image" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.2s;">
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button class="carousel-next-btn" aria-label="Next image" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.2s;">
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-            <div class="carousel-slides-container" style="width: 100%; flex-grow: 1; display: flex; align-items: center; justify-content: center; position: relative;">
-              <!-- Magnifier Lens -->
-              <div class="zoom-magnifier" style="position: absolute; border-radius: 8px; width: 280px; height: 280px; border: 2px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.25); background-repeat: no-repeat; background-color: var(--bg-secondary); pointer-events: none; opacity: 0; transition: opacity 0.15s ease-in-out; z-index: 999; display: none;"></div>
-
-              ${images.map((img, i) => `
-                <div class="carousel-slide" style="display: ${i === 0 ? 'flex' : 'none'}; width: 100%; height: 100%; align-items: center; justify-content: center; overflow: hidden; position: absolute; inset: 0;">
-                  <img src="${escapeHtml(img.src)}" class="modal-plain-image carousel-slide-img" style="max-height: 100%; max-width: 100%; width: auto; height: auto; object-fit: contain; cursor: crosshair; transform: scale(1.65);" alt="${escapeHtml(currentProduct.name)} - ${img.label}">
-                </div>
-              `).join('')}
-            </div>
-            <div class="carousel-dots-container" style="position: absolute; bottom: 20px; left: 0; right: 0; display: flex; gap: 8px; justify-content: center; z-index: 20;">
-              ${images.map((_, i) => `<div class="carousel-dot" data-index="${i}" style="width: 10px; height: 10px; border-radius: 50%; background: ${i === 0 ? 'var(--text-primary)' : 'var(--border-color)'}; cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>`).join('')}
-            </div>
-          </div>
-          ${nextBtnHtml}
-        `;
-
-        let currentIndex = 0;
-        const slides = modalImageCol.querySelectorAll('.carousel-slide');
-        const dots = modalImageCol.querySelectorAll('.carousel-dot');
-        const prevBtn = modalImageCol.querySelector('.carousel-prev-btn');
-        const nextBtn = modalImageCol.querySelector('.carousel-next-btn');
-
-        const updateSlide = (idx) => {
-          slides.forEach((sl, i) => sl.style.display = i === idx ? 'flex' : 'none');
-          dots.forEach((dot, i) => dot.style.background = i === idx ? 'var(--text-primary)' : 'var(--border-color)');
-        };
-
-        const goPrev = (e) => {
-          if (e) e.stopPropagation();
-          currentIndex = (currentIndex > 0) ? currentIndex - 1 : images.length - 1;
-          updateSlide(currentIndex);
-        };
-
-        const goNext = (e) => {
-          if (e) e.stopPropagation();
-          currentIndex = (currentIndex < images.length - 1) ? currentIndex + 1 : 0;
-          updateSlide(currentIndex);
-        };
-
-        prevBtn.addEventListener('click', goPrev);
-        nextBtn.addEventListener('click', goNext);
-
-        dots.forEach((dot, i) => {
-          dot.addEventListener('click', (e) => {
-            if (e) e.stopPropagation();
-            currentIndex = i;
-            updateSlide(currentIndex);
-          });
-        });
-
-        const magnifier = modalImageCol.querySelector('.zoom-magnifier');
-        slides.forEach((sl) => {
-          const img = sl.querySelector('img');
-
-          img.addEventListener('mousemove', (e) => {
-            const rect = img.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            magnifier.style.display = 'block';
-            magnifier.style.opacity = '1';
-            magnifier.style.backgroundImage = `url('${img.src}')`;
-
-            const zoomLevel = 2.5;
-            magnifier.style.backgroundSize = `${rect.width * zoomLevel}px auto`;
-
-            const containerRect = sl.parentElement.getBoundingClientRect();
-            const lensX = e.clientX - containerRect.left - 140;
-            const lensY = e.clientY - containerRect.top - 140;
-
-            magnifier.style.left = lensX + 'px';
-            magnifier.style.top = lensY + 'px';
-
-            const bgX = -((x * zoomLevel) - 140);
-            const bgY = -((y * zoomLevel) - 140);
-            magnifier.style.backgroundPosition = `${bgX}px ${bgY}px`;
-          });
-
-          img.addEventListener('mouseleave', () => {
-            magnifier.style.opacity = '0';
-          });
-
-          img.addEventListener('click', goNext);
-        });
-
-        slides.forEach(sl => {
-          sl.addEventListener('click', goNext);
-        });
-
+        modalImageCol.innerHTML = buildApparelGallery(currentProduct) + nextBtnHtml;
+        initApparelGallery(modalImageCol);
       } else {
         modalImageCol.innerHTML = `<div class="modal-plain-image-wrapper">
           ${imgHtml}
@@ -1182,9 +1312,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      renderVariantSelectors((currentProduct.productType || 'poster').toLowerCase());
+      renderVariantSelectors(currentProduct.productType || 'poster');
       updateModalPrice();
       renderReviews();
+      renderModalRating();
+      resetStarInput();
     } catch (err) {
       console.error(err);
       showToast('Failed to load product details');
@@ -1225,56 +1357,102 @@ document.addEventListener('DOMContentLoaded', () => {
   // wallpaper: Roll Size) — reads Cart's shared PRODUCT_TYPES config so a
   // new type only has to be added in one place (cart.js) to show up here.
   const variantSelectorsEl = document.getElementById('variant-selectors');
+  // Swatches honour each option's `onlyWith` rule (DTG only on the
+  // Classic Crew, XS/3XL only on fits that stock them): options that don't
+  // apply to the current choice are hidden, and the selection re-resolves
+  // to a valid combination whenever an earlier group changes.
+  let currentVariantType = 'poster';
+
   function renderVariantSelectors(productType) {
     if (!variantSelectorsEl) return;
+    currentVariantType = productType;
     const typeConfig = Cart.typeConfigFor(productType);
+    const initial = Cart.resolveVariants(typeConfig, null).variants;
     variantSelectorsEl.innerHTML = typeConfig.variantGroups.map(group => `
-      <div class="selector-group">
+      <div class="selector-group" data-group-wrap="${group.key}">
         <label id="variant-label-${group.key}">${group.label}</label>
-        <div class="swatch-group" data-group-key="${group.key}" role="group" aria-labelledby="variant-label-${group.key}">
-          ${group.options.map((opt, i) => `
-            <button type="button" class="swatch-btn ${i === 0 ? 'active' : ''}" data-value="${opt.value}" data-price="${opt.priceDelta}">
-              ${opt.label}${opt.priceDelta ? ` <small>${opt.priceDelta > 0 ? `+₹${opt.priceDelta}` : `-₹${Math.abs(opt.priceDelta)}`}</small>` : ''}
+        <div class="swatch-group swatch-group--${group.key}" data-group-key="${group.key}" role="group" aria-labelledby="variant-label-${group.key}">
+          ${group.options.map(opt => `
+            <button type="button" class="swatch-btn ${initial[group.key] === opt.value ? 'active' : ''}" data-value="${escapeHtml(opt.value)}" data-price="${opt.priceDelta}" aria-pressed="${initial[group.key] === opt.value}">
+              <span class="swatch-label">${escapeHtml(opt.label)}</span>${opt.priceDelta ? ` <small>${opt.priceDelta > 0 ? `+₹${opt.priceDelta}` : `−₹${Math.abs(opt.priceDelta)}`}</small>` : ''}
             </button>
           `).join('')}
         </div>
       </div>
-    `).join('');
+    `).join('') + (typeConfig.variantGroups.length ? '<p class="variant-note" id="variant-note"></p>' : '');
+    syncVariantAvailability();
+  }
+
+  function syncVariantAvailability() {
+    if (!variantSelectorsEl) return;
+    const typeConfig = Cart.typeConfigFor(currentVariantType);
+    const { variants } = Cart.resolveVariants(typeConfig, readSwatches());
+    const chosen = {};
+    typeConfig.variantGroups.forEach(group => {
+      const groupEl = variantSelectorsEl.querySelector(`.swatch-group[data-group-key="${group.key}"]`);
+      if (!groupEl) return;
+      let visible = 0;
+      group.options.forEach(opt => {
+        const btn = groupEl.querySelector(`.swatch-btn[data-value="${CSS.escape(opt.value)}"]`);
+        const ok = Cart.optionAllowed(opt, chosen);
+        btn.hidden = !ok;
+        if (ok) visible++;
+        const on = variants[group.key] === opt.value;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      chosen[group.key] = variants[group.key];
+      // A group with a single possible choice (e.g. Print on a Polo is
+      // DTF-only) still shows, so shoppers can see what they're getting.
+      groupEl.classList.toggle('is-single', visible === 1);
+    });
+    const note = document.getElementById('variant-note');
+    if (note) {
+      note.textContent = normalizeTypeKey(currentVariantType) === 'apparel'
+        ? 'Front chest logo + full back print. DTG is available on the Classic Crew only.'
+        : (normalizeTypeKey(currentVariantType) === 'poster' ? 'Printed on 300 GSM art board. Inch sizes may crop the artwork slightly to fit.' : '');
+    }
+  }
+
+  function normalizeTypeKey(t) {
+    return Cart.typeConfigFor(t) === Cart.PRODUCT_TYPES.apparel ? 'apparel'
+      : (Cart.typeConfigFor(t) === Cart.PRODUCT_TYPES.poster ? 'poster' : 'other');
+  }
+
+  function readSwatches() {
+    const v = {};
+    if (!variantSelectorsEl) return v;
+    variantSelectorsEl.querySelectorAll('.swatch-group').forEach(group => {
+      const active = group.querySelector('.swatch-btn.active');
+      if (active) v[group.dataset.groupKey] = active.dataset.value;
+    });
+    return v;
   }
 
   function updateModalPrice() {
     if (!currentProduct || !variantSelectorsEl) return;
-
-    let finalPrice = currentProduct.price;
-    variantSelectorsEl.querySelectorAll('.swatch-group').forEach(group => {
-      finalPrice += parseInt(getActiveSwatch(group).dataset.price);
-    });
-    if (finalPrice < 10) finalPrice = 10;
-
+    const { price } = Cart.priceFor(currentProduct, readSwatches());
+    const finalPrice = Math.max(10, price);
     document.getElementById('modal-price').textContent = `₹${finalPrice}`;
     document.getElementById('modal-btn-price').textContent = `₹${finalPrice}`;
+    const orig = document.getElementById('modal-original-price');
+    if (orig) orig.style.display = currentProduct.originalPrice > finalPrice ? '' : 'none';
   }
 
   // One delegated listener handles every group regardless of how many the
-  // current product type has — the swatch markup itself is rebuilt per
-  // product by renderVariantSelectors(), so per-group listeners would need
-  // re-attaching on every modal open.
+  // current product type has.
   if (variantSelectorsEl) {
     variantSelectorsEl.addEventListener('click', (e) => {
       const btn = e.target.closest('.swatch-btn');
-      if (!btn) return;
+      if (!btn || btn.hidden) return;
       setActiveSwatch(btn.closest('.swatch-group'), btn.dataset.value);
+      syncVariantAvailability();
       updateModalPrice();
     });
   }
 
   function getSelectedVariants() {
-    const variants = {};
-    if (!variantSelectorsEl) return variants;
-    variantSelectorsEl.querySelectorAll('.swatch-group').forEach(group => {
-      variants[group.dataset.groupKey] = getActiveSwatch(group).dataset.value;
-    });
-    return variants;
+    return Cart.resolveVariants(Cart.typeConfigFor(currentVariantType), readSwatches()).variants;
   }
 
   const modalAddToCartBtn = document.getElementById('modal-add-to-cart');
@@ -1328,12 +1506,69 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="review-author">${safeUser}</span>
           <span class="review-date">${new Date(r.date).toLocaleDateString()}</span>
         </div>
-        <div class="review-stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</div>
+        <div class="review-stars">${starsHtml(stars)}</div>
         <p class="review-text">${escapeHtml(r.comment)}</p>
         ${r.photo ? `<img class="review-photo" src="${escapeHtml(r.photo)}" alt="Photo from ${safeUser}'s review" loading="lazy">` : ''}
       </div>
     `;
     }).join('');
+  }
+
+  // ---- Interactive star picker (review form) ----
+  const STAR_WORDS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Loved it'];
+  const starInput = document.querySelector('.star-input');
+  const starCaption = document.getElementById('star-input-caption');
+  const ratingHidden = document.getElementById('review-rating');
+
+  function setStarCaption(v, preview) {
+    if (!starCaption) return;
+    starCaption.textContent = v ? `${v}/5 · ${STAR_WORDS[v]}` : 'Tap a star to rate';
+    starCaption.classList.toggle('is-preview', !!preview);
+  }
+  function resetStarInput() {
+    if (!starInput) return;
+    starInput.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; });
+    if (ratingHidden) ratingHidden.value = '';
+    starInput.classList.remove('needs-rating', 'shake');
+    setStarCaption(0);
+  }
+  if (starInput) {
+    starInput.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        ratingHidden.value = radio.value;
+        starInput.classList.remove('needs-rating');
+        setStarCaption(Number(radio.value));
+        const label = starInput.querySelector(`label[for="${radio.id}"]`);
+        if (label) { label.classList.remove('pop'); void label.offsetWidth; label.classList.add('pop'); }
+      });
+    });
+    starInput.querySelectorAll('label').forEach(label => {
+      const v = Number(document.getElementById(label.htmlFor).value);
+      label.addEventListener('mouseenter', () => setStarCaption(v, true));
+    });
+    starInput.addEventListener('mouseleave', () => setStarCaption(Number(ratingHidden.value) || 0));
+  }
+
+  // ---- Rating summary under the modal title ----
+  function renderModalRating() {
+    const title = document.getElementById('modal-title');
+    if (!title || !currentProduct) return;
+    let el = document.getElementById('modal-rating');
+    if (!el) {
+      el = document.createElement('button');
+      el.type = 'button';
+      el.id = 'modal-rating';
+      el.className = 'modal-rating';
+      title.insertAdjacentElement('afterend', el);
+      el.addEventListener('click', () => {
+        const target = document.querySelector('#product-modal .reviews-section');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    const { avg, count } = ratingStats(currentProduct);
+    el.innerHTML = count
+      ? `${starsHtml(avg)}<span class="modal-rating-value">${avg.toFixed(1)}</span><span class="modal-rating-count">${count} review${count === 1 ? '' : 's'}</span>`
+      : `${starsHtml(0)}<span class="modal-rating-count">No reviews yet · be the first</span>`;
   }
 
   const reviewForm = document.getElementById('review-form');
@@ -1360,7 +1595,19 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (!currentProduct) return;
 
-      const btn = reviewForm.querySelector('button');
+      const ratingInput = document.getElementById('review-rating');
+      if (!ratingInput.value) {
+        const starBox = reviewForm.querySelector('.star-input');
+        if (starBox) {
+          starBox.classList.remove('shake');
+          void starBox.offsetWidth;
+          starBox.classList.add('shake', 'needs-rating');
+        }
+        showToast('Please pick a star rating');
+        return;
+      }
+
+      const btn = reviewForm.querySelector('button[type="submit"]') || reviewForm.querySelector('button');
       btn.textContent = 'Submitting...';
       btn.disabled = true;
 
@@ -1385,9 +1632,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentProduct.reviews.push(newReview);
 
         reviewForm.reset();
+        resetStarInput();
         reviewPhotoPreview.hidden = true;
         reviewPhotoLabelText.textContent = 'Add a photo (optional)';
         renderReviews();
+        renderModalRating();
         showToast('Review submitted successfully!');
       } catch (err) {
         showToast('Error submitting review');

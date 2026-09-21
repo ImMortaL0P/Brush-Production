@@ -12,6 +12,7 @@
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="theme.js"></script>
+  <script src="cart.js?v=4"></script>
   <style>
     :root {
       /* Mirrors the brand palette in styles.css (dark default) — keep these two files in sync.
@@ -359,7 +360,7 @@
     }
   </style>
   <link rel="icon" type="image/png" href="assets/misc/favicon.png">
-  <script src="global-navbar.js"></script>
+  <script src="global-navbar.js?v=3"></script>
 </head>
 <body>
 
@@ -394,6 +395,9 @@
     </div>
     <div class="nav-item" data-target="add-product-view" id="nav-add-product">
       <i class="fa-solid fa-plus-circle"></i> <span class="sidebar-text">Add Product</span>
+    </div>
+    <div class="nav-item" data-target="pricing-view">
+      <i class="fa-solid fa-indian-rupee-sign"></i> <span class="sidebar-text">Pricing</span>
     </div>
     <div class="nav-item" data-target="logs-view" id="nav-logs" style="display:none;">
       <i class="fa-solid fa-list-check"></i> <span class="sidebar-text">System Logs</span>
@@ -471,6 +475,7 @@
             <option value="Gaming">Gaming</option>
             <option value="Plates">Plates</option>
             <option value="Wallpaper">Wallpaper</option>
+            <option value="Apparel">Apparel (T-Shirts)</option>
             <option value="General">General / Other</option>
           </select>
           <button class="refresh-btn" onclick="saveAllProducts()" style="background: var(--success); color: var(--on-accent);"><i class="fa-solid fa-save"></i> Save All</button>
@@ -487,7 +492,7 @@
               <th>Product Details</th>
               <th>SKU (ID)</th>
               <th>Badge</th>
-              <th>Base Price</th>
+              <th>Price (ex-GST)</th>
               <th>Stock Qty</th>
               <th>Order Freq</th>
               <th>Homepage Placement</th>
@@ -525,11 +530,20 @@
             <option value="Gaming">Gaming</option>
             <option value="Plates">Plates</option>
             <option value="Wallpaper">Wallpaper</option>
+            <option value="Apparel">Apparel (T-Shirts)</option>
             <option value="General">General / Other</option>
           </select>
           <p style="grid-column: 1 / -1; margin: -8px 0 0; font-size: 0.8rem; color: var(--text-secondary);">
             Plates and Wallpaper get their own size/pricing options automatically at checkout — no separate setup needed here.
           </p>
+          <select id="new-prod-type" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+            <option value="Posters" selected>Product type: Poster</option>
+            <option value="apparel">Product type: T-Shirt</option>
+            <option value="Stickers">Product type: Sticker</option>
+            <option value="Collectibles">Product type: Collectible</option>
+            <option value="Wallpapers">Product type: Wallpaper</option>
+          </select>
+          <p id="new-prod-price-note" style="grid-column: 1 / -1; margin: -8px 0 0; font-size: 0.8rem; color: var(--text-secondary);"></p>
           <input type="number" id="new-prod-price" placeholder="Price (₹) *" required style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="number" id="new-prod-original-price" placeholder="Original Price (₹)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
           <input type="text" id="new-prod-sku" placeholder="SKU / Custom ID (optional)" style="background: var(--bg-secondary); color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
@@ -548,6 +562,15 @@
       </div>
     </div>
     
+    <!-- Pricing View -->
+    <div class="view-section" id="pricing-view">
+      <div class="header">
+        <h1>Pricing</h1>
+        <button class="refresh-btn" onclick="loadPricing()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+      </div>
+      <div id="pricing-content"></div>
+    </div>
+
     <!-- Logs View -->
     <div class="view-section" id="logs-view">
       <div class="header">
@@ -602,12 +625,89 @@
     // orders placed before that change still display correctly.
     function formatVariantLine(item) {
       if (item.variants && typeof item.variants === 'object' && Object.keys(item.variants).length) {
-        return Object.values(item.variants).filter(Boolean).join(' | ') || 'N/A';
+        // Human labels from the shared rate table ("Classic Crew · 180 GSM",
+        // "DTG", "12×18″") rather than raw codes like uc21 / dtg.
+        const cfg = typeof Cart !== 'undefined' ? Cart.typeConfigFor(item.productType) : null;
+        const labels = Object.entries(item.variants).map(([k, v]) => {
+          const group = cfg && (cfg.variantGroups || []).find(g => g.key === k);
+          const opt = group && group.options.find(o => o.value === v);
+          return escapeHtml(opt ? opt.label : v);
+        }).filter(Boolean);
+        return labels.join(' | ') || 'N/A';
       }
       if (item.size || item.gsm) {
         return `${item.size || 'A4'} | ${item.gsm || '80'} GSM`;
       }
       return 'N/A';
+    }
+
+    // Posters / T-shirts are priced from the shared Qikink rate table
+    // (Backend/productTypes.js, mirrored in cart.js) — their price can't be
+    // edited per product here; everything else keeps a manual price.
+    function isCatalogPriced(p) {
+      return typeof Cart !== 'undefined' && typeof Cart.typeConfigFor(p.productType).basePrice === 'number';
+    }
+
+    // ---- Pricing view: every sellable variant, cost, shelf price, margin ----
+    async function loadPricing() {
+      const box = document.getElementById('pricing-content');
+      box.innerHTML = '<p style="color:var(--text-secondary);">Loading…</p>';
+      try {
+        // Server copy is authoritative; fall back to the storefront's mirrored
+        // copy (cart.js) if the backend is older than the /api/pricing route.
+        let data = null;
+        try {
+          const res = await fetch(`${API_BASE}/pricing`);
+          if (res.ok) data = await res.json();
+        } catch (e) {}
+        if (!data && typeof Cart !== 'undefined') data = { productTypes: Cart.PRODUCT_TYPES, orderCharges: Cart.ORDER_CHARGES };
+        if (!data) throw new Error('no pricing data');
+        const { productTypes: T, orderCharges: C } = data;
+        const inr = n => '₹' + (Number.isInteger(n) ? n : n.toFixed(2));
+        const row = (label, cost, price, gst) => {
+          const margin = price - cost;
+          return `<tr><td>${label}</td><td style="text-align:right;">${inr(cost)}</td><td style="text-align:right; font-weight:700;">${inr(price)}</td><td style="text-align:right; color:var(--success);">${inr(margin)} (${(margin / cost * 100).toFixed(1)}%)</td><td style="text-align:right; color:var(--text-secondary);">${Math.round(gst * 100)}%</td></tr>`;
+        };
+        const head = '<thead><tr><th>Variant</th><th style="text-align:right;">Qikink cost</th><th style="text-align:right;">Brush price</th><th style="text-align:right;">Margin</th><th style="text-align:right;">GST</th></tr></thead>';
+
+        const poster = T.poster;
+        const posterRows = poster.variantGroups[0].options.map(o =>
+          row(o.label, poster.qikinkCost.size[o.value], poster.basePrice + o.priceDelta, poster.gstRate)).join('');
+
+        const ap = T.apparel;
+        const styleG = ap.variantGroups.find(g => g.key === 'style');
+        const printG = ap.variantGroups.find(g => g.key === 'print');
+        const sizeG = ap.variantGroups.find(g => g.key === 'size');
+        const apRows = [];
+        styleG.options.forEach(st => printG.options.forEach(pr => {
+          if (pr.onlyWith && !pr.onlyWith.style.includes(st.value)) return;
+          const sizes = sizeG.options.filter(o => !o.onlyWith || o.onlyWith.style.includes(st.value)).map(o => o.label);
+          apRows.push(row(`${st.label} · ${pr.label}<br><small style="color:var(--text-secondary);">${sizes.join(', ')}</small>`,
+            ap.qikinkCost.style[st.value] + ap.qikinkCost.print[pr.value],
+            ap.basePrice + st.priceDelta + pr.priceDelta, ap.gstRate));
+        }));
+
+        box.innerHTML = `
+          <p style="color:var(--text-secondary); max-width:760px; line-height:1.5;">
+            Shelf prices are Qikink product + printing cost plus a 15% Brush margin, rounded up. GST, shipping and the COD fee are added once per order at checkout.
+            To change a price, edit <code>Backend/productTypes.js</code>, run <code>python3 tools/sync-cart-config.py</code>, and restart the backend — stored product prices update automatically on start.
+          </p>
+          <h3 style="margin:1.5rem 0 0.5rem;">Posters <small style="color:var(--text-secondary); font-weight:400;">300 GSM art board</small></h3>
+          <div class="data-table-wrapper"><table>${head}<tbody>${posterRows}</tbody></table></div>
+          <h3 style="margin:1.5rem 0 0.5rem;">T-Shirts <small style="color:var(--text-secondary); font-weight:400;">back A3 + chest print, no colour choice</small></h3>
+          <div class="data-table-wrapper"><table>${head}<tbody>${apRows.join('')}</tbody></table></div>
+          <h3 style="margin:1.5rem 0 0.5rem;">Per-order charges</h3>
+          <div class="data-table-wrapper"><table>
+            <thead><tr><th>Charge</th><th style="text-align:right;">Amount</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td>Shipping</td><td style="text-align:right;">${inr(C.shipping)} + ${Math.round(C.serviceGstRate * 100)}% GST</td><td>Every order</td></tr>
+              <tr><td>COD fee</td><td style="text-align:right;">${inr(C.codFee)} + ${Math.round(C.serviceGstRate * 100)}% GST</td><td>Cash-on-delivery orders</td></tr>
+              <tr><td>GST on items</td><td style="text-align:right;">Posters ${Math.round(T.poster.gstRate * 100)}% · T-shirts ${Math.round(T.apparel.gstRate * 100)}% · others ${Math.round(T.generic.gstRate * 100)}%</td><td>Every order</td></tr>
+            </tbody>
+          </table></div>`;
+      } catch (e) {
+        box.innerHTML = '<p style="color:var(--sale-red);">Couldn\'t load pricing — restart the backend so /api/pricing is available.</p>';
+      }
     }
 
     // Auth State
@@ -700,6 +800,30 @@
       toastTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
     }
     
+    // Add Product: posters / T-shirts take their price from the rate table.
+    function syncNewProductPriceField() {
+      const type = document.getElementById('new-prod-type').value;
+      const priceEl = document.getElementById('new-prod-price');
+      const note = document.getElementById('new-prod-price-note');
+      const cfg = typeof Cart !== 'undefined' ? Cart.typeConfigFor(type) : null;
+      if (cfg && typeof cfg.basePrice === 'number') {
+        priceEl.value = cfg.basePrice;
+        priceEl.disabled = true;
+        priceEl.required = false;
+        note.textContent = `${cfg.label}s are priced from the Qikink rate table (from ₹${cfg.basePrice}, sizes/variants priced automatically) — see Pricing.`;
+      } else {
+        if (priceEl.disabled) priceEl.value = '';
+        priceEl.disabled = false;
+        priceEl.required = true;
+        note.textContent = '';
+      }
+    }
+    document.getElementById('new-prod-type').addEventListener('change', syncNewProductPriceField);
+    document.getElementById('new-prod-cat').addEventListener('change', (e) => {
+      if (e.target.value === 'Apparel') { document.getElementById('new-prod-type').value = 'apparel'; syncNewProductPriceField(); }
+    });
+    syncNewProductPriceField();
+
     // Tab switching
     document.querySelectorAll('.nav-item').forEach(item => {
       if(!item.dataset.target) return;
@@ -713,6 +837,7 @@
         if(item.dataset.target === 'orders-view') loadOrders();
         if(item.dataset.target === 'inventory-view') loadInventory();
         if(item.dataset.target === 'logs-view') loadLogs();
+        if(item.dataset.target === 'pricing-view') loadPricing();
       });
     });
 
@@ -821,7 +946,9 @@
                     </table>
                     <div style="text-align: right;">
                       <p style="margin: 0.2rem 0; color: var(--text-secondary);">Subtotal: ₹${o.subtotal.toFixed(2)}</p>
+                      ${o.gst ? `<p style="margin: 0.2rem 0; color: var(--text-secondary);">GST: ₹${Number(o.gst).toFixed(2)}</p>` : ''}
                       <p style="margin: 0.2rem 0; color: var(--text-secondary);">Shipping: ₹${o.shipping.toFixed(2)}</p>
+                      ${o.codFee ? `<p style="margin: 0.2rem 0; color: var(--text-secondary);">COD fee: ₹${Number(o.codFee).toFixed(2)}</p>` : ''}
                       <p style="margin: 0.5rem 0 0 0; font-weight: 700; font-size: 1.1rem; color: var(--accent);">Total: ₹${o.total.toFixed(2)}</p>
                     </div>
                   </div>
@@ -949,10 +1076,10 @@
                 <div>
                   <input type="text" id="name-${p.id}" value="${escapeHtml(p.name)}" ${isDisabled} style="width: 200px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; font-weight:600; font-family:inherit;"><br>
                   <select id="type-${p.id}" ${isDisabled} style="width: 110px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-size: 0.85rem; margin-top: 5px; margin-right: 5px;">
-                    ${['Posters', 'Collectibles', 'Wallpapers', 'Stickers'].map(t => '<option value="'+t+'" ' + (p.productType === t ? 'selected' : '') + '>'+t+'</option>').join('')}
+                    ${[['Posters','Posters'], ['apparel','T-Shirts'], ['Collectibles','Collectibles'], ['Wallpapers','Wallpapers'], ['Stickers','Stickers']].map(([t, label]) => '<option value="'+t+'" ' + (String(p.productType || 'Posters').toLowerCase() === t.toLowerCase() ? 'selected' : '') + '>'+label+'</option>').join('')}
                   </select>
                   <select id="cat-${p.id}" ${isDisabled} style="width: 110px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-size: 0.85rem; margin-top: 5px;">
-                    ${['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'Board Finish', 'Floral', 'Travel', 'Mythological', 'Original Movie Posters', 'Pop Culture', 'Gaming', 'Plates', 'Wallpaper', 'General'].map(c => `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    ${['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'Board Finish', 'Floral', 'Travel', 'Mythological', 'Original Movie Posters', 'Pop Culture', 'Gaming', 'Plates', 'Wallpaper', 'Apparel', 'General'].map(c => `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
                   </select>
                 </div>
               </div>
@@ -965,7 +1092,13 @@
               <input type="text" id="keywords-${p.id}" value="${escapeHtml(p.keywords || '')}" ${isDisabled} placeholder="Keywords" style="width: 100px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px; margin-top:5px; font-size: 0.8rem;">
             </td>
             <td>
-              ₹<input type="number" id="price-${p.id}" value="${p.price}" ${isDisabled} style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
+              ${isCatalogPriced(p) ? `
+                <input type="hidden" id="price-${p.id}" value="${p.price}">
+                <span style="font-weight:600;">₹${p.price}</span>
+                <span title="Priced from the Qikink rate table (see Pricing). Edit Backend/productTypes.js to change it." style="display:block; font-size:0.72rem; color:var(--text-secondary); margin-top:3px;">
+                  <i class="fa-solid fa-lock"></i> Rate table · from
+                </span>` : `
+              ₹<input type="number" id="price-${p.id}" value="${p.price}" ${isDisabled} style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">`}
             </td>
             <td>
               <input type="number" id="stock-${p.id}" value="${p.stockQuantity !== undefined ? p.stockQuantity : 0}" ${stockDisabled} style="width: 60px; background:var(--bg-card); color:white; border:1px solid var(--border-color); padding:4px; border-radius:4px;">
@@ -1173,7 +1306,6 @@
       formData.append('name', document.getElementById('new-prod-name').value);
       formData.append('category', document.getElementById('new-prod-cat').value);
       formData.append('productType', document.getElementById('new-prod-type').value);
-      formData.append('productType', document.getElementById('new-prod-type').value);
       formData.append('price', document.getElementById('new-prod-price').value);
       formData.append('originalPrice', document.getElementById('new-prod-original-price').value || document.getElementById('new-prod-price').value);
       formData.append('badge', document.getElementById('new-prod-badge').value);
@@ -1195,6 +1327,7 @@
         
         showToast('New product added to inventory!');
         document.getElementById('add-product-form').reset();
+        syncNewProductPriceField();
         loadInventory();
       } catch (err) {
         showToast(err.message);

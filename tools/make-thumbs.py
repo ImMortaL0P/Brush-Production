@@ -2,7 +2,7 @@ import os, sys
 from PIL import Image, ImageOps
 Image.MAX_IMAGE_PIXELS = None
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public')
-SRC_DIRS = ['assets/Floral','assets/Mythological','assets/Pop Culture','assets/Travel','posters','uploads']
+SRC_DIRS = ['assets/Tshirt designs','assets/Floral','assets/Mythological','assets/Pop Culture','assets/Travel','posters','uploads']
 SIZES = [480, 1080]
 exts = ('.jpg','.jpeg','.png','.webp')
 done = skipped = 0

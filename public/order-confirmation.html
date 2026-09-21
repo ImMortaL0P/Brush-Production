@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=17">
   <style>
     .confirmation-page {
       min-height: 100vh;
@@ -324,7 +324,7 @@
     }
   </style>
   <link rel="icon" type="image/png" href="assets/misc/favicon.png">
-  <script src="global-navbar.js"></script>
+  <script src="global-navbar.js?v=3"></script>
 </head>
 
 <body>
@@ -349,7 +349,7 @@
   <script src="navbar-scroll.js?v=3"></script>
   <script src="micro-interactions.js"></script>
   <script src="img-utils.js?v=1"></script>
-  <script src="cart.js"></script>
+  <script src="cart.js?v=4"></script>
   <script>
 
     // Order lookup is intentionally unauthenticated (the order ID is the
@@ -475,10 +475,20 @@
                 <span class="label">Subtotal</span>
                 <span class="value">₹${order.subtotal}</span>
               </div>
+              ${order.gst ? `
+              <div class="detail-row">
+                <span class="label">GST</span>
+                <span class="value">₹${Number(order.gst).toFixed(2)}</span>
+              </div>` : ''}
               <div class="detail-row">
                 <span class="label">Shipping</span>
                 <span class="value ${order.shipping === 0 ? 'free' : ''}">${order.shipping === 0 ? 'FREE' : '₹' + order.shipping}</span>
               </div>
+              ${order.codFee ? `
+              <div class="detail-row">
+                <span class="label">COD fee</span>
+                <span class="value">₹${order.codFee}</span>
+              </div>` : ''}
               ${order.discount > 0 ? `
               <div class="detail-row">
                 <span class="label">Discount (10%)</span>

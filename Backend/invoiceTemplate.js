@@ -120,8 +120,14 @@ function drawInvoice(pdfDoc, order) {
   });
 
   // ---- Totals ----
-  const hasDiscount = order.discount > 0;
-  const summaryRows = hasDiscount ? 4 : 3;
+  // Rows vary: GST and COD fee only exist on orders placed after
+  // per-order GST/shipping; discount only on older orders that had one.
+  const rows = [['Sub Total', money(order.subtotal)]];
+  if (order.gst) rows.push(['GST', money(order.gst)]);
+  rows.push(['Shipping', order.shipping ? money(order.shipping) : 'FREE']);
+  if (order.codFee) rows.push(['COD Fee', money(order.codFee)]);
+  if (order.discount > 0) rows.push(['Discount', '-' + money(order.discount)]);
+  const summaryRows = rows.length + 1;
   const summaryTop = y + 10;
   const summaryH = summaryRows * 20 + 5;
 
@@ -133,19 +139,11 @@ function drawInvoice(pdfDoc, order) {
 
   let sy = summaryTop;
   pdfDoc.font('Helvetica').fillColor('#2d3748');
-  pdfDoc.text('Sub Total', 340, sy, { width: 80 });
-  pdfDoc.text(money(order.subtotal), 440, sy, { width: 100, align: 'right' });
-  sy += 20;
-
-  pdfDoc.text('Shipping', 340, sy, { width: 80 });
-  pdfDoc.text(order.shipping ? money(order.shipping) : 'FREE', 440, sy, { width: 100, align: 'right' });
-  sy += 20;
-
-  if (hasDiscount) {
-    pdfDoc.text('Discount', 340, sy, { width: 80 });
-    pdfDoc.text('-' + money(order.discount), 440, sy, { width: 100, align: 'right' });
+  rows.forEach(([label, value]) => {
+    pdfDoc.text(label, 340, sy, { width: 80 });
+    pdfDoc.text(value, 440, sy, { width: 100, align: 'right' });
     sy += 20;
-  }
+  });
 
   pdfDoc.font('Helvetica-Bold');
   pdfDoc.text('Total', 340, sy, { width: 80 });

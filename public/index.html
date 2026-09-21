@@ -19,8 +19,8 @@
   <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
 
-  <link rel="stylesheet" href="styles.css?v=13">
-  <script src="global-navbar.js"></script>
+  <link rel="stylesheet" href="styles.css?v=17">
+  <script src="global-navbar.js?v=3"></script>
 </head>
 
 <body class="preloader-active">
@@ -35,7 +35,7 @@
   </div>
 
   
-  <global-navbar></global-navbar>
+  <global-navbar announcement></global-navbar>
 
 
 
@@ -76,7 +76,7 @@
       </div>
       <div class="hero-trust-badges">
         <span class="hero-trust-badge">Cash on Delivery</span>
-        <span class="hero-trust-badge">Free Shipping Above ₹500</span>
+        <span class="hero-trust-badge">Flat ₹54 Shipping</span>
         <span class="hero-trust-badge">Easy Returns</span>
       </div>
     </div>
@@ -97,7 +97,7 @@
   <div class="marquee-section">
     <div class="marquee-track">
       <span class="marquee-item"><span class="dot-sep"></span>Premium Quality</span>
-      <span class="marquee-item"><span class="dot-sep"></span>Free Shipping Above ₹500</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Flat ₹54 Shipping</span>
       <span class="marquee-item"><span class="dot-sep"></span>Easy Returns</span>
       <span class="marquee-item"><span class="dot-sep"></span>Wide Variety</span>
       <span class="marquee-item"><span class="dot-sep"></span>Custom Prints</span>
@@ -106,7 +106,7 @@
       <span class="marquee-item"><span class="dot-sep"></span>Movie Posters</span>
       <!-- Duplicate for seamless loop -->
       <span class="marquee-item"><span class="dot-sep"></span>Premium Quality</span>
-      <span class="marquee-item"><span class="dot-sep"></span>Free Shipping Above ₹500</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Flat ₹54 Shipping</span>
       <span class="marquee-item"><span class="dot-sep"></span>Easy Returns</span>
       <span class="marquee-item"><span class="dot-sep"></span>Wide Variety</span>
       <span class="marquee-item"><span class="dot-sep"></span>Custom Prints</span>
@@ -123,8 +123,8 @@
       <div class="features-grid">
         <div class="feature-item fade-in">
           <span class="feature-icon"><i class="fa-solid fa-truck-fast"></i></span>
-          <h4>Free Shipping</h4>
-          <p>On all orders above ₹500</p>
+          <h4>Flat Shipping</h4>
+          <p>One ₹54 charge per order, however many items</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-1">
           <span class="feature-icon"><i class="fa-solid fa-rotate-left"></i></span>
@@ -230,6 +230,16 @@
             </div>
           </div>
           <span class="category-card-title">Posters</span>
+        </a>
+        <a href="all_products.html?type=Apparel" class="category-card scale-in">
+          <div class="category-card-media">
+            <img src="img/placeholders/cat-apparel.webp" class="plain-product-image loaded" alt="T-Shirts" width="480" height="600" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='img/placeholders/fallback.webp'">
+            <div class="category-card-overlay">
+              <p>Oversized parody tees</p>
+              <span class="cat-arrow">Explore →</span>
+            </div>
+          </div>
+          <span class="category-card-title">T-Shirts</span>
         </a>
         <a href="all_products.html?type=Collectibles" class="category-card scale-in">
           <div class="category-card-media">
@@ -420,7 +430,7 @@
 
       <div class="testimonials-grid">
         <div class="testimonial-card scale-in">
-          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-stars"><span class="stars" style="--rating:5" role="img" aria-label="Rated 5 out of 5"></span></div>
           <p class="testimonial-text">"Absolutely love the quality of the posters! The colors are vibrant and the print finish is premium. My room looks completely transformed."</p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">AK</div>
@@ -432,7 +442,7 @@
         </div>
 
         <div class="testimonial-card scale-in fade-in-delay-1">
-          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-stars"><span class="stars" style="--rating:5" role="img" aria-label="Rated 5 out of 5"></span></div>
           <p class="testimonial-text">"Ordered the Anime Girls collection and it exceeded my expectations. Fast delivery and the packaging was top-notch. Will order again!"</p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">PS</div>
@@ -444,7 +454,7 @@
         </div>
 
         <div class="testimonial-card scale-in fade-in-delay-2">
-          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-stars"><span class="stars" style="--rating:5" role="img" aria-label="Rated 5 out of 5"></span></div>
           <p class="testimonial-text">"Best poster store in India, hands down. The minimalist collection is gorgeous and the prices are super affordable. Highly recommend Brush!"</p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">RV</div>
@@ -1151,13 +1161,17 @@
           <form class="review-form" id="review-form">
             <h4>Write a Review</h4>
             <input type="text" id="review-name" placeholder="Your Name" required>
-            <select id="review-rating" required>
-              <option value="5">★★★★★ (5 Stars)</option>
-              <option value="4">★★★★☆ (4 Stars)</option>
-              <option value="3">★★★☆☆ (3 Stars)</option>
-              <option value="2">★★☆☆☆ (2 Stars)</option>
-              <option value="1">★☆☆☆☆ (1 Star)</option>
-            </select>
+            <div class="star-input" role="radiogroup" aria-label="Your rating">
+              <div class="star-input-stars">
+                <input type="radio" name="review-stars" id="rs-5" value="5"><label for="rs-5" title="Loved it"><span class="sr-only">5 stars</span></label>
+                <input type="radio" name="review-stars" id="rs-4" value="4"><label for="rs-4" title="Great"><span class="sr-only">4 stars</span></label>
+                <input type="radio" name="review-stars" id="rs-3" value="3"><label for="rs-3" title="Good"><span class="sr-only">3 stars</span></label>
+                <input type="radio" name="review-stars" id="rs-2" value="2"><label for="rs-2" title="Fair"><span class="sr-only">2 stars</span></label>
+                <input type="radio" name="review-stars" id="rs-1" value="1"><label for="rs-1" title="Poor"><span class="sr-only">1 star</span></label>
+              </div>
+              <span class="star-input-caption" id="star-input-caption">Tap a star to rate</span>
+              <input type="hidden" id="review-rating" value="">
+            </div>
             <textarea id="review-comment" placeholder="What did you think?" required></textarea>
             <label class="review-photo-label" for="review-photo">
               <i class="fa-solid fa-camera"></i> <span id="review-photo-label-text">Add a photo (optional)</span>
@@ -1186,12 +1200,16 @@
         <span>Subtotal</span>
         <span class="cart-subtotal" id="cart-subtotal">₹0</span>
       </div>
+      <div class="cart-summary-row">
+        <span>GST</span>
+        <span id="cart-gst">₹0</span>
+      </div>
       <div class="cart-summary-row shipping-note" id="cart-shipping-note">
         <span>Shipping</span>
-        <span id="cart-shipping">₹49</span>
+        <span id="cart-shipping">₹0</span>
       </div>
       <div class="cart-summary-row cart-total-row">
-        <span>Total</span>
+        <span>Total <small class="cart-total-note">(prepaid · COD adds ₹34 + GST)</small></span>
         <span class="cart-total" id="cart-total">₹0</span>
       </div>
       <a href="checkout.html" class="cart-checkout-btn" id="cart-checkout-btn">Proceed to Checkout →</a>
@@ -1218,8 +1236,8 @@
   <script src="navbar-scroll.js?v=3" defer></script>
   <script src="micro-interactions.js" defer></script>
   <script src="img-utils.js?v=1" defer></script>
-  <script src="cart.js" defer></script>
-  <script src="script.js?v=9" defer></script>
+  <script src="cart.js?v=4" defer></script>
+  <script src="script.js?v=14" defer></script>
 </body>
 
 </html>

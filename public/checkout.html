@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=17">
   <style>
     /* ===== CHECKOUT PAGE STYLES ===== */
     .checkout-page {
@@ -359,6 +359,24 @@
       color: var(--success);
     }
 
+    .item-variants {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 2px 0 4px;
+    }
+    .price-note {
+      margin: 0.4rem 0 0;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+    .summary-plain-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 6px;
+    }
     .price-row.total {
       padding-top: 16px;
       margin-top: 8px;
@@ -489,7 +507,7 @@
     }
   </style>
   <link rel="icon" type="image/png" href="assets/misc/favicon.png">
-  <script src="global-navbar.js"></script>
+  <script src="global-navbar.js?v=3"></script>
 </head>
 
 <body class="page-layered">
@@ -635,7 +653,7 @@
   <script src="navbar-scroll.js?v=3"></script>
   <script src="micro-interactions.js"></script>
   <script src="img-utils.js?v=1"></script>
-  <script src="cart.js"></script>
+  <script src="cart.js?v=4"></script>
 
   <!-- Checkout toast notification (replaces blocking alert() popups) -->
   <div class="toast" id="checkout-toast" role="alert" aria-live="assertive">
@@ -715,60 +733,52 @@
         summaryItems.innerHTML = items.map(item => `
           <div class="summary-item">
             <div class="summary-item-image">
+              ${Cart.typeConfigFor(item.productType) === Cart.PRODUCT_TYPES.poster ? `
               <div class="mockup-wrapper">
                 <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
                 <img ${BrushImg.urlAttrs(item.image, 480)} class="mockup-poster" alt="${item.name}">
                 <img ${BrushImg.urlAttrs(item.image, 480)} class="mockup-hover" alt="${item.name}">
-              </div>
+              </div>` : `<img ${BrushImg.urlAttrs(item.image, 480)} class="summary-plain-img" alt="${item.name}">`}
               <span class="qty-badge">${item.quantity}</span>
             </div>
             <div class="summary-item-details">
               <h4>${item.name}</h4>
+              ${(() => { const cfg = Cart.typeConfigFor(item.productType); const line = (cfg.variantGroups || []).map(g => { const o = g.options.find(o => o.value === (item.variants || {})[g.key]); return o ? o.label : ''; }).filter(Boolean).join(' · '); return line ? `<span class="item-variants">${line}</span>` : ''; })()}
               <span class="item-price">₹${item.price} × ${item.quantity} = ₹${item.price * item.quantity}</span>
             </div>
           </div>
         `).join('');
 
-        const subtotal = Cart.getSubtotal();
-        const shipping = Cart.getShipping();
-        const discount = Cart.getDiscount();
-        const total = Cart.getTotal();
-        const savings = Cart.getSavings();
+        // Shelf prices exclude GST and shipping — added once per order here,
+        // mirroring the server's orderCharges(); COD adds Qikink's COD fee.
+        const selectedPayment = (document.querySelector('input[name="payment"]:checked') || {}).value || 'cod';
+        const c = Cart.getCharges(selectedPayment);
+        const inr = (n) => '₹' + (Number.isInteger(n) ? n : n.toFixed(2));
 
         let breakdownHTML = `
           <div class="price-row">
             <span class="label">Subtotal</span>
-            <span class="value">₹${subtotal}</span>
+            <span class="value">${inr(c.subtotal)}</span>
           </div>
-          <div class="price-row ${shipping === 0 ? 'free' : ''}">
+          <div class="price-row">
+            <span class="label">GST</span>
+            <span class="value">${inr(c.gst)}</span>
+          </div>
+          <div class="price-row">
             <span class="label">Shipping</span>
-            <span class="value">${shipping === 0 ? 'FREE' : '₹' + shipping}</span>
+            <span class="value">${inr(c.shipping)}</span>
           </div>
-        `;
-
-        if (discount > 0) {
-          breakdownHTML += `
-            <div class="price-row discount">
-              <span class="label">Discount (10%)</span>
-              <span class="value">-₹${discount}</span>
-            </div>
-          `;
-        }
-
-        breakdownHTML += `
+          ${c.codFee ? `
+          <div class="price-row">
+            <span class="label">COD fee</span>
+            <span class="value">${inr(c.codFee)}</span>
+          </div>` : ''}
           <div class="price-row total">
             <span class="label">Total</span>
-            <span class="value">₹${total}</span>
+            <span class="value">₹${c.total}</span>
           </div>
+          <p class="price-note">GST covers your items plus shipping${c.codFee ? ' and the COD fee. Pay online to skip the COD fee' : ''}.</p>
         `;
-
-        if (savings > 0) {
-          breakdownHTML += `
-            <div class="price-row savings">
-              <i class="fa-solid fa-tag"></i>&nbsp; You're saving ₹${savings + discount} on this order!
-            </div>
-          `;
-        }
 
         priceBreakdown.innerHTML = breakdownHTML;
       }
@@ -783,6 +793,7 @@
           paymentOptions.forEach(o => o.classList.remove('selected'));
           opt.classList.add('selected');
           opt.querySelector('input[type="radio"]').checked = true;
+          renderSummary();
         });
       });
 

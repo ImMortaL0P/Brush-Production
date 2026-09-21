@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=17">
   
   <style>
     body {
@@ -365,7 +365,7 @@
       }
     }
   </style>
-  <script src="global-navbar.js"></script>
+  <script src="global-navbar.js?v=3"></script>
 </head>
 <body class="page-layered">
 
@@ -746,13 +746,17 @@
           <form class="review-form" id="review-form">
             <h4>Write a Review</h4>
             <input type="text" id="review-name" placeholder="Your Name" required>
-            <select id="review-rating" required>
-              <option value="5">★★★★★ (5 Stars)</option>
-              <option value="4">★★★★☆ (4 Stars)</option>
-              <option value="3">★★★☆☆ (3 Stars)</option>
-              <option value="2">★★☆☆☆ (2 Stars)</option>
-              <option value="1">★☆☆☆☆ (1 Star)</option>
-            </select>
+            <div class="star-input" role="radiogroup" aria-label="Your rating">
+              <div class="star-input-stars">
+                <input type="radio" name="review-stars" id="rs-5" value="5"><label for="rs-5" title="Loved it"><span class="sr-only">5 stars</span></label>
+                <input type="radio" name="review-stars" id="rs-4" value="4"><label for="rs-4" title="Great"><span class="sr-only">4 stars</span></label>
+                <input type="radio" name="review-stars" id="rs-3" value="3"><label for="rs-3" title="Good"><span class="sr-only">3 stars</span></label>
+                <input type="radio" name="review-stars" id="rs-2" value="2"><label for="rs-2" title="Fair"><span class="sr-only">2 stars</span></label>
+                <input type="radio" name="review-stars" id="rs-1" value="1"><label for="rs-1" title="Poor"><span class="sr-only">1 star</span></label>
+              </div>
+              <span class="star-input-caption" id="star-input-caption">Tap a star to rate</span>
+              <input type="hidden" id="review-rating" value="">
+            </div>
             <textarea id="review-comment" placeholder="What did you think?" required></textarea>
             <label class="review-photo-label" for="review-photo">
               <i class="fa-solid fa-camera"></i> <span id="review-photo-label-text">Add a photo (optional)</span>
@@ -791,12 +795,16 @@
         <span>Subtotal</span>
         <span class="cart-subtotal" id="cart-subtotal">₹0</span>
       </div>
+      <div class="cart-summary-row">
+        <span>GST</span>
+        <span id="cart-gst">₹0</span>
+      </div>
       <div class="cart-summary-row shipping-note" id="cart-shipping-note">
         <span>Shipping</span>
-        <span id="cart-shipping">₹49</span>
+        <span id="cart-shipping">₹0</span>
       </div>
       <div class="cart-summary-row cart-total-row">
-        <span>Total</span>
+        <span>Total <small class="cart-total-note">(prepaid · COD adds ₹34 + GST)</small></span>
         <span class="cart-total" id="cart-total">₹0</span>
       </div>
       <a href="checkout.html" class="cart-checkout-btn" id="cart-checkout-btn">Proceed to Checkout →</a>
@@ -815,7 +823,7 @@
   <script src="navbar-scroll.js?v=3"></script>
   <script src="micro-interactions.js"></script>
   <script src="img-utils.js?v=1"></script>
-  <script src="cart.js"></script>
+  <script src="cart.js?v=4"></script>
   <script>
     let allProductsData = [];
     const escapeAttr = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -969,6 +977,15 @@ const checkedTypes = Array.from(document.querySelectorAll('.type-cb:checked')).m
     };
 
     const COLLECTION_COPY = {
+      apparel: {
+        title: 'T-Shirts',
+        intro: 'Oversized parody tees — a front chest logo and a full back print on every shirt. Open any tee to see the back, the front, the full design layout and the size chart.',
+        faq: [
+          { icon: 'fa-ruler-combined', q: 'How do the tees fit?', a: 'They are cut oversized. Check the size chart in each product\'s image gallery (last slide) for chest and length in inches.' },
+          { icon: 'fa-shirt', q: 'Where is the print placed?', a: 'Every design has a small logo on the left chest and the full artwork across the back. The "Design" slide in the gallery shows both prints laid out.' },
+          { icon: 'fa-box-open', q: 'What if my tee arrives damaged or wrong?', a: 'Every tee is printed to order, so we don\'t offer change-of-mind returns — but if it arrives damaged or incorrect we\'ll replace it once you share an unboxing video. See our <a href="policies.html#cancellation-returns">full returns policy</a>.' }
+        ]
+      },
       plates: {
         title: 'Plates',
         intro: 'Decorative wall plates, hand-finished and printed to order — a rounder, more sculptural alternative to a framed print for the same wall.',
@@ -1026,7 +1043,7 @@ const checkedTypes = Array.from(document.querySelectorAll('.type-cb:checked')).m
       try {
         const res = await fetch(API_BASE + '/products');
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        allProductsData = await res.json();
+        allProductsData = (await res.json()).map(p => (typeof Cart !== 'undefined' ? { ...p, price: Cart.priceFor(p, null).price } : p));
         
         const urlParams = new URLSearchParams(window.location.search);
         
@@ -1103,6 +1120,7 @@ const typeParam = urlParams.get('type');
             <div class="list-item-details">
               <h3 class="list-item-title">${escapeAttr(p.name)}</h3>
               <span class="list-item-cat">${escapeAttr(p.category)}</span>
+              ${(() => { const rv = (p.reviews || []).map(r => Number(r.rating)).filter(v => v >= 1 && v <= 5); if (!rv.length || !window.BrushStars) return ''; const avg = rv.reduce((a, b) => a + b, 0) / rv.length; return `<div class="card-rating">${window.BrushStars(avg, 'stars-sm')}<span>${avg.toFixed(1)} (${rv.length})</span></div>`; })()}
               <p class="list-item-desc">${p.description ? escapeAttr(p.description) : 'Premium quality poster printed on 300 GSM matte paper. Enhances the aesthetics of your space instantly.'}</p>
               <div class="list-item-features">
                 <span><i class="fa-solid fa-gem"></i> Premium Finish</span>
@@ -1125,6 +1143,6 @@ const typeParam = urlParams.get('type');
     loadAllProducts();
 
     </script>
-  <script src="script.js?v=9"></script>
+  <script src="script.js?v=14"></script>
 </body>
 </html>

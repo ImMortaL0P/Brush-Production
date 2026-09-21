@@ -22,7 +22,38 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const { buildOrderStatusEmail } = require('./orderEmailTemplate');
 const { drawInvoice } = require('./invoiceTemplate');
-const { getProductType, priceWithVariants } = require('./productTypes');
+const { getProductType, priceWithVariants, orderCharges, PRODUCT_TYPES, ORDER_CHARGES, normalizeProductType } = require('./productTypes');
+
+// Posters and T-shirts are priced from the Qikink rate table in
+// productTypes.js, not from each product's stored price — expose that
+// catalogue price to the storefront so cards, modal and checkout agree.
+// Rate-table types (posters, T-shirts) have a fixed catalogue price;
+// returns it, or null for types priced per product (stickers etc).
+function catalogBasePrice(productType, category) {
+  const cfg = PRODUCT_TYPES[normalizeProductType(productType, category)];
+  return cfg && typeof cfg.basePrice === 'number' ? cfg.basePrice : null;
+}
+
+// Keeps stored prices in step with the rate table. Runs on every server
+// start, so changing a price in productTypes.js is reflected in the
+// database (and admin panel) after a restart — no manual migration.
+async function syncCatalogPrices() {
+  const docs = await productsRef.find({}, { projection: { _id: 1, id: 1, price: 1, productType: 1, category: 1, pricingSource: 1 } }).toArray();
+  const ops = [];
+  for (const doc of docs) {
+    const base = catalogBasePrice(doc.productType, doc.category);
+    if (base === null) continue;
+    if (doc.price === base && doc.pricingSource === 'qikink') continue;
+    ops.push({ updateOne: { filter: { _id: doc._id }, update: { $set: { price: base, pricingSource: 'qikink' } } } });
+  }
+  if (ops.length) await productsRef.bulkWrite(ops);
+  console.log(`💱 Catalogue prices synced (${ops.length} product${ops.length === 1 ? '' : 's'} updated)`);
+}
+
+function withCatalogPrice(product) {
+  const { price } = priceWithVariants(product.price, product.productType || getProductType(product.category), null);
+  return { ...product, price };
+}
 
 // ── Startup environment validation ─────────────────────────────
 // Warns loudly at boot if critical config is missing so developers
@@ -486,7 +517,7 @@ class OrderValidationError extends Error {}
 // authoritative pricing — used by both /api/payment/create-order (to know
 // what to actually charge) and /api/orders (to confirm what was charged
 // matches what's being fulfilled). Never trusts a client-submitted price.
-async function computeOrderPricing(items) {
+async function computeOrderPricing(items, paymentMethod) {
   if (!items || !Array.isArray(items) || items.length === 0) {
     throw new OrderValidationError('Order must contain at least one item');
   }
@@ -525,11 +556,15 @@ async function computeOrderPricing(items) {
     });
   }
 
-  const shipping = subtotal > 500 ? 0 : 49;
-  const discount = subtotal > 1000 ? subtotal * 0.1 : 0;
-  const total = subtotal + shipping - discount;
+  // Shelf prices exclude GST and shipping — both are added once per order
+  // here (see orderCharges in productTypes.js), plus the COD fee for
+  // cash-on-delivery orders.
+  const charges = orderCharges(
+    enrichedItems.map(i => ({ price: i.price, quantity: i.quantity, productType: i.productType })),
+    paymentMethod
+  );
 
-  return { subtotal, shipping, discount, total, enrichedItems };
+  return { ...charges, enrichedItems };
 }
 
 
@@ -734,10 +769,15 @@ app.get('/api/orders/user/:id', requireUser, requireOwnUser, async (req, res) =>
   }
 });
 
+// Rate table + per-order charges, for the admin Pricing view.
+app.get('/api/pricing', (req, res) => {
+  res.json({ productTypes: PRODUCT_TYPES, orderCharges: ORDER_CHARGES });
+});
+
 app.get('/api/products', async (req, res) => {
   try {
     const docs = await productsRef.find().sort({ orderFrequency: -1, id: -1 }).toArray();
-    res.json(docs.map(stripId));
+    res.json(docs.map(d => withCatalogPrice(stripId(d))));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -748,7 +788,7 @@ app.get('/api/products/:id', async (req, res) => {
   try {
     const product = await productsRef.findOne({ id: parseInt(req.params.id) });
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    const safeProduct = stripId(product);
+    const safeProduct = withCatalogPrice(stripId(product));
     safeProduct.reviews = safeProduct.reviews || [];
     res.json(safeProduct);
   } catch (error) {
@@ -814,7 +854,7 @@ app.post('/api/payment/create-order', paymentOrderLimiter, async (req, res) => {
     // never taken from the client — so what the shopper is asked to pay
     // (and what /api/orders later requires the payment to match) can't be
     // manipulated by sending a smaller `amount` for the same items.
-    const { total } = await computeOrderPricing(req.body.items);
+    const { total } = await computeOrderPricing(req.body.items, 'online');
     const amountPaise = Math.round(total * 100);
 
     const options = {
@@ -863,7 +903,7 @@ app.post('/api/orders', orderCreateLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid payment method' });
     }
 
-    const { subtotal, shipping, discount, total, enrichedItems } = await computeOrderPricing(items);
+    const { subtotal, gst, shipping, codFee, discount, total, enrichedItems } = await computeOrderPricing(items, paymentMethod);
 
     // Payment verification for online methods. Every real Razorpay payment
     // AND the demo "order_mock_" fallback must resolve to a razorpay_order_id
@@ -921,7 +961,9 @@ app.post('/api/orders', orderCreateLimiter, async (req, res) => {
       items: enrichedItems,
       paymentMethod,
       subtotal,
+      gst,
       shipping,
+      codFee,
       discount,
       total,
       status: 'confirmed',
@@ -1195,6 +1237,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
       updateData.category = category;
       updateData.productType = getProductType(category);
     }
+    if (productType !== undefined && productType !== '') updateData.productType = productType;
     if (keywords !== undefined) updateData.keywords = keywords;
     if (sku !== undefined) updateData.sku = sku;
     if (showInBestsellers !== undefined) updateData.showInBestsellers = Boolean(showInBestsellers);
@@ -1205,9 +1248,22 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
     const oldData = await productsRef.findOne({ id: productId });
     if (!oldData) return res.status(404).json({ error: 'Product not found' });
 
+    // Posters / T-shirts are priced from the Qikink rate table — an admin
+    // price edit can't override it (it would be ignored at checkout anyway).
+    const effectiveBase = catalogBasePrice(
+      updateData.productType !== undefined ? updateData.productType : oldData.productType,
+      updateData.category !== undefined ? updateData.category : oldData.category
+    );
+    if (effectiveBase !== null) {
+      updateData.price = effectiveBase;
+      updateData.pricingSource = 'qikink';
+    } else if (oldData.pricingSource === 'qikink') {
+      updateData.pricingSource = 'manual';
+    }
+
     const changes = [];
     if (name !== undefined && oldData.name !== name) changes.push(`name to "${name}"`);
-    if (price !== undefined && oldData.price !== Number(price)) changes.push(`price to ${price}`);
+    if (updateData.price !== undefined && oldData.price !== updateData.price) changes.push(`price to ${updateData.price}`);
     if (stockQuantity !== undefined && oldData.stockQuantity !== Number(stockQuantity)) changes.push(`stock to ${stockQuantity}`);
     if (badge !== undefined && oldData.badge !== badge) changes.push(`badge to "${badge}"`);
     if (category !== undefined && oldData.category !== category) changes.push(`cat to "${category}"`);
@@ -1258,7 +1314,9 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
 
     const { name, category, productType, price, originalPrice, badge, description, stockQuantity, keywords, sku } = req.body;
 
-    if (!name || !price) {
+    const requestedType = Array.isArray(productType) ? productType[0] : productType;
+    const fixedPrice = catalogBasePrice(requestedType, category);
+    if (!name || (!price && fixedPrice === null)) {
       return res.status(400).json({ error: 'Name and price are required' });
     }
 
@@ -1285,16 +1343,17 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
     }
 
     const resolvedCategory = category || 'Miscellaneous';
-    const resolvedType = productType || 'Posters';
+    const resolvedType = requestedType || getProductType(resolvedCategory);
+    const finalPrice = fixedPrice !== null ? fixedPrice : Number(price);
     const newProduct = {
       _id: newId,
       id: newId,
       name,
       category: resolvedCategory,
       productType: resolvedType,
-      productType: getProductType(resolvedCategory),
-      price: Number(price),
-      originalPrice: Number(originalPrice || price),
+      price: finalPrice,
+      pricingSource: fixedPrice !== null ? 'qikink' : 'manual',
+      originalPrice: Number(originalPrice) > finalPrice ? Number(originalPrice) : finalPrice,
       badge: badge || '',
       description: description || '',
       stockQuantity: Number(stockQuantity || 0),
@@ -1406,6 +1465,12 @@ async function start() {
   adminLogsRef = db.collection('admin_logs');
   countersRef = db.collection('counters');
   console.log('✅ Connected to MongoDB');
+
+  try {
+    await syncCatalogPrices();
+  } catch (err) {
+    console.error('⚠️ Catalogue price sync failed (storefront still prices from productTypes.js):', err.message);
+  }
 
   app.listen(port, () => {
     console.log(`Server listening on port ${port}`);

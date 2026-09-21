@@ -214,7 +214,9 @@ function buildOrderStatusEmail(order, siteUrl) {
         <tr><td style="padding:16px 32px 28px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:${TEXT_MUTED};">
             <tr><td>Subtotal</td><td align="right">${money(order.subtotal)}</td></tr>
+            ${order.gst ? `<tr><td style="padding-top:4px;">GST</td><td align="right" style="padding-top:4px;">${money(order.gst)}</td></tr>` : ''}
             <tr><td style="padding-top:4px;">Shipping</td><td align="right" style="padding-top:4px;">${order.shipping ? money(order.shipping) : 'FREE'}</td></tr>
+            ${order.codFee ? `<tr><td style="padding-top:4px;">COD fee</td><td align="right" style="padding-top:4px;">${money(order.codFee)}</td></tr>` : ''}
             ${order.discount ? `<tr><td style="padding-top:4px;">Discount</td><td align="right" style="padding-top:4px;">-${money(order.discount)}</td></tr>` : ''}
             <tr><td style="padding-top:10px;border-top:1px solid ${BORDER};font-weight:700;color:${TEXT_PRIMARY};font-size:14px;">Total</td><td align="right" style="padding-top:10px;border-top:1px solid ${BORDER};font-weight:700;color:${TEXT_PRIMARY};font-size:14px;">${money(order.total)}</td></tr>
           </table>
