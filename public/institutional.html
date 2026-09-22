@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="api-base.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="theme.js"></script>
+  <title>Institutional & Corporate — Brush</title>
+  <meta name="description" content="Custom printing solutions for organisations and institutions. Get certificates, letterheads, visiting cards, envelopes, and flyers tailored to your brand.">
+  <link rel="icon" href="assets/misc/favicon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
+  <link rel="stylesheet" href="styles.css?v=17">
+  <style>
+    .b2b-header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      padding: 100px 0 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .b2b-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      margin-bottom: 14px;
+      text-wrap: balance;
+    }
+    .b2b-header p {
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      text-wrap: pretty;
+    }
+
+    .b2b-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 4rem 24px;
+    }
+
+    .b2b-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .b2b-showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 4rem;
+      margin-bottom: 5rem;
+    }
+
+    .b2b-showcase-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      width: 100%;
+    }
+
+    .b2b-showcase-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      border-color: var(--accent);
+    }
+
+    .b2b-showcase-image-wrapper {
+      position: relative;
+      width: 100%;
+      height: 350px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .b2b-showcase-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .b2b-showcase-badge {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .b2b-showcase-content {
+      padding: 2.5rem;
+    }
+
+    .b2b-showcase-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .b2b-showcase-header h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    .b2b-showcase-desc {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      max-width: 800px;
+      text-wrap: pretty;
+    }
+
+    .b2b-showcase-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .b2b-showcase-specs {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .b2b-showcase-specs span {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .b2b-showcase-specs i {
+      color: var(--accent);
+      font-size: 1.2rem;
+    }
+
+    .b2b-showcase-cta {
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      padding: 1rem 2.5rem;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .b2b-showcase-cta:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    @media (max-width: 768px) {
+      .b2b-showcase-image-wrapper { height: 250px; }
+      .b2b-showcase-content { padding: 1.5rem; }
+      .b2b-showcase-header h3 { font-size: 1.5rem; }
+      .b2b-showcase-specs { flex-direction: column; gap: 0.8rem; }
+    }
+
+    .b2b-form-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 3rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .b2b-form-section h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .b2b-form-section > p {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .b2b-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .b2b-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) {
+      .b2b-header { padding: 80px 20px 40px; }
+      .b2b-container { padding: 2.5rem 16px; }
+      .b2b-showcase { gap: 2.5rem; margin-bottom: 3.5rem; }
+      .b2b-form-section { padding: 1.5rem; }
+    }
+
+    @media (max-width: 600px) {
+      .checkbox-group {
+        grid-template-columns: 1fr;
+      }
+      .b2b-form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 0.8rem 1rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 90, 90, 0.1);
+    }
+    .b2b-submit {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .b2b-submit:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    /* Multiselect checkboxes for product types */
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+  </style>
+  <script src="global-navbar.js?v=3"></script>
+</head>
+<body>
+
+  <global-navbar></global-navbar>
+
+  <header class="b2b-header">
+    <div class="container">
+      <h1>Custom Brand Printing</h1>
+      <p>Premium quality prints tailored for organizations, institutions, and corporate events. From certificates to business cards, we've got your brand covered.</p>
+      <a href="#quote-form" class="hero-cta" style="display: inline-block;">Get a Custom Quote</a>
+    </div>
+  </header>
+
+  <main class="b2b-container">
+    <h2 class="b2b-section-title">What We Print for You</h2>
+    <div class="b2b-showcase">
+      <!-- Item 1: Certificates -->
+      <div class="b2b-showcase-card">
+        <div class="b2b-showcase-image-wrapper">
+          <img src="https://placehold.co/1200x400/18181b/ffffff?font=outfit&text=Certificates" class="b2b-showcase-image" alt="Certificates" loading="lazy" decoding="async">
+          <span class="b2b-showcase-badge">Custom</span>
+        </div>
+        <div class="b2b-showcase-content">
+          <div class="b2b-showcase-header">
+            <h3>Premium Certificates</h3>
+          </div>
+          <p class="b2b-showcase-desc">High-GSM specialty papers with foil stamping finishes, perfect for awards and institutional recognition.</p>
+          <div class="b2b-showcase-footer">
+            <div class="b2b-showcase-specs">
+              <span><i class="fa-solid fa-gem"></i> High-GSM</span>
+              <span><i class="fa-solid fa-award"></i> Foil Stamped</span>
+            </div>
+            <a href="#quote-form" class="b2b-showcase-cta">Request Quote</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 2: Envelopes -->
+      <div class="b2b-showcase-card">
+        <div class="b2b-showcase-image-wrapper">
+          <img src="https://placehold.co/1200x400/18181b/ffffff?font=outfit&text=Envelopes" class="b2b-showcase-image" alt="Corporate Envelopes" loading="lazy" decoding="async">
+          <span class="b2b-showcase-badge">Custom</span>
+        </div>
+        <div class="b2b-showcase-content">
+          <div class="b2b-showcase-header">
+            <h3>Corporate Envelopes</h3>
+          </div>
+          <p class="b2b-showcase-desc">Premium textured envelopes that leave a lasting professional impression in every correspondence.</p>
+          <div class="b2b-showcase-footer">
+            <div class="b2b-showcase-specs">
+              <span><i class="fa-solid fa-clone"></i> Peel & Seal</span>
+              <span><i class="fa-solid fa-copyright"></i> Custom Branded</span>
+            </div>
+            <a href="#quote-form" class="b2b-showcase-cta">Request Quote</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 3: Letterheads -->
+      <div class="b2b-showcase-card">
+        <div class="b2b-showcase-image-wrapper">
+          <img src="https://placehold.co/1200x400/18181b/ffffff?font=outfit&text=Letterheads" class="b2b-showcase-image" alt="Executive Letterheads" loading="lazy" decoding="async">
+          <span class="b2b-showcase-badge">Custom</span>
+        </div>
+        <div class="b2b-showcase-content">
+          <div class="b2b-showcase-header">
+            <h3>Executive Letterheads</h3>
+          </div>
+          <p class="b2b-showcase-desc">High-quality bond paper letterheads tailored to reflect your brand's pristine identity.</p>
+          <div class="b2b-showcase-footer">
+            <div class="b2b-showcase-specs">
+              <span><i class="fa-solid fa-file-invoice"></i> Executive Bond</span>
+              <span><i class="fa-solid fa-fingerprint"></i> Textured Finish</span>
+            </div>
+            <a href="#quote-form" class="b2b-showcase-cta">Request Quote</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 4: Visiting Cards -->
+      <div class="b2b-showcase-card">
+        <div class="b2b-showcase-image-wrapper">
+          <img src="https://placehold.co/1200x400/18181b/ffffff?font=outfit&text=Visiting+Cards" class="b2b-showcase-image" alt="Brand / Visiting Cards" loading="lazy" decoding="async">
+          <span class="b2b-showcase-badge">Custom</span>
+        </div>
+        <div class="b2b-showcase-content">
+          <div class="b2b-showcase-header">
+            <h3>Brand / Visiting Cards</h3>
+          </div>
+          <p class="b2b-showcase-desc">Spot-UV, matte, and glossy finished cards designed to make your first interaction unforgettable.</p>
+          <div class="b2b-showcase-footer">
+            <div class="b2b-showcase-specs">
+              <span><i class="fa-solid fa-layer-group"></i> Spot UV</span>
+              <span><i class="fa-regular fa-star"></i> Matte/Glossy</span>
+            </div>
+            <a href="#quote-form" class="b2b-showcase-cta">Request Quote</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 5: Flyers & Brochures -->
+      <div class="b2b-showcase-card">
+        <div class="b2b-showcase-image-wrapper">
+          <img src="https://placehold.co/1200x400/18181b/ffffff?font=outfit&text=Flyers+%26+Brochures" class="b2b-showcase-image" alt="Flyers & Brochures" loading="lazy" decoding="async">
+          <span class="b2b-showcase-badge">Custom</span>
+        </div>
+        <div class="b2b-showcase-content">
+          <div class="b2b-showcase-header">
+            <h3>Flyers & Brochures</h3>
+          </div>
+          <p class="b2b-showcase-desc">Crisp, vibrant, and precise promotional materials to boost your campaigns and event reach.</p>
+          <div class="b2b-showcase-footer">
+            <div class="b2b-showcase-specs">
+              <span><i class="fa-solid fa-map"></i> Tri-fold</span>
+              <span><i class="fa-solid fa-scroll"></i> Gloss Art Paper</span>
+            </div>
+            <a href="#quote-form" class="b2b-showcase-cta">Request Quote</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="b2b-form-section" id="quote-form">
+      <h2>Request a Bulk Quote</h2>
+      <p>Fill out the details below and our team will get back to you within 24 hours with a custom proposal.</p>
+
+      <form class="b2b-form" onsubmit="event.preventDefault(); alert('Request submitted! We will contact you soon.'); this.reset();">
+        <div class="b2b-form-row">
+          <div class="form-group">
+            <label for="org-name">Organization Name *</label>
+            <input type="text" id="org-name" required placeholder="e.g. Kraft Studios">
+          </div>
+          <div class="form-group">
+            <label for="contact-name">Contact Person *</label>
+            <input type="text" id="contact-name" required placeholder="Your Name">
+          </div>
+        </div>
+
+        <div class="b2b-form-row">
+          <div class="form-group">
+            <label for="contact-email">Email Address *</label>
+            <input type="email" id="contact-email" required placeholder="name@yourcompany.com">
+          </div>
+          <div class="form-group">
+            <label for="contact-phone">Phone Number</label>
+            <input type="tel" id="contact-phone" placeholder="+91 00000 00000">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Services Required *</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label"><input type="checkbox" name="services" value="certificates"> Certificates</label>
+            <label class="checkbox-label"><input type="checkbox" name="services" value="letterheads"> Letterheads</label>
+            <label class="checkbox-label"><input type="checkbox" name="services" value="visiting_cards"> Visiting Cards</label>
+            <label class="checkbox-label"><input type="checkbox" name="services" value="envelopes"> Envelopes</label>
+            <label class="checkbox-label"><input type="checkbox" name="services" value="flyers"> Flyers & Brochures</label>
+            <label class="checkbox-label"><input type="checkbox" name="services" value="other"> Other Custom Prints</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="bulk-quantity">Estimated Quantity</label>
+          <select id="bulk-quantity">
+            <option value="50-100">50 - 100 units</option>
+            <option value="100-500">100 - 500 units</option>
+            <option value="500-1000">500 - 1000 units</option>
+            <option value="1000+">1000+ units</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="project-details">Project Details & Requirements</label>
+          <textarea id="project-details" rows="4" placeholder="Tell us more about your design requirements, paper quality preferences, and timeline..."></textarea>
+        </div>
+
+        <button type="submit" class="b2b-submit">Submit Request</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Footer placeholder (matches about_us) -->
+  <footer class="site-footer" style="padding: 2rem 0; text-align: center; border-top: 1px solid var(--border-color); margin-top: 4rem;">
+    <div class="container">
+      <div style="margin-bottom: 20px;">
+        <img src="img/site/brush-logo.png" alt="Brush Logo" style="height: 30px; width: auto; filter: grayscale(100%) opacity(0.7);">
+      </div>
+      <p style="color: var(--text-secondary);">© 2024 Brush. Powered by Kraft Studios.</p>
+      <div style="margin-top: 10px; display: flex; justify-content: center; gap: 15px;">
+        <a href="index.html" style="color: var(--text-secondary); text-decoration: none;">Home</a>
+        <a href="policies.html" style="color: var(--text-secondary); text-decoration: none;">Policies</a>
+        <a href="mailto:admin@brush.ind.in" style="color: var(--text-secondary); text-decoration: none;">Contact Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Basic scripts structure -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js"></script>
+  <script src="scroll.js?v=2"></script>
+  <script src="navbar-scroll.js?v=3"></script>
+  <script src="micro-interactions.js"></script>
+</body>
+</html>

@@ -58,6 +58,7 @@
             </div>
             <a href="index.html#newarrival">New Arrivals</a>
             <a href="all_products.html">Shop All</a>
+            <a href="institutional.html">B2B / Corporate</a>
             <a href="about_us.html">About</a>
           </div>
 

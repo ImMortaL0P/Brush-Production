@@ -23,6 +23,9 @@ const helmet = require('helmet');
 const { buildOrderStatusEmail } = require('./orderEmailTemplate');
 const { drawInvoice } = require('./invoiceTemplate');
 const { getProductType, priceWithVariants, orderCharges, PRODUCT_TYPES, ORDER_CHARGES, normalizeProductType } = require('./productTypes');
+const { seedStickerSheets } = require('./stickerCatalog');
+const { seedWallpapers } = require('./wallpaperCatalog');
+const { removePlaceholders } = require('./placeholders');
 
 // Posters and T-shirts are priced from the Qikink rate table in
 // productTypes.js, not from each product's stored price — expose that
@@ -1470,6 +1473,15 @@ async function start() {
     await syncCatalogPrices();
   } catch (err) {
     console.error('⚠️ Catalogue price sync failed (storefront still prices from productTypes.js):', err.message);
+  }
+
+  // Real sticker sheets + wallpapers in, their placeholders out.
+  try {
+    await seedStickerSheets(productsRef);
+    await seedWallpapers(productsRef);
+    await removePlaceholders(productsRef);
+  } catch (err) {
+    console.error('⚠️ Catalogue seed failed:', err.message);
   }
 
   app.listen(port, () => {

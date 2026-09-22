@@ -1064,7 +1064,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // edge to edge instead of floating small inside padding.
     if (sheet) slides.push({ src: sheet, label: 'Design', fit: 'sheet', optional: true });
     slides.push({ src: APPAREL_SIZE_CHART, label: 'Size chart', fit: 'contain' });
+    return buildGallery(p, slides);
+  }
 
+  // Wallpapers: room mockup first, then the zoomable pattern and a print-
+  // scale close-up (p.gallery, written by Backend/wallpaperCatalog.js).
+  function buildWallpaperGallery(p) {
+    const labels = { room: 'In a room', pattern: 'Pattern', detail: 'Close-up' };
+    const slides = (p.gallery || []).map(g => ({
+      src: g.src, label: g.label || labels[g.kind] || 'View', fit: 'cover', zoom: g.kind !== 'room'
+    }));
+    return slides.length ? buildGallery(p, slides) : null;
+  }
+
+  function buildGallery(p, slides) {
     const name = escapeHtml(p.name);
     // Photos go through the resized-WebP pipeline (with fallback to the
     // original); the design sheet stays full-res so zoom stays crisp, and
@@ -1274,8 +1287,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const modalImgAttrs = `decoding="sync" onload="this.classList.add('loaded')"`; // modal images are strictly above the fold
       let imgHtml = `<img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>`;
 
+      const wallpaperGallery = modalProductType.startsWith('wallpaper') ? buildWallpaperGallery(currentProduct) : null;
       if (modalProductType === 'apparel') {
         modalImageCol.innerHTML = buildApparelGallery(currentProduct) + nextBtnHtml;
+        initApparelGallery(modalImageCol);
+      } else if (wallpaperGallery) {
+        modalImageCol.innerHTML = wallpaperGallery + nextBtnHtml;
         initApparelGallery(modalImageCol);
       } else {
         modalImageCol.innerHTML = `<div class="modal-plain-image-wrapper">
