@@ -5,15 +5,17 @@
 // posters, apparel and anything uploaded through the admin panel are safe.
 const { STICKER_SHEETS } = require('./stickerCatalog');
 const { WALLPAPERS } = require('./wallpaperCatalog');
+const { COLLECTIBLES } = require('./collectiblesCatalog');
 
 const REAL_SKUS = [
   ...STICKER_SHEETS.map(s => s.sku),
-  ...WALLPAPERS.map(w => 'WP-' + w.slug.toUpperCase())
+  ...WALLPAPERS.map(w => 'WP-' + w.slug.toUpperCase()),
+  ...COLLECTIBLES.map(c => 'COL-' + c.slug.toUpperCase())
 ];
 
 async function removePlaceholders(productsRef) {
   const filter = {
-    productType: { $regex: /^(stickers?|wallpapers?)$/i },
+    productType: { $regex: /^(stickers?|wallpapers?|collectibles?)$/i },
     sku: { $nin: REAL_SKUS },
     $or: [
       { keywords: 'dummy' },

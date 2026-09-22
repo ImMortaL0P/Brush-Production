@@ -25,6 +25,7 @@ const { drawInvoice } = require('./invoiceTemplate');
 const { getProductType, priceWithVariants, orderCharges, PRODUCT_TYPES, ORDER_CHARGES, normalizeProductType } = require('./productTypes');
 const { seedStickerSheets } = require('./stickerCatalog');
 const { seedWallpapers } = require('./wallpaperCatalog');
+const { seedCollectibles } = require('./collectiblesCatalog');
 const { removePlaceholders } = require('./placeholders');
 
 // Posters and T-shirts are priced from the Qikink rate table in
@@ -1479,6 +1480,7 @@ async function start() {
   try {
     await seedStickerSheets(productsRef);
     await seedWallpapers(productsRef);
+    await seedCollectibles(productsRef);
     await removePlaceholders(productsRef);
   } catch (err) {
     console.error('⚠️ Catalogue seed failed:', err.message);

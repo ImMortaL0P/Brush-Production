@@ -1069,6 +1069,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Wallpapers: room mockup first, then the zoomable pattern and a print-
   // scale close-up (p.gallery, written by Backend/wallpaperCatalog.js).
+  function buildCollectibleGallery(p) {
+    const slides = (p.gallery || []).map(g => ({
+      src: g.src, label: g.label || 'View', fit: 'contain', zoom: true
+    }));
+    return slides.length ? buildGallery(p, slides) : null;
+  }
+
   function buildWallpaperGallery(p) {
     const labels = { room: 'In a room', pattern: 'Pattern', detail: 'Close-up' };
     const slides = (p.gallery || []).map(g => ({
@@ -1287,9 +1294,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const modalImgAttrs = `decoding="sync" onload="this.classList.add('loaded')"`; // modal images are strictly above the fold
       let imgHtml = `<img ${imgAttrsFor(currentProduct, 1080)} class="modal-plain-image" alt="${escapeHtml(currentProduct.name)}" ${modalImgAttrs}>`;
 
+      const collectibleGallery = modalProductType.startsWith('collectible') ? buildCollectibleGallery(currentProduct) : null;
       const wallpaperGallery = modalProductType.startsWith('wallpaper') ? buildWallpaperGallery(currentProduct) : null;
       if (modalProductType === 'apparel') {
         modalImageCol.innerHTML = buildApparelGallery(currentProduct) + nextBtnHtml;
+        initApparelGallery(modalImageCol);
+      } else if (collectibleGallery) {
+        modalImageCol.innerHTML = collectibleGallery + nextBtnHtml;
         initApparelGallery(modalImageCol);
       } else if (wallpaperGallery) {
         modalImageCol.innerHTML = wallpaperGallery + nextBtnHtml;
