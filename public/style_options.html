@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="api-base.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="theme.js"></script>
+  <title>Style Options — Brush</title>
+  <meta name="description" content="View style options, designs, and product showcase for institutional printing.">
+  <link rel="icon" href="assets/misc/favicon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
+  <link rel="stylesheet" href="styles.css?v=17">
+  <style>
+    .style-header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      padding: 100px 0 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .style-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      margin-bottom: 14px;
+      text-wrap: balance;
+      text-transform: capitalize;
+    }
+    .style-header p {
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    .style-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 4rem 24px;
+    }
+    .style-section {
+      margin-bottom: 5rem;
+    }
+    .style-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+    }
+    .placeholder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    .placeholder-card {
+      background: var(--bg-secondary);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+      height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-align: center;
+      padding: 2rem;
+    }
+    .placeholder-card i {
+      display: block;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body class="loading">
+  <!-- Minimal Header placeholder for continuity -->
+  <header class="header">
+    <div class="header-container">
+      <a href="index.html" class="logo">BRUSH</a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="all_products.html">Retail</a>
+        <a href="institutional.html" class="active">Institutional</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="style-header">
+      <h1 id="page-title">Style Options</h1>
+      <p id="page-desc">Explore the various styles, designs, and examples we offer.</p>
+      <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <a href="#section-style" class="b2b-showcase-cta" style="background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.8rem 1.5rem; text-decoration: none;">Styles</a>
+        <a href="#section-design" class="b2b-showcase-cta" style="background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.8rem 1.5rem; text-decoration: none;">Designs</a>
+        <a href="#section-showcase" class="b2b-showcase-cta" style="background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.8rem 1.5rem; text-decoration: none;">Showcase</a>
+      </div>
+    </div>
+
+    <div class="style-container">
+      <!-- Style Section -->
+      <section class="style-section" id="section-style">
+        <h2 class="style-section-title">Style</h2>
+        <div class="placeholder-grid">
+          <div class="placeholder-card">
+            <div>
+              <i class="fa-solid fa-swatchbook"></i>
+              Add Style Options Here
+            </div>
+          </div>
+          <div class="placeholder-card">
+            <div>
+              <i class="fa-solid fa-swatchbook"></i>
+              Add Style Options Here
+            </div>
+          </div>
+          <div class="placeholder-card">
+            <div>
+              <i class="fa-solid fa-swatchbook"></i>
+              Add Style Options Here
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Design Section -->
+      <section class="style-section" id="section-design">
+        <h2 class="style-section-title">Design</h2>
+        <div class="placeholder-grid">
+          <div class="placeholder-card">
+            <div>
+              <i class="fa-solid fa-pen-ruler"></i>
+              Add Design Templates Here
+            </div>
+          </div>
+          <div class="placeholder-card">
+            <div>
+              <i class="fa-solid fa-pen-ruler"></i>
+              Add Design Templates Here
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Product Showcase Section -->
+      <section class="style-section" id="section-showcase">
+        <h2 class="style-section-title">Product Showcase</h2>
+        <div class="placeholder-grid">
+          <div class="placeholder-card">
+            <div>
+              <i class="fa-solid fa-camera"></i>
+              Add Product Images Here
+            </div>
+          </div>
+          <div class="placeholder-card">
+            <div>
+              <i class="fa-solid fa-camera"></i>
+              Add Product Images Here
+            </div>
+          </div>
+          <div class="placeholder-card">
+            <div>
+              <i class="fa-solid fa-camera"></i>
+              Add Product Images Here
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer placeholder -->
+  <footer class="footer">
+    <div class="footer-bottom" style="text-align: center; padding: 2rem; color: var(--text-secondary); border-top: 1px solid var(--border-color);">
+      <p>&copy; 2026 Brush. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.body.classList.remove('loading');
+    
+    // Parse URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const productSlug = urlParams.get('product') || 'custom';
+    
+    // Format product name for display
+    let productName = productSlug.replace(/_/g, ' ');
+    if (productName === 'visiting cards') productName = 'Visiting Cards';
+    else if (productName === 'label tags') productName = 'Label Tags';
+    else if (productName === 'note pads') productName = 'Note Pads';
+    else if (productName.toLowerCase() === 'id cards') productName = 'ID Cards';
+    
+    // Capitalize first letter of each word
+    productName = productName.replace(/\b\w/g, l => l.toUpperCase());
+    
+    document.getElementById('page-title').textContent = productName + ' Style Options';
+    document.getElementById('page-desc').textContent = 'Explore the various styles, designs, and examples we offer for ' + productName.toLowerCase() + '.';
+    
+    // In-page subnav styling logic could go here
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js"></script>
+  <script src="scroll.js?v=2"></script>
+  <script src="navbar-scroll.js?v=3"></script>
+  <script src="micro-interactions.js"></script>
+  <script src="script.js?v=21"></script>
+</body>
+</html>
