@@ -653,6 +653,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let extraImgClass = '';
         if (p.productType === 'apparel') {
           extraImgClass = 'apparel-card-img';
+        } else if (p.productType === 'Collectibles') {
+          extraImgClass = 'collectible-card-img';
         }
 
         return `
@@ -1071,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // scale close-up (p.gallery, written by Backend/wallpaperCatalog.js).
   function buildCollectibleGallery(p) {
     const slides = (p.gallery || []).map(g => ({
-      src: g.src, label: g.label || 'View', fit: 'contain', zoom: true
+      src: g.src, label: g.label || 'View', fit: 'collectible', zoom: true
     }));
     return slides.length ? buildGallery(p, slides) : null;
   }
@@ -1288,6 +1290,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const modalImageCol = document.querySelector('.modal-image-col');
       const nextId = getNextProductId(productId);
       const modalProductType = (currentProduct.productType || 'poster').toLowerCase();
+
+      const contentWrapper = document.querySelector('.modal-content-wrapper');
+      if (contentWrapper) {
+        contentWrapper.setAttribute('data-product-type', modalProductType);
+      }
       const isPosterModal = modalProductType.startsWith('poster');
       const nextBtnHtml = nextId ? `<button class="modal-next-btn" id="modal-next-btn" data-next-id="${nextId}">Next ${isPosterModal ? 'Poster' : Cart.typeConfigFor(modalProductType).label} <i class="fa-solid fa-arrow-right"></i></button>` : '';
 

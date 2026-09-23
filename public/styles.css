@@ -4907,3 +4907,53 @@ img {
    as large as the stage allows, on a neutral backdrop. */
 .ag-slide[data-fit="sheet"] { background: var(--bg-secondary); }
 .ag-slide[data-fit="sheet"] img { object-fit: contain; }
+
+
+
+
+/* ===== COLLECTIBLE MODAL LAYOUT ===== */
+.modal-content-wrapper[data-product-type="collectibles"] .modal-image-col {
+  width: auto;
+  min-width: 40%;
+  max-width: 60%;
+  background: var(--bg-primary); /* Remove empty box effect */
+}
+.modal-content-wrapper[data-product-type="collectibles"] .modal-info-col {
+  flex: 1;
+  width: auto;
+}
+.modal-content-wrapper[data-product-type="collectibles"] .ag-stage {
+  aspect-ratio: 2 / 3;
+  margin: auto;
+  max-height: calc(100vh - 120px);
+  background: transparent;
+}
+.ag-slide[data-fit="collectible"] { padding: 0; background: transparent; }
+.ag-slide[data-fit="collectible"] img { object-fit: contain; }
+
+/* Collectible Mobile Overrides */
+@media (max-width: 768px) {
+  .modal-content-wrapper[data-product-type="collectibles"] .modal-image-col {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0;
+  }
+  .modal-content-wrapper[data-product-type="collectibles"] .ag-stage {
+    aspect-ratio: 2 / 3;
+    max-height: 70vh;
+  }
+}
+
+/* Prevent cropping constraint on cards */
+.product-card[data-product-type="Collectibles"] .product-card-image,
+.product-card[data-product-type="Collectibles"] .list-item-img-wrapper,
+.product-card[data-product-type="Collectibles"] .mockup-wrapper {
+  aspect-ratio: 2 / 3 !important;
+  background: transparent;
+}
+.product-card[data-product-type="Collectibles"] .product-card-image > img,
+.product-card[data-product-type="Collectibles"] .list-item-img-wrapper > img {
+  object-fit: contain !important;
+}
