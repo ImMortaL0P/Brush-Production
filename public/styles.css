@@ -540,6 +540,12 @@ a:focus-visible {
 
 
 /* ===== NAVBAR ===== */
+/* Custom-element host is display:inline by default, which would collapse
+   around the fixed pill and break first-paint layout on inner pages. */
+global-navbar {
+  display: contents;
+}
+
 .navbar {
   position: fixed;
   top: var(--nav-top, 16px);          /* floating gap; navbar-scroll.js tucks it under the announcement bar at page top */
