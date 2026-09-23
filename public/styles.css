@@ -4957,3 +4957,9 @@ img {
 .product-card[data-product-type="Collectibles"] .list-item-img-wrapper > img {
   object-fit: contain !important;
 }
+
+/* Ensure category card for collectibles uses a smart crop to keep the figurine's face in view */
+.category-card[href="all_products.html?type=Collectibles"] .category-card-media > img {
+  object-fit: cover;
+  object-position: center 25%;
+}
