@@ -3262,10 +3262,10 @@ body.custom-cursor-active * {
     bottom: 0;
     background: rgba(var(--bg-primary-rgb), 0.98);
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 28px;
     z-index: 1001;
-    padding: 80px 40px;
+    padding:  110px 40px 60px; overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
 
   .nav-links.open {
@@ -4788,7 +4788,7 @@ img {
   .nav-links .nav-dd-item { font-size: 1rem; }
   .nav-links .nav-dd-genre { font-size: 0.8rem; }
   .nav-links .nav-dd-all { font-size: 0.9rem; }
-  .nav-links:has(.nav-dropdown.open) { justify-content: flex-start; overflow-y: auto; padding-top: 130px; padding-bottom: 40px; }
+  
 }
 
 /* Five product categories: one row on wide screens, balanced wrap below. */
