@@ -409,6 +409,7 @@
         <label class="filter-label"><input type="checkbox" value="Mythological" checked class="cat-cb"> Mythological</label>
         <label class="filter-label"><input type="checkbox" value="Pop Culture" checked class="cat-cb"> Pop Culture</label>
         <label class="filter-label"><input type="checkbox" value="Gaming" checked class="cat-cb"> Gaming</label>
+        <label class="filter-label"><input type="checkbox" value="Typography" checked class="cat-cb"> Typography</label>
         <label class="filter-label"><input type="checkbox" value="General" checked class="cat-cb"> Other</label>
       </div>
       <div class="filter-group">
@@ -868,7 +869,11 @@ const checkedTypes = Array.from(document.querySelectorAll('.type-cb:checked')).m
           );
 
           // Type match
-          const matchesType = checkedTypes.length === 0 || checkedTypes.some(t => type === t || type.includes(t));
+          const matchesType = checkedTypes.length === 0 || checkedTypes.some(t => {
+            if (t === 'posters' && type === 'poster') return true;
+            if (t === 'poster' && type === 'posters') return true;
+            return type === t || type.includes(t) || t.includes(type);
+          });
 
           // Category (Genre) match
           const matchesCat = checkedCats.length === 0 || checkedCats.some(c =>

@@ -473,6 +473,7 @@
             <option value="Original Movie Posters">Original Movie Posters</option>
             <option value="Pop Culture">Pop Culture</option>
             <option value="Gaming">Gaming</option>
+            <option value="Typography">Typography</option>
             <option value="Plates">Plates</option>
             <option value="Wallpaper">Wallpaper</option>
             <option value="Apparel">Apparel (T-Shirts)</option>
@@ -1092,7 +1093,7 @@
                     ${[['Posters','Posters'], ['apparel','T-Shirts'], ['Collectibles','Collectibles'], ['Wallpapers','Wallpapers'], ['Stickers','Stickers']].map(([t, label]) => '<option value="'+t+'" ' + (String(p.productType || 'Posters').toLowerCase() === t.toLowerCase() ? 'selected' : '') + '>'+label+'</option>').join('')}
                   </select>
                   <select id="cat-${p.id}" ${isDisabled} style="width: 110px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-color); padding:4px; border-radius:4px; font-size: 0.85rem; margin-top: 5px;">
-                    ${['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'Board Finish', 'Floral', 'Travel', 'Mythological', 'Original Movie Posters', 'Pop Culture', 'Gaming', 'Plates', 'Wallpaper', 'Apparel', 'General'].map(c => `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    ${['Anime', 'Movies & TV', 'Minimalist', 'Cyberpunk', 'Space & Sci-Fi', 'Board Finish', 'Floral', 'Travel', 'Mythological', 'Original Movie Posters', 'Pop Culture', 'Gaming', 'Typography', 'Plates', 'Wallpaper', 'Apparel', 'General'].map(c => `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
                   </select>
                 </div>
               </div>
