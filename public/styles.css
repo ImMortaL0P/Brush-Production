@@ -3233,6 +3233,7 @@ body.custom-cursor-active * {
     padding: 20px;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
+    display: block;
   }
   .modal-info-col {
     width: 100%;
@@ -4664,7 +4665,7 @@ img {
 
 @media (max-width: 768px) {
   .modal-image-col:has(.apparel-gallery) { padding: 0; }
-  .apparel-gallery { height: auto; }
+  .apparel-gallery { height: auto; display: block; }
   .ag-stage { flex: none; aspect-ratio: 4 / 5; }
   .ag-nav { width: 38px; height: 38px; }
   .ag-prev { left: 10px; }
@@ -4950,6 +4951,7 @@ img {
     height: auto;
     border-bottom: 1px solid var(--border-color);
     padding: 0;
+    display: block;
   }
   .modal-content-wrapper[data-product-type="collectibles" i] .ag-stage {
     aspect-ratio: 2 / 3;
