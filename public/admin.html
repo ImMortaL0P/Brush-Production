@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js" defer></script>
   <script src="theme.js"></script>
   <script src="cart.js?v=4"></script>
   <style>
@@ -479,7 +479,7 @@
             <option value="General">General / Other</option>
           </select>
           <button class="refresh-btn" onclick="saveAllProducts()" style="background: var(--success); color: var(--on-accent);"><i class="fa-solid fa-save"></i> Save All</button>
-          <button class="refresh-btn" onclick="loadInventory()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+          <button class="refresh-btn" onclick="loadInventory(true)"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
         </div>
       </div>
       
@@ -1028,45 +1028,58 @@
     }
 
     // Load Inventory
-    async function loadInventory() {
-      if (!adminToken) return;
-      const tbody = document.getElementById('inventory-table-body');
-      const filter = document.getElementById('inventory-cat-filter');
-      const selectedCat = filter ? filter.value : 'All';
-      const nameSearch = document.getElementById('inventory-name-search')?.value.toLowerCase() || '';
-      const skuSearch = document.getElementById('inventory-sku-search')?.value.toLowerCase() || '';
-      const stockSort = document.getElementById('inventory-stock-sort')?.value || 'none';
-      const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
-      const isDisabled = (role === 'stocker' || role === 'watcher') ? 'disabled style="opacity:0.7"' : '';
-      const stockDisabled = role === 'watcher' ? 'disabled style="opacity:0.7"' : '';
-      const saveDisabled = role === 'watcher' ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
-      
-      try {
-        const res = await fetch(`${API_BASE}/products`);
-        let products = await res.json();
-        
-        if (selectedCat !== 'All') {
-          products = products.filter(p => (p.category || '').toLowerCase() === selectedCat.toLowerCase());
-        }
-        if (nameSearch) {
-          products = products.filter(p => (p.name || '').toLowerCase().includes(nameSearch));
-        }
-        if (skuSearch) {
-          products = products.filter(p => (p.sku || p.id || '').toString().toLowerCase().includes(skuSearch));
-        }
-        
-        if (stockSort === 'asc') {
-          products.sort((a, b) => (Number(a.stockQuantity ?? a.stock ?? 0)) - (Number(b.stockQuantity ?? b.stock ?? 0)));
-        } else if (stockSort === 'desc') {
-          products.sort((a, b) => (Number(b.stockQuantity ?? b.stock ?? 0)) - (Number(a.stockQuantity ?? a.stock ?? 0)));
-        }
-        
-        if (products.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No products found in this category.</td></tr>';
-          return;
-        }
+    let _cachedProducts = null;
+    let _lastFetchTime = 0;
+    let _inventoryDebounce = null;
 
-        const placementDisabled = role === 'superadmin' ? '' : 'disabled style="opacity:0.4; cursor:not-allowed;"';
+    async function loadInventory(forceRefresh = false) {
+      if (forceRefresh === true || !_cachedProducts || (Date.now() - _lastFetchTime > 60000)) {
+        _cachedProducts = null;
+      }
+      clearTimeout(_inventoryDebounce);
+      _inventoryDebounce = setTimeout(async () => {
+        if (!adminToken) return;
+        const tbody = document.getElementById('inventory-table-body');
+        const filter = document.getElementById('inventory-cat-filter');
+        const selectedCat = filter ? filter.value : 'All';
+        const nameSearch = document.getElementById('inventory-name-search')?.value.toLowerCase() || '';
+        const skuSearch = document.getElementById('inventory-sku-search')?.value.toLowerCase() || '';
+        const stockSort = document.getElementById('inventory-stock-sort')?.value || 'none';
+        const role = sessionStorage.getItem('brush_admin_role') || 'superadmin';
+        const isDisabled = (role === 'stocker' || role === 'watcher') ? 'disabled style="opacity:0.7"' : '';
+        const stockDisabled = role === 'watcher' ? 'disabled style="opacity:0.7"' : '';
+        const saveDisabled = role === 'watcher' ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
+
+        try {
+          if (!_cachedProducts) {
+             const res = await fetch(`${API_BASE}/products`);
+             _cachedProducts = await res.json();
+             _lastFetchTime = Date.now();
+          }
+          let products = _cachedProducts;
+
+          if (selectedCat !== 'All') {
+            products = products.filter(p => (p.category || '').toLowerCase() === selectedCat.toLowerCase());
+          }
+          if (nameSearch) {
+            products = products.filter(p => (p.name || '').toLowerCase().includes(nameSearch));
+          }
+          if (skuSearch) {
+            products = products.filter(p => (p.sku || p.id || '').toString().toLowerCase().includes(skuSearch));
+          }
+
+          if (stockSort === 'asc') {
+            products = products.slice().sort((a, b) => (Number(a.stockQuantity ?? a.stock ?? 0)) - (Number(b.stockQuantity ?? b.stock ?? 0)));
+          } else if (stockSort === 'desc') {
+            products = products.slice().sort((a, b) => (Number(b.stockQuantity ?? b.stock ?? 0)) - (Number(a.stockQuantity ?? a.stock ?? 0)));
+          }
+
+          if (products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No products found in this category.</td></tr>';
+            return;
+          }
+
+          const placementDisabled = role === 'superadmin' ? '' : 'disabled style="opacity:0.4; cursor:not-allowed;"';
 
         tbody.innerHTML = products.map(p => `
           <tr>
@@ -1126,6 +1139,7 @@
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--sale-red);">Failed to load inventory.</td></tr>';
       }
+      }, 300);
     }
 
     // Update Product
@@ -1224,6 +1238,7 @@
       } else {
          showToast(`Successfully saved all ${successCount} products!`);
       }
+      loadInventory(true);
     }
 
     // Delete Product
@@ -1253,7 +1268,7 @@
           throw new Error(err.error || 'Failed to delete product');
         }
         showToast('Product deleted successfully!');
-        loadInventory(); // Refresh the list
+        loadInventory(true); // Refresh the list
       } catch (e) {
         showToast(e.message);
       }
