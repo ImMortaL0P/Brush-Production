@@ -362,7 +362,9 @@
       .list-item-img-wrapper {
         width: 100%;
         min-width: 100%;
-        height: min(420px, 110vw);
+        height: auto;
+        flex: 0 0 auto;
+        /* Let aspect-ratio dictate height where applicable, otherwise fallback constraints */
       }
     }
   </style>

@@ -4918,17 +4918,17 @@ img {
 
 
 /* ===== COLLECTIBLE MODAL LAYOUT ===== */
-.modal-content-wrapper[data-product-type="collectibles"] .modal-image-col {
+.modal-content-wrapper[data-product-type="collectibles" i] .modal-image-col {
   width: auto;
   min-width: 40%;
   max-width: 60%;
   background: var(--bg-primary); /* Remove empty box effect */
 }
-.modal-content-wrapper[data-product-type="collectibles"] .modal-info-col {
+.modal-content-wrapper[data-product-type="collectibles" i] .modal-info-col {
   flex: 1;
   width: auto;
 }
-.modal-content-wrapper[data-product-type="collectibles"] .ag-stage {
+.modal-content-wrapper[data-product-type="collectibles" i] .ag-stage {
   aspect-ratio: 2 / 3;
   margin: auto;
   max-height: calc(100vh - 120px);
@@ -4939,28 +4939,28 @@ img {
 
 /* Collectible Mobile Overrides */
 @media (max-width: 768px) {
-  .modal-content-wrapper[data-product-type="collectibles"] .modal-image-col {
+  .modal-content-wrapper[data-product-type="collectibles" i] .modal-image-col {
     width: 100%;
     max-width: 100%;
     height: auto;
     border-bottom: 1px solid var(--border-color);
     padding: 0;
   }
-  .modal-content-wrapper[data-product-type="collectibles"] .ag-stage {
+  .modal-content-wrapper[data-product-type="collectibles" i] .ag-stage {
     aspect-ratio: 2 / 3;
     max-height: 70vh;
   }
 }
 
 /* Prevent cropping constraint on cards */
-.product-card[data-product-type="Collectibles"] .product-card-image,
-.product-card[data-product-type="Collectibles"] .list-item-img-wrapper,
-.product-card[data-product-type="Collectibles"] .mockup-wrapper {
+.product-card[data-product-type="collectibles" i] .product-card-image,
+.product-card[data-product-type="collectibles" i] .list-item-img-wrapper,
+.product-card[data-product-type="collectibles" i] .mockup-wrapper {
   aspect-ratio: 2 / 3 !important;
   background: transparent;
 }
-.product-card[data-product-type="Collectibles"] .product-card-image > img,
-.product-card[data-product-type="Collectibles"] .list-item-img-wrapper > img {
+.product-card[data-product-type="collectibles" i] .product-card-image > img,
+.product-card[data-product-type="collectibles" i] .list-item-img-wrapper > img {
   object-fit: contain !important;
 }
 
@@ -4968,4 +4968,34 @@ img {
 .category-card[href="all_products.html?type=Collectibles"] .category-card-media > img {
   object-fit: cover;
   object-position: center 25%;
+}
+
+/* ===== FIX: aspect-ratio collapse & overlap on iOS Safari ===== */
+@media (max-width: 992px) {
+  /* Give the wrapper a deterministic height to break the auto/100% cyclical dependency on Safari */
+  .list-item-img-wrapper {
+    aspect-ratio: 4 / 5;
+    min-height: 0; /* Bypass flex item minimum height calc bug */
+  }
+  
+  /* Collectibles have a taller photo frame */
+  .product-card[data-product-type="collectibles" i] .list-item-img-wrapper {
+    aspect-ratio: 2 / 3;
+  }
+  
+  /* Apparel photos are variable, but fallback to 4/5 logic is fine or auto if we want */
+  .product-card[data-product-type="apparel" i] .list-item-img-wrapper {
+    /* Apparel can just use 4/5 ratio container in list view for uniformity */
+    aspect-ratio: 4 / 5;
+  }
+
+  /* Make sure the image inside fills the deterministic wrapper */
+  .list-item-img-wrapper > img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100% !important;
+    object-fit: cover;
+  }
 }
