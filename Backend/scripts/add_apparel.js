@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
 const fs = require('fs');
+const { PRODUCT_TYPES } = require('../productTypes');
 const path = require('path');
 
 if (!process.env.MONGODB_URI) {
@@ -57,8 +58,9 @@ async function run() {
       name,
       category: CATEGORY,
       productType: 'apparel',
-      price: 599,
-      originalPrice: 899,
+      price: PRODUCT_TYPES['apparel'].basePrice,
+      originalPrice: PRODUCT_TYPES['apparel'].basePrice + 300,
+      pricingSource: 'qikink',
       badge: 'New',
       description: `Premium quality ${capitalize(brand)} t-shirt. Comfortable and stylish for your everyday wear.`,
       stockQuantity: 50,

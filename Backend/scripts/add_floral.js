@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { PRODUCT_TYPES, normalizeProductType } = require('../productTypes');
 const path = require('path');
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -51,8 +52,10 @@ async function run() {
           sku: sku,
           name: nameDisplay,
           category: 'Floral',
-          price: 299,
-          originalPrice: 499,
+          productType: 'poster',
+      price: PRODUCT_TYPES['poster'].basePrice,
+      originalPrice: PRODUCT_TYPES['poster'].basePrice * 3,
+      pricingSource: 'qikink',
           badge: 'New',
           stock: 50,
           image: `assets/Floral/${newName}`,

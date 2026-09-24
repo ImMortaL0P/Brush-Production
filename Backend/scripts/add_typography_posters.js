@@ -3,6 +3,7 @@ const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const { PRODUCT_TYPES, normalizeProductType } = require('../productTypes');
 
 const sourceDir = "/Volumes/MangalamHDD/Brush Content/New/Typography Centric Illustrated/Upload";
 const targetOriginals = path.join(__dirname, '../../public/assets/Typography');
@@ -81,15 +82,18 @@ async function run() {
     
     const displayName = filename.replace(/\.png/i, '');
     
+    const productType = 'poster';
+    const cfg = PRODUCT_TYPES[normalizeProductType(productType, category)];
     const id = nextId++;
     const doc = {
       _id: id,
       id: id,
       name: displayName,
       category: category,
-      productType: 'poster',
-      price: 299,
-      originalPrice: 499,
+      productType: productType,
+      price: cfg ? cfg.basePrice : 299,
+      originalPrice: (cfg ? cfg.basePrice : 299) * 2, // arbitrary original price based on current prices (299/499)
+      pricingSource: cfg ? 'qikink' : undefined,
       badge: 'New',
       description: contentMap[displayName] || 'Premium illustrated typography poster printed on 300 GSM matte paper.',
       stockQuantity: 50,

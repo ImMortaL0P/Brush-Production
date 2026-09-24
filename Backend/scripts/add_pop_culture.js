@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
 const fs = require('fs');
+const { PRODUCT_TYPES, normalizeProductType } = require('../productTypes');
 const path = require('path');
 
 if (!process.env.MONGODB_URI) {
@@ -53,8 +54,10 @@ async function run() {
       id: id,
       name,
       category: CATEGORY,
-      price: 299,
-      originalPrice: 499,
+      productType: 'poster',
+      price: PRODUCT_TYPES['poster'].basePrice,
+      originalPrice: PRODUCT_TYPES['poster'].basePrice * 3,
+      pricingSource: 'qikink',
       badge: 'New',
       description: 'Premium quality poster printed on 300 GSM matte paper. Enhances the aesthetics of your space instantly.',
       stockQuantity: 50,

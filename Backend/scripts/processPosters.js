@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { PRODUCT_TYPES, normalizeProductType } = require('../productTypes');
 const path = require('path');
 const { execSync } = require('child_process');
 const { initializeApp, cert } = require('firebase-admin/app');
@@ -48,8 +49,10 @@ async function processPosters() {
       products.push({
         id: idCounter++,
         name: nameWithoutExt,
-        price: 199,
-        originalPrice: 299,
+        productType: 'poster',
+      price: PRODUCT_TYPES['poster'].basePrice,
+      originalPrice: PRODUCT_TYPES['poster'].basePrice * 3,
+      pricingSource: 'qikink',
         image: `posters/${jpgFileName}`,
         category: 'Posters',
         badge: 'New',

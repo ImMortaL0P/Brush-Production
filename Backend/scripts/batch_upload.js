@@ -2,6 +2,7 @@ const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getStorage } = require('firebase-admin/storage');
 const fs = require('fs');
+const { PRODUCT_TYPES, normalizeProductType } = require('../productTypes');
 const path = require('path');
 const { execSync } = require('child_process');
 
@@ -91,8 +92,10 @@ async function processPdfs() {
         id: newId,
         name: posterName,
         category: 'Miscellaneous',
-        price: 299,
-        originalPrice: 499,
+        productType: 'poster',
+      price: PRODUCT_TYPES['poster'].basePrice,
+      originalPrice: PRODUCT_TYPES['poster'].basePrice * 3,
+      pricingSource: 'qikink',
         badge: 'New Arrival',
         description: 'High quality A3 poster print.',
         stockQuantity: 50,

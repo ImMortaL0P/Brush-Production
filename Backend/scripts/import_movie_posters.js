@@ -1,6 +1,7 @@
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const fs = require('fs');
+const { PRODUCT_TYPES, normalizeProductType } = require('../productTypes');
 const path = require('path');
 
 const serviceAccount = require('./serviceAccountKey.json'); // Check if this is the correct key file name
@@ -36,8 +37,10 @@ async function importPosters() {
 
       const product = {
         name: name,
-        price: 999, // default price
-        originalPrice: 1499,
+        productType: 'poster',
+        price: PRODUCT_TYPES['poster'].basePrice,
+        originalPrice: PRODUCT_TYPES['poster'].basePrice * 3,
+        pricingSource: 'qikink',
         category: "Original Movie Posters",
         image: `posters/Original Movie Posters/${file}`,
         badge: "New",
