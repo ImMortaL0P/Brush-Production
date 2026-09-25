@@ -5,7 +5,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { PRODUCT_TYPES, normalizeProductType } = require('../productTypes');
 
-const sourceDir = "/Volumes/MangalamHDD/Brush Content/New/Typography Centric Illustrated/Upload 2";
+const sourceDir = "/Volumes/MangalamHDD/Brush Content/New/Typography Centric Illustrated/Upload 3";
 const targetOriginals = path.join(__dirname, '../../public/assets/Typography');
 const targetThumbs1080 = path.join(__dirname, '../../public/img/w1080/assets/Typography');
 const targetThumbs480 = path.join(__dirname, '../../public/img/w480/assets/Typography');
@@ -16,14 +16,11 @@ fs.mkdirSync(targetThumbs480, { recursive: true });
 
 const category = "Typography";
 const contentMap = {
-  "Beautiful day": "A bright, illustrated typographic celebration of ordinary joy — loud lettering with a poster-print punch.",
-  "Dekho magar Pyaar se": "Hindi-forward illustrated type: look, but with love. Bold colour and hand-drawn lettering for walls that talk back.",
-  "Menu Fuck Ni Penda": "Punjabi attitude in illustrated type. Unapologetic, loud, and built for a wall that doesn't whisper.",
-  "Oh Shit Baddie": "Pop-illustrated typography with attitude. High-contrast lettering for anyone who walks in like they own the room.",
-  "Pop Skeleton Mohawk": "A pop-art skeleton with a mohawk, wrapped in illustrated type. Punk energy, poster scale.",
-  "Save Me": "Illustrated typographic plea — dramatic lettering, gallery-poster presence.",
-  "are you pooping": "Bathroom humour, illustrated type. The poster your guests will actually notice.",
-  "what the actual duck": "A visual pun in illustrated lettering. Quack energy, premium 300 GSM print."
+  "Dilli": "Illustrated type for the capital — Dilli energy, street colour, and lettering that fills a wall.",
+  "Love da Lahsun": "Punjabi wordplay in illustrated type. Love, garlic, and a poster that doesn't take itself too seriously.",
+  "Naritva": "Illustrated typography celebrating womanhood. Bold Hindi lettering with gallery-poster presence.",
+  "Rajasthan": "Desert colour and illustrated type — Rajasthan as a wall-scale poster, not a postcard.",
+  "shut the fuck up": "Blunt illustrated lettering. Zero subtlety, maximum wall presence."
 };
 
 function displayNameFromFile(filename) {
