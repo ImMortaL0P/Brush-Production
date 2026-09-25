@@ -116,6 +116,7 @@ function renderItemsRows(items, siteUrl) {
       <td style="padding:14px 0 14px 14px;border-bottom:1px solid ${BORDER};font-family:Arial,Helvetica,sans-serif;">
         <div style="font-size:14px;font-weight:600;color:${TEXT_PRIMARY};">${escapeHtml(item.name)}</div>
         <div style="font-size:12px;color:${TEXT_MUTED};margin-top:2px;">${escapeHtml(formatVariantLine(item))} &middot; Qty: ${escapeHtml(item.quantity)}</div>
+        ${item.sku ? `<div style="font-size:11px;color:#a0aec0;margin-top:2px;">SKU: ${escapeHtml(item.sku)}</div>` : ''}
       </td>
       <td align="right" style="padding:14px 0;border-bottom:1px solid ${BORDER};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;color:${TEXT_PRIMARY};white-space:nowrap;">
         ${money(item.subtotal)}
@@ -223,13 +224,13 @@ function buildOrderStatusEmail(order, siteUrl) {
         </td></tr>
 
         <tr><td style="background:${BRAND_CREAM};padding:24px 32px;text-align:center;">
-          <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:${TEXT_PRIMARY};">Thank you for shopping with Brush!</p>
+          <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:${TEXT_PRIMARY};">Thank you for shopping with Brush, a Kraft Studios brand!</p>
           <p style="margin:0;font-size:12px;color:${TEXT_MUTED};">Got questions about your order? Reply to this email and we'll help you out.</p>
         </td></tr>
 
       </table>
       <p style="max-width:600px;margin:16px auto 0;font-size:11px;color:${TEXT_MUTED};font-family:Arial,Helvetica,sans-serif;text-align:center;">
-        This email refers to order ${escapeHtml(orderId)} placed on brushposters. Please do not reply if this address is marked no-reply.
+        This email refers to order ${escapeHtml(orderId)} placed on Brush (Kraft Studios). Please do not reply if this address is marked no-reply.
       </p>
     </td></tr>
   </table>
@@ -250,11 +251,11 @@ ${order.customer.address}
 ${order.customer.city}, ${order.customer.state} ${order.customer.pincode}
 
 Items:
-${(order.items || []).map(i => `- ${i.name} (Qty ${i.quantity}) - ${money(i.subtotal)}`).join('\n')}
+${(order.items || []).map(i => `- ${i.name} ${i.sku ? '(SKU: '+i.sku+') ' : ''}(Qty ${i.quantity}) - ${money(i.subtotal)}`).join('\n')}
 
 Track your order: ${trackUrl}
 
-Thank you for shopping with Brush!`;
+Thank you for shopping with Brush, a Kraft Studios brand!`;
 
   return {
     subject: `${meta.heading} - Order ${orderId}`,

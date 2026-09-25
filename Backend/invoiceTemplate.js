@@ -1,15 +1,16 @@
 // Draws the PDF invoice onto an already-created PDFDocument. Brush is
-// presented as a consumer brand of the legal/billing entity, Krafters Inc.
+// presented as a consumer brand of the legal/billing entity, Kraft Studios
 //
 // NOTE: GSTIN, CIN, phone and bank details below are placeholders, explicitly
 // fabricated per product owner instruction (no real registration exists for
-// them yet) - swap them for the real numbers once Krafters Inc. has them.
+// them yet) - swap them for the real numbers once Kraft Studios has them.
 
 const path = require('path');
 const fs = require('fs');
 const { formatVariantLine } = require('./productTypes');
 
 const LOGO_PATH = path.join(__dirname, '../public/assets/misc/Brush Text Arial.png');
+const WORDMARK_PATH = path.join(__dirname, 'assets/kraft_wordmark.png');
 const SIGNATURE_IMAGE_PATH = path.join(__dirname, 'assets/signature.png');
 // Falls back to this cursive font (already used elsewhere on the site) to
 // render the signatory's name as a real vector signature when no scanned
@@ -17,14 +18,14 @@ const SIGNATURE_IMAGE_PATH = path.join(__dirname, 'assets/signature.png');
 const SIGNATURE_FONT_PATH = path.join(__dirname, '../public/Fonts/amsterdam_signature/Amsterdam Signature.ttf');
 
 const COMPANY = {
-  legalName: 'Krafters Inc.',
-  brandLine: 'Brush — a consumer brand of Krafters Inc.',
+  legalName: 'Kraft Studios',
+  brandLine: 'Brush — a consumer brand of Kraft Studios',
   addressLines: ['Vijay Complex, Rampur Road', 'Bazar Samiti, Patna, Bihar 800003'],
   email: 'admin_brush@mangalam.cc',
   phone: '+91 90000 00000', // placeholder
   gstin: '10ABCDE1234F1Z5', // placeholder
   cin: 'U74999BR2024PTC012345', // placeholder
-  bankName: 'Krafters Inc. — Current Account',
+  bankName: 'Kraft Studios — Current Account',
   bankAccount: 'A/C # 5012 3456 7890', // placeholder
   bankIfsc: 'IFSC # HDFC0001234' // placeholder
 };
@@ -55,7 +56,13 @@ function drawInvoice(pdfDoc, order) {
   // ---- From / Invoice meta ----
   pdfDoc.fontSize(10).fillColor('#4a5568');
   pdfDoc.font('Helvetica-Bold').text('From:', 50, 115);
-  pdfDoc.font('Helvetica-Bold').text(COMPANY.legalName, 50, 128);
+  
+  if (fs.existsSync(WORDMARK_PATH)) {
+    pdfDoc.image(WORDMARK_PATH, 50, 122, { height: 16 });
+  } else {
+    pdfDoc.font('Helvetica-Bold').text(COMPANY.legalName, 50, 128);
+  }
+
   pdfDoc.font('Helvetica');
   COMPANY.addressLines.forEach((line, i) => pdfDoc.text(line, 50, 142 + i * 13));
   pdfDoc.text(`GSTIN: ${COMPANY.gstin}`, 50, 142 + COMPANY.addressLines.length * 13);
@@ -111,12 +118,16 @@ function drawInvoice(pdfDoc, order) {
     pdfDoc.fillColor('#2d3748').text(item.quantity.toString(), 60, y + 5);
     pdfDoc.font('Helvetica-Bold').text(item.name, 100, y + 5, { width: 220 });
     pdfDoc.font('Helvetica').fillColor('#718096').text(formatVariantLine(item), 100, y + 17);
+    if (item.sku) {
+      pdfDoc.font('Helvetica').fillColor('#a0aec0').fontSize(8).text(`SKU: ${item.sku}`, 100, y + 29);
+      pdfDoc.fontSize(10); // reset
+    }
     pdfDoc.fillColor('#2d3748').text(money(item.price), 330, y + 5, { width: 70, align: 'right' });
     pdfDoc.text('0.00%', 400, y + 5, { width: 60, align: 'right' });
     pdfDoc.text(money(item.subtotal), 470, y + 5, { width: 70, align: 'right' });
 
-    pdfDoc.moveTo(50, y + 35).lineTo(550, y + 35).strokeColor('#e2e8f0').stroke();
-    y += 35;
+    pdfDoc.moveTo(50, y + 42).lineTo(550, y + 42).strokeColor('#e2e8f0').stroke();
+    y += 42;
   });
 
   // ---- Totals ----
@@ -188,7 +199,7 @@ function drawInvoice(pdfDoc, order) {
   // ---- Footer ----
   pdfDoc.fontSize(8).fillColor('#a0aec0');
   pdfDoc.text('Payment is due within 15 days from the date of invoice. This is a computer-generated invoice and does not require a physical stamp.', 50, 730, { width: 500 });
-  pdfDoc.text(`Thanks for shopping with Brush, a Krafters Inc. brand | ${COMPANY.email} | ${COMPANY.phone} | CIN: ${COMPANY.cin}`, 50, 750, { width: 500 });
+  pdfDoc.text(`Thanks for shopping with Brush, a Kraft Studios brand | ${COMPANY.email} | ${COMPANY.phone} | CIN: ${COMPANY.cin}`, 50, 750, { width: 500 });
 }
 
 module.exports = { drawInvoice };

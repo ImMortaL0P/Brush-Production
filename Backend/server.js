@@ -91,11 +91,53 @@ const transporter = nodemailer.createTransport({
 // Returns { sent: true } on success, or { sent: false, reason } on failure -
 // never throws, so callers can report accurate status back to the admin
 // instead of assuming the email went out.
+
+async function enrichOrderWithDynamicPrices(order) {
+  if (!order || !order.items) return order;
+  const productIds = order.items.map(item => item.productId).filter(Boolean);
+  const latestProducts = await productsRef.find({ _id: { $in: productIds } }).toArray();
+  const productMap = {};
+  latestProducts.forEach(p => productMap[p._id] = p);
+
+  let newSubtotal = 0;
+  
+  order.items = order.items.map(item => {
+    const liveProduct = productMap[item.productId];
+    if (liveProduct) {
+      let basePrice = liveProduct.price;
+      const catalogPrice = catalogBasePrice(liveProduct.productType, liveProduct.category);
+      if (catalogPrice !== null) basePrice = catalogPrice;
+      
+      let variants = item.variants || item.variant || { size: item.size, gsm: item.gsm };
+      const { price: livePrice } = priceWithVariants(basePrice, liveProduct.productType || getProductType(liveProduct.category), variants);
+      
+      item.price = livePrice;
+      item.subtotal = livePrice * item.quantity;
+      item.sku = liveProduct.sku || liveProduct.id.toString() || item.productId;
+      item.name = liveProduct.name;
+    } else {
+      item.sku = item.productId;
+    }
+    newSubtotal += item.subtotal;
+    return item;
+  });
+
+  order.subtotal = newSubtotal;
+  const charges = orderCharges(order.items, order.paymentMethod);
+  order.gst = charges.gst;
+  order.shipping = charges.shipping;
+  order.codFee = charges.codFee;
+  order.total = newSubtotal + order.gst + order.shipping + order.codFee - (order.discount || 0);
+  
+  return order;
+}
+
 async function sendOrderEmail(order, forceSend = false) {
   if (!order || !order.customer) return { sent: false, reason: 'Order has no customer details' };
   const toEmail = order.customer.email || order.customer.id;
   if (!toEmail || !toEmail.includes('@')) return { sent: false, reason: 'Customer has no valid email address' };
 
+  order = await enrichOrderWithDynamicPrices(order);
   const { subject, html, text } = buildOrderStatusEmail(order, SITE_URL);
   const mailOptions = {
     from: process.env.EMAIL_FROM || '"Brush Posters" <noreply@brushposters.com>',
@@ -1048,8 +1090,10 @@ app.post('/api/orders/:orderId/cancel', orderLookupLimiter, async (req, res) => 
 
 app.get('/api/orders/:orderId/invoice', orderLookupLimiter, async (req, res) => {
   try {
-    const order = await ordersRef.findOne({ _id: req.params.orderId });
+    let order = await ordersRef.findOne({ _id: req.params.orderId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    order = await enrichOrderWithDynamicPrices(order);
 
     const pdfDoc = new PDFDocument({ size: 'A4', margin: 50 });
 
