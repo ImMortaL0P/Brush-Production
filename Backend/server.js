@@ -80,8 +80,8 @@ const SITE_URL = process.env.SITE_URL || 'https://immortal0p.github.io/Brush-Pro
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 465,
-  secure: true,
+  port: Number(process.env.SMTP_PORT) || 465,
+  secure: Number(process.env.SMTP_PORT || 465) === 465,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
@@ -132,6 +132,19 @@ async function enrichOrderWithDynamicPrices(order) {
   return order;
 }
 
+// Renders the invoice PDF into memory so it can be attached to order emails.
+function renderInvoicePdf(order) {
+  return new Promise((resolve, reject) => {
+    const pdfDoc = new PDFDocument({ size: 'A4', margin: 50 });
+    const chunks = [];
+    pdfDoc.on('data', c => chunks.push(c));
+    pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
+    pdfDoc.on('error', reject);
+    drawInvoice(pdfDoc, order);
+    pdfDoc.end();
+  });
+}
+
 async function sendOrderEmail(order, forceSend = false) {
   if (!order || !order.customer) return { sent: false, reason: 'Order has no customer details' };
   const toEmail = order.customer.email || order.customer.id;
@@ -142,10 +155,24 @@ async function sendOrderEmail(order, forceSend = false) {
   const mailOptions = {
     from: process.env.EMAIL_FROM || '"Brush Posters" <noreply@brushposters.com>',
     to: toEmail,
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
     subject,
     html,
     text
   };
+
+  // Attach the tax invoice PDF (non-fatal: the status email still goes out
+  // if the invoice can't be rendered).
+  try {
+    const pdf = await renderInvoicePdf(order);
+    mailOptions.attachments = [{
+      filename: `invoice-${order.invoiceNumber || order.orderId || order._id}.pdf`,
+      content: pdf,
+      contentType: 'application/pdf'
+    }];
+  } catch (err) {
+    console.error('Invoice attachment failed:', err.message);
+  }
 
   try {
     await transporter.sendMail(mailOptions);
