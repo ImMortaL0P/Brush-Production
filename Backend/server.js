@@ -155,6 +155,7 @@ async function sendOrderEmail(order, forceSend = false) {
   const mailOptions = {
     from: process.env.EMAIL_FROM || '"Brush Posters" <noreply@brushposters.com>',
     to: toEmail,
+    bcc: process.env.EMAIL_BCC || process.env.EMAIL_FROM || undefined,
     replyTo: process.env.EMAIL_REPLY_TO || undefined,
     subject,
     html,

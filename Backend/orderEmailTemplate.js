@@ -63,13 +63,13 @@ function money(n) {
 function absoluteUrl(siteUrl, relativePath) {
   if (!relativePath) return '';
   if (/^https?:\/\//i.test(relativePath)) return relativePath;
-  
+
   let path = String(relativePath).replace(/^\//, '');
-  // For product images stored in 'assets/', use the 480px WebP thumbnail instead of the full print-ready PNG/JPG
-  if (path.startsWith('assets/') && !path.startsWith('img/')) {
+  // For product images, use the 480px WebP thumbnail instead of the full print-ready PNG/JPG
+  if (/^(assets\/|posters\/|uploads\/)/.test(path) && !path.startsWith('img/')) {
     path = `img/w480/${path.replace(/\.(png|jpe?g)$/i, '.webp')}`;
   }
-  
+
   const joined = `${siteUrl.replace(/\/$/, '')}/${path}`;
   return encodeURI(joined);
 }

@@ -58,7 +58,7 @@ function drawInvoice(pdfDoc, order) {
   pdfDoc.font('Helvetica-Bold').text('From:', 50, 115);
   
   if (fs.existsSync(WORDMARK_PATH)) {
-    pdfDoc.image(WORDMARK_PATH, 50, 122, { height: 16 });
+    pdfDoc.image(WORDMARK_PATH, 50, 118, { height: 28 }); // Enlarged height
   } else {
     pdfDoc.font('Helvetica-Bold').text(COMPANY.legalName, 50, 128);
   }
@@ -130,6 +130,19 @@ function drawInvoice(pdfDoc, order) {
     y += 42;
   });
 
+  // Page break protection if table items flow too deep
+  if (y > 580) { 
+    pdfDoc.addPage();
+    // Re-draw table header for the new page
+    pdfDoc.rect(50, 50, 500, 20).fillAndStroke('#f7fafc', '#cbd5e0');
+    pdfDoc.fillColor('#2d3748').font('Helvetica-Bold').fontSize(10);
+    pdfDoc.text('Qty', 60, 55);
+    pdfDoc.text('Product', 100, 55);
+    pdfDoc.text('Rate', 330, 55, { width: 70, align: 'right' });
+    pdfDoc.text('Discount', 400, 55, { width: 60, align: 'right' });
+    pdfDoc.text('Sub Total', 470, 55, { width: 70, align: 'right' });
+    y = 85; 
+  }
   // ---- Totals ----
   // Rows vary: GST and COD fee only exist on orders placed after
   // per-order GST/shipping; discount only on older orders that had one.
@@ -197,9 +210,12 @@ function drawInvoice(pdfDoc, order) {
   pdfDoc.text(COMPANY.legalName, sigX, sigLineY + 30);
 
   // ---- Footer ----
+  // If items push the signature line past Y 670, dynamic anchor lower
+  const footerY = Math.max(730, sigLineY + 50); 
+  
   pdfDoc.fontSize(8).fillColor('#a0aec0');
-  pdfDoc.text('Payment is due within 15 days from the date of invoice. This is a computer-generated invoice and does not require a physical stamp.', 50, 730, { width: 500 });
-  pdfDoc.text(`Thanks for shopping with Brush, a Kraft Studios brand | ${COMPANY.email} | ${COMPANY.phone} | CIN: ${COMPANY.cin}`, 50, 750, { width: 500 });
+  pdfDoc.text('Payment is due within 15 days from the date of invoice. This is a computer-generated invoice and does not require a physical stamp.', 50, footerY, { width: 500 });
+  pdfDoc.text(`Thanks for shopping with Brush, a Kraft Studios brand | ${COMPANY.email} | ${COMPANY.phone} | CIN: ${COMPANY.cin}`, 50, footerY + 20, { width: 500 });
 }
 
 module.exports = { drawInvoice };
