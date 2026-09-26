@@ -4983,6 +4983,13 @@ img {
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
   z-index: 5;
 }
+.nav-links .nav-dd-item.nav-dd-item--feature {
+  margin-top: 6px;
+  border-top: 1px solid var(--border-light);
+  padding-top: 12px;
+  color: var(--accent);
+}
+
 /* invisible bridge so the pointer can travel from toggle to panel */
 .nav-dd-panel::before { content: ''; position: absolute; left: 0; right: 0; top: -24px; height: 24px; }
 .nav-dropdown.open .nav-dd-panel {

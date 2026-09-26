@@ -1252,6 +1252,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Exposed for pages that render their own product UI (poster reels).
+  window.BrushOpenProduct = (id) => openProductModal(id);
+
   async function openProductModal(productId) {
     // Guarded the same way as openCart() — harmless in practice today (the
     // overlay blocks clicks reaching another product card while open) but

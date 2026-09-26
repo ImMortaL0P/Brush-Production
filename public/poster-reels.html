@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="api-base.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <script src="theme.js?v=2"></script>
+  <title>Browse Posters — Brush</title>
+  <meta name="description" content="Browse Brush posters one at a time, full screen — swipe for the next one and double-tap to add it to your cart.">
+  <link rel="icon" href="assets/misc/favicon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
+  <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
+  <link rel="stylesheet" href="styles.css?v=24">
+  <link rel="stylesheet" href="reels.css?v=1">
+  <script src="site-overlays.js?v=2"></script>
+</head>
+<body class="reels-page">
+
+  <header class="reels-bar">
+    <a href="all_products.html?type=Posters" class="reels-bar-btn" aria-label="Back to posters"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a>
+    <div class="reels-bar-title">
+      <strong>Browse Posters</strong>
+      <label class="reels-genre">
+        <span class="sr-only">Genre</span>
+        <select id="reels-genre"><option value="">All genres</option></select>
+        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+      </label>
+    </div>
+    <a href="checkout.html" class="reels-bar-btn reels-cart nav-action-btn" aria-label="Cart">
+      <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>
+      <span class="cart-count" style="display: none;">0</span>
+    </a>
+  </header>
+
+  <main id="main-content" class="reels">
+    <div class="reels-feed" id="reels-feed" tabindex="-1" data-lenis-prevent aria-label="Poster feed">
+      <div class="reels-empty"><div class="reels-loader" aria-hidden="true"></div><p>Loading posters…</p></div>
+    </div>
+
+    <div class="reels-nav" aria-label="Feed navigation">
+      <button type="button" id="reels-prev" aria-label="Previous poster"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
+      <button type="button" id="reels-next" aria-label="Next poster"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+    </div>
+
+    <div class="reels-hint" id="reels-hint" hidden>
+      <div class="reels-hint-card">
+        <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
+        <p><strong>Swipe up</strong> for the next poster</p>
+        <p><strong>Double-tap</strong> to add it to your cart</p>
+      </div>
+    </div>
+  </main>
+
+  <site-overlays></site-overlays>
+
+  <script src="img-utils.js?v=2"></script>
+  <script src="cart.js?v=4"></script>
+  <script src="script.js?v=25"></script>
+  <script src="reels.js?v=1"></script>
+</body>
+</html>

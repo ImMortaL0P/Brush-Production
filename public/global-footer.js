@@ -44,6 +44,7 @@
                 <h2>Shop</h2>
                 <ul>
                   <li><a href="all_products.html">Shop All</a></li>
+                  <li><a href="poster-reels.html">Browse Posters</a></li>
                   <li><a href="${home}#bestsellers">Bestsellers</a></li>
                   <li><a href="${home}#newarrival">New Arrivals</a></li>
                   <li><a href="${home}#categories">Categories</a></li>

@@ -55,6 +55,7 @@
                 <div class="nav-dd-col">
                   <p class="nav-dd-heading">Shop by product</p>
                   ${typeLinks}
+                  <a href="poster-reels.html" class="nav-dd-item nav-dd-item--feature"><i class="fa-solid fa-film"></i><span>Browse Posters</span></a>
                 </div>
                 <div class="nav-dd-col nav-dd-col-genres">
                   <p class="nav-dd-heading">Poster genres</p>
