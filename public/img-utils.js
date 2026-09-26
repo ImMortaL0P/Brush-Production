@@ -12,7 +12,7 @@
 // back to the original, and a broken original falls back to a placeholder.
 // ========================================
 (function () {
-  var LOCAL_ROOTS = /^(assets\/(Floral|Mythological|Pop Culture|Travel|Tshirt designs|Stickers|Wallpapers|Figurines)|posters|uploads)\//;
+  var LOCAL_ROOTS = /^(assets\/(Floral|Mythological|Pop Culture|Travel|Typography|Tshirt designs|Stickers|Wallpapers|Figurines)|posters|uploads)\//;
   var PLACEHOLDER_TYPES = { stickers: 1, collectibles: 1, wallpapers: 1 };
 
   function typeKey(p) {
