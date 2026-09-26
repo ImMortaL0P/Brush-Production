@@ -21,10 +21,10 @@
   <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
 
-  <link rel="stylesheet" href="styles.css?v=27">
-  <script src="global-navbar.js?v=7"></script>
+  <link rel="stylesheet" href="styles.css?v=28">
+  <script src="global-navbar.js?v=9"></script>
   <script src="site-overlays.js?v=2"></script>
-  <script src="global-footer.js?v=3" defer></script>
+  <script src="global-footer.js?v=4" defer></script>
 </head>
 
 <body class="preloader-active">
@@ -76,12 +76,12 @@
       
       <!-- Dynamic Counter (Will be updated via JS or CSS animation) -->
       <div class="hero-counter">
-        <span id="poster-count-number">0</span> + unique artoworks available
+        <span id="poster-count-number">0</span> + unique artworks available
       </div>
       <div class="hero-trust-badges">
         <span class="hero-trust-badge">Cash on Delivery</span>
         <span class="hero-trust-badge">Flat ₹54 Shipping</span>
-        <span class="hero-trust-badge">Easy Returns</span>
+        <span class="hero-trust-badge">Damage Protection</span>
       </div>
     </div>
     <div class="hero-dots" id="hero-dots">
@@ -102,7 +102,7 @@
     <div class="marquee-track">
       <span class="marquee-item"><span class="dot-sep"></span>Premium Quality</span>
       <span class="marquee-item"><span class="dot-sep"></span>Flat ₹54 Shipping</span>
-      <span class="marquee-item"><span class="dot-sep"></span>Easy Returns</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Damage Protection</span>
       <span class="marquee-item"><span class="dot-sep"></span>Wide Variety</span>
       <span class="marquee-item"><span class="dot-sep"></span>Custom Prints</span>
       <span class="marquee-item"><span class="dot-sep"></span>Fast Delivery</span>
@@ -111,7 +111,7 @@
       <!-- Duplicate for seamless loop -->
       <span class="marquee-item"><span class="dot-sep"></span>Premium Quality</span>
       <span class="marquee-item"><span class="dot-sep"></span>Flat ₹54 Shipping</span>
-      <span class="marquee-item"><span class="dot-sep"></span>Easy Returns</span>
+      <span class="marquee-item"><span class="dot-sep"></span>Damage Protection</span>
       <span class="marquee-item"><span class="dot-sep"></span>Wide Variety</span>
       <span class="marquee-item"><span class="dot-sep"></span>Custom Prints</span>
       <span class="marquee-item"><span class="dot-sep"></span>Fast Delivery</span>
@@ -132,9 +132,9 @@
           <p>One ₹54 charge per order, however many items</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-1">
-          <span class="feature-icon"><i class="fa-solid fa-rotate-left"></i></span>
-          <h3>Easy Returns</h3>
-          <p>Hassle-free exchange & refund</p>
+          <span class="feature-icon"><i class="fa-solid fa-shield-halved"></i></span>
+          <h3>Damage Protection</h3>
+          <p>Free replacement if it arrives damaged</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-2">
           <span class="feature-icon"><i class="fa-solid fa-award"></i></span>
@@ -144,7 +144,7 @@
         <div class="feature-item fade-in fade-in-delay-3">
           <span class="feature-icon"><i class="fa-solid fa-palette"></i></span>
           <h3>Wide Variety</h3>
-          <p>500+ designs across collections</p>
+          <p>Hundreds of designs across genres</p>
         </div>
       </div>
     </div>
@@ -644,21 +644,21 @@
   </section>
 
   <!-- Institutional Supplies CTA -->
-  <section class="app-section" style="border-top: 1px solid var(--border-color, #333);">
+  <section class="app-section b2b-cta-section">
     <div class="container">
-      <div class="app-grid" style="align-items: center;">
+      <div class="app-grid">
         <div class="app-content fade-in">
           <span class="section-tag">B2B / Corporates</span>
-          <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Are you an organisation/institution?</h2>
-          <p style="font-size: 1.1rem; margin-bottom: 2rem;">Click here to browse our exclusive institutional supplies.</p>
+          <h2 class="b2b-cta-title">Are you an organisation/<wbr>institution?</h2>
+          <p class="b2b-cta-text">Browse our exclusive supplies for schools, colleges and companies.</p>
           <div class="app-buttons">
-            <a href="institutional.html" class="hero-cta" style="display: inline-flex; align-items: center; justify-content: center;">
+            <a href="institutional.html" class="hero-cta">
               Browse Supplies
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; margin-left: 8px;"><path d="m9 18 6-6-6-6"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
             </a>
           </div>
         </div>
-        <div class="app-image fade-in fade-in-delay-2">
+        <div class="app-image b2b-cta-media fade-in fade-in-delay-2">
           <img src="img/site/institutional.webp" alt="Institutional Supplies" loading="lazy" decoding="async" width="800" height="533" class="institutional-cta-img">
         </div>
       </div>
@@ -706,7 +706,7 @@
             </button>
             <div class="faq-answer">
               <div class="faq-answer-inner">
-                <p>Yes! We cater to bulk orders, especially for businesses. Simply drop us a message on WhatsApp for special rates and assistance.</p>
+                <p>Yes — we print for cafés, offices, hostels, schools and events. Tell us what you need on our <a href="institutional.html#quote-form">Corporate / B2B page</a> or email <a href="mailto:admin@brush.ind.in">admin@brush.ind.in</a>, and we'll send bulk pricing.</p>
               </div>
             </div>
           </div>
@@ -718,19 +718,19 @@
             </button>
             <div class="faq-answer">
               <div class="faq-answer-inner">
-                <p>Absolutely! We offer a custom print option, conveniently located in the menu tab. Simply upload your artwork for a poster and leave the rest to us. We'll ensure your design is beautifully printed and delivered to your doorstep.</p>
+                <p>Self-serve custom prints are coming soon. Until then, email your artwork to <a href="mailto:admin@brush.ind.in">admin@brush.ind.in</a> with the size you want and we'll print it for you.</p>
               </div>
             </div>
           </div>
 
           <div class="faq-item">
             <button class="faq-question">
-              <span class="faq-q-text"><i class="fa-regular fa-clock"></i> How many days taken for delivery?</span>
+              <span class="faq-q-text"><i class="fa-regular fa-clock"></i> How long does delivery take?</span>
               <i class="fa-solid fa-chevron-down faq-toggle-icon"></i>
             </button>
             <div class="faq-answer">
               <div class="faq-answer-inner">
-                <p>Delivery typically takes 5-7 days, depending on your location.</p>
+                <p>Every order is printed to order and dispatched within 1–2 business days. After that, delivery takes 3–5 business days to metros and Tier 1 cities, and 5–10 business days elsewhere.</p>
               </div>
             </div>
           </div>
@@ -742,7 +742,7 @@
             </button>
             <div class="faq-answer">
               <div class="faq-answer-inner">
-                <p>Tracking your order is easy! Once your order is placed, you'll receive both a WhatsApp notification and an email confirming your purchase, complete with a tracking ID. Additionally, you'll get another WhatsApp message when your order is picked up by our courier partner. Keep an eye on your WhatsApp and email for regular updates on your order's progress!</p>
+                <p>Right after you order, you'll get an email with your order ID and tax invoice, and another email each time the status changes (packed, shipped, delivered). If you're logged in, you can also see all your orders any time from the box icon in the navbar.</p>
               </div>
             </div>
           </div>
@@ -875,11 +875,11 @@
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js" defer></script>
   <script src="scroll.js?v=2" defer></script>
   <script src="motion.js?v=3" defer></script>
-  <script src="navbar-scroll.js?v=3" defer></script>
+  <script src="navbar-scroll.js?v=4" defer></script>
   <script src="micro-interactions.js" defer></script>
   <script src="img-utils.js?v=2" defer></script>
   <script src="cart.js?v=4" defer></script>
-  <script src="script.js?v=25" defer></script>
+  <script src="script.js?v=26" defer></script>
 </body>
 
 </html>

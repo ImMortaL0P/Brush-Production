@@ -180,7 +180,8 @@
     if (state.q) u.set('search', state.q);
     if (state.page > 1) u.set('page', state.page);
     const qs = u.toString();
-    history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+    // Keep history.state: an open overlay's Back-button entry lives there.
+    history.replaceState(history.state, '', window.location.pathname + (qs ? '?' + qs : ''));
   }
 
   // ---- filtering ----
@@ -437,8 +438,9 @@
 
   // ---- mobile sheets ----
   let openSheet = null;
-  function setSheet(sheet) {
+  function setSheet(sheet, fromHistory) {
     if (openSheet === sheet) return;
+    const wasOpen = !!openSheet;
     if (openSheet) {
       openSheet.classList.remove('open');
       if (window.BrushScrollLock) BrushScrollLock.unlock();
@@ -448,8 +450,11 @@
     if (sheet) {
       sheet.classList.add('open');
       if (window.BrushScrollLock) BrushScrollLock.lock();
+      if (!wasOpen && window.BrushBack) BrushBack.opened('sheet');
       const focusable = sheet.querySelector('input, button');
       if (focusable) focusable.focus({ preventScroll: true });
+    } else if (wasOpen && fromHistory !== true && window.BrushBack) {
+      BrushBack.closed('sheet');
     }
   }
   const mobile = window.matchMedia('(max-width: 900px)');
@@ -537,6 +542,8 @@
       if (e.key === 'Enter' && e.target.classList.contains('store-card')) e.target.click();
     });
 
+    if (window.BrushBack) BrushBack.register('sheet', () => setSheet(null, true), () => !!openSheet);
+    window.addEventListener('pageshow', (e) => { if (e.persisted) setSheet(null, true); });
     $('open-filters').addEventListener('click', () => setSheet(els.facetsPanel));
     $('open-sort').addEventListener('click', () => setSheet(els.sortSheet));
     els.sheetBackdrop.addEventListener('click', () => setSheet(null));

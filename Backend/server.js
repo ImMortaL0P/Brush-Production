@@ -85,51 +85,64 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
-  }
+  },
+  // Admin status changes wait for the email result; without these a slow
+  // or unreachable SMTP server left the dashboard spinning for ~2 minutes.
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 20000
 });
 
 // Returns { sent: true } on success, or { sent: false, reason } on failure -
 // never throws, so callers can report accurate status back to the admin
 // instead of assuming the email went out.
 
-async function enrichOrderWithDynamicPrices(order) {
+// Invoices and status emails must show what the customer was actually
+// charged. This used to re-price every stored order from *today's* product
+// prices (overwriting item prices, names and the total), so any price change
+// after purchase silently changed old invoices. Now it only back-fills
+// fields that older orders never stored (SKU, line subtotal, charges) and
+// never touches an amount that was recorded at checkout.
+async function withInvoiceDefaults(order) {
   if (!order || !order.items) return order;
   const productIds = order.items.map(item => item.productId).filter(Boolean);
-  const latestProducts = await productsRef.find({ _id: { $in: productIds } }).toArray();
-  const productMap = {};
-  latestProducts.forEach(p => productMap[p._id] = p);
+  const products = productIds.length ? await productsRef.find({ id: { $in: productIds } }).toArray() : [];
+  const byId = {};
+  products.forEach(p => { byId[p.id] = p; });
 
-  let newSubtotal = 0;
-  
+  let subtotal = 0;
   order.items = order.items.map(item => {
-    const liveProduct = productMap[item.productId];
-    if (liveProduct) {
-      let basePrice = liveProduct.price;
-      const catalogPrice = catalogBasePrice(liveProduct.productType, liveProduct.category);
-      if (catalogPrice !== null) basePrice = catalogPrice;
-      
-      let variants = item.variants || item.variant || { size: item.size, gsm: item.gsm };
-      const { price: livePrice } = priceWithVariants(basePrice, liveProduct.productType || getProductType(liveProduct.category), variants);
-      
-      item.price = livePrice;
-      item.subtotal = livePrice * item.quantity;
-      item.sku = liveProduct.sku || liveProduct.id.toString() || item.productId;
-      item.name = liveProduct.name;
-    } else {
-      item.sku = item.productId;
-    }
-    newSubtotal += item.subtotal;
-    return item;
+    const live = byId[item.productId];
+    const lineTotal = item.subtotal != null ? item.subtotal : Number(item.price) * Number(item.quantity);
+    subtotal += lineTotal;
+    return {
+      ...item,
+      subtotal: lineTotal,
+      sku: item.sku || (live && (live.sku || String(live.id))) || String(item.productId || ''),
+    };
   });
 
-  order.subtotal = newSubtotal;
-  const charges = orderCharges(order.items, order.paymentMethod);
-  order.gst = charges.gst;
-  order.shipping = charges.shipping;
-  order.codFee = charges.codFee;
-  order.total = newSubtotal + order.gst + order.shipping + order.codFee - (order.discount || 0);
-  
+  if (order.subtotal == null) order.subtotal = subtotal;
+  if (order.gst == null || order.shipping == null) {
+    const charges = orderCharges(order.items, order.paymentMethod);
+    if (order.gst == null) order.gst = charges.gst;
+    if (order.shipping == null) order.shipping = charges.shipping;
+    if (order.codFee == null) order.codFee = charges.codFee;
+  }
+  if (order.total == null) order.total = order.subtotal + order.gst + order.shipping + (order.codFee || 0) - (order.discount || 0);
   return order;
+}
+
+// Returns stock (and the order-count used for "popularity") when an order
+// is cancelled, and takes it again if a cancelled order is reinstated.
+async function adjustStockForOrder(order, direction) {
+  const ops = (order.items || []).filter(i => i.productId != null && Number(i.quantity) > 0).map(i => ({
+    updateOne: {
+      filter: { id: i.productId },
+      update: { $inc: { stockQuantity: direction * Number(i.quantity), orderFrequency: -direction * Number(i.quantity) } },
+    },
+  }));
+  if (ops.length) await productsRef.bulkWrite(ops);
 }
 
 // Renders the invoice PDF into memory so it can be attached to order emails.
@@ -150,7 +163,7 @@ async function sendOrderEmail(order, forceSend = false) {
   const toEmail = order.customer.email || order.customer.id;
   if (!toEmail || !toEmail.includes('@')) return { sent: false, reason: 'Customer has no valid email address' };
 
-  order = await enrichOrderWithDynamicPrices(order);
+  order = await withInvoiceDefaults(order);
   const { subject, html, text } = buildOrderStatusEmail(order, SITE_URL);
   const mailOptions = {
     from: process.env.EMAIL_FROM || '"Brush Posters" <noreply@brushposters.com>',
@@ -256,6 +269,9 @@ setInterval(() => {
 // actual string first, or a crafted JSON body could bypass the intended
 // lookup entirely (classic NoSQL injection).
 const isNonEmptyString = (v) => typeof v === 'string' && v.length > 0;
+// Optional free-text fields from shoppers: always stored as a trimmed,
+// length-capped string (never an object/array from a crafted body).
+const cleanText = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
 // Length over composition rules (NIST 800-63B) — no forced uppercase/
 // number/symbol mix, just a floor long enough to resist guessing. Applied
@@ -596,16 +612,29 @@ async function computeOrderPricing(items, paymentMethod) {
     throw new OrderValidationError('Order must contain at least one item');
   }
 
+  if (items.length > 50) throw new OrderValidationError('Too many lines in one order');
+
   let subtotal = 0;
   const enrichedItems = [];
+  const requestedByProduct = {};
 
   for (const item of items) {
-    const product = await productsRef.findOne({ id: item.productId });
-    if (!product) throw new OrderValidationError(`Product with ID ${item.productId} not found`);
-    if (!item.quantity || item.quantity < 1) throw new OrderValidationError(`Invalid quantity for product ${item.productId}`);
+    // Must be real numbers: an object here would be read by MongoDB as a
+    // query operator, and a string/fractional quantity would corrupt stock.
+    const productId = Number(item && item.productId);
+    const quantity = Number(item && item.quantity);
+    if (!Number.isInteger(productId)) throw new OrderValidationError('Invalid product in order');
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) throw new OrderValidationError(`Invalid quantity for product ${productId}`);
+    item.productId = productId;
+    item.quantity = quantity;
 
+    const product = await productsRef.findOne({ id: productId });
+    if (!product) throw new OrderValidationError(`Product with ID ${productId} not found`);
+
+    // The same poster in two sizes is two cart lines but one stock pool.
+    requestedByProduct[productId] = (requestedByProduct[productId] || 0) + quantity;
     const currentStock = product.stockQuantity !== undefined ? product.stockQuantity : 0;
-    if (currentStock < item.quantity) {
+    if (currentStock < requestedByProduct[productId]) {
       throw new OrderValidationError(`Insufficient stock for product ${product.name}. Only ${currentStock} left.`);
     }
 
@@ -667,9 +696,9 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
       _id: id,
       id,
       passwordHash: hash,
-      name: name || '',
-      phone: phone || '',
-      address: address || '',
+      name: cleanText(name, 80),
+      phone: cleanText(phone, 20),
+      address: cleanText(address, 300),
       createdAt: new Date()
     };
 
@@ -818,9 +847,9 @@ app.put('/api/auth/profile/:id', requireUser, requireOwnUser, async (req, res) =
     const { name, phone, address } = req.body;
     await usersRef.updateOne({ _id: req.params.id }, {
       $set: {
-        name: name || '',
-        phone: phone || '',
-        address: address || '',
+        name: cleanText(name, 80),
+        phone: cleanText(phone, 20),
+        address: cleanText(address, 300),
         updatedAt: new Date()
       }
     });
@@ -833,9 +862,9 @@ app.put('/api/auth/profile/:id', requireUser, requireOwnUser, async (req, res) =
 
 app.get('/api/orders/user/:id', requireUser, requireOwnUser, async (req, res) => {
   try {
-    const docs = await ordersRef.find({ userId: req.params.id }).toArray();
+    // Newest first (this used to sort on a `date` field orders don't have).
+    const docs = await ordersRef.find({ userId: req.params.id }).sort({ createdAt: -1 }).toArray();
     const orders = docs.map(d => ({ id: d._id, ...stripId(d) }));
-    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
     res.json(orders);
   } catch (error) {
     console.error(error);
@@ -872,7 +901,9 @@ app.get('/api/products/:id', async (req, res) => {
 
 app.post('/api/products/:id/reviews', reviewLimiter, uploadReviewPhoto.single('photo'), async (req, res) => {
   try {
-    const { user, rating, comment } = req.body;
+    const user = cleanText(req.body.user, 60);
+    const comment = cleanText(req.body.comment, 1000);
+    const { rating } = req.body;
     if (!user || !rating || !comment) return res.status(400).json({ error: 'Missing review fields' });
 
     const ratingNum = parseInt(rating);
@@ -942,9 +973,15 @@ app.post('/api/payment/create-order', paymentOrderLimiter, async (req, res) => {
       order = await razorpay.orders.create(options);
     } catch (rzpError) {
       console.error('Razorpay Order Error:', rzpError);
-      // Demo/degraded-mode fallback when Razorpay itself is unreachable or
-      // misconfigured — the id is still tracked in pendingPayments below,
-      // so /api/orders still enforces the amount match for this path too.
+      // The mock fallback skips the payment step entirely (checkout confirms
+      // "order_mock_" orders without opening Razorpay, and /api/orders skips
+      // the signature check for them). It used to kick in automatically
+      // whenever Razorpay failed — so a Razorpay outage or bad key made
+      // every UPI/card order confirm as paid with no money collected. Now
+      // it is a local-development switch only.
+      if (process.env.ALLOW_MOCK_PAYMENTS !== 'true') {
+        return res.status(503).json({ error: 'Online payment is temporarily unavailable. Please choose Cash on Delivery or try again shortly.' });
+      }
       order = { id: 'order_mock_' + Date.now(), amount: amountPaise, currency: 'INR' };
     }
 
@@ -998,6 +1035,9 @@ app.post('/api/orders', orderCreateLimiter, async (req, res) => {
         return res.status(400).json({ error: 'Payment session not found or expired — please retry checkout.' });
       }
 
+      if (razorpay_order_id.startsWith('order_mock_') && process.env.ALLOW_MOCK_PAYMENTS !== 'true') {
+        return res.status(400).json({ error: 'Payment verification required' });
+      }
       if (!razorpay_order_id.startsWith('order_mock_')) {
         const key_secret = process.env.RAZORPAY_KEY_SECRET;
         const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -1103,9 +1143,11 @@ app.post('/api/orders/:orderId/cancel', orderLookupLimiter, async (req, res) => 
     }
 
     await ordersRef.updateOne({ _id: req.params.orderId }, { $set: { status: 'cancelled' } });
+    await adjustStockForOrder(order, +1);
 
     const safeOrder = stripId(order);
     safeOrder.status = 'cancelled';
+    sendOrderEmail({ ...order, status: 'cancelled' }); // fire-and-forget confirmation
     if (safeOrder.createdAt instanceof Date) {
       safeOrder.createdAt = safeOrder.createdAt.toISOString();
     }
@@ -1121,7 +1163,7 @@ app.get('/api/orders/:orderId/invoice', orderLookupLimiter, async (req, res) => 
     let order = await ordersRef.findOne({ _id: req.params.orderId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    order = await enrichOrderWithDynamicPrices(order);
+    order = await withInvoiceDefaults(order);
 
     const pdfDoc = new PDFDocument({ size: 'A4', margin: 50 });
 
@@ -1292,7 +1334,7 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
 
     if (req.adminSession.role === 'stocker') {
        // Stocker can only update stockQuantity
-       if (name !== undefined || price !== undefined || badge !== undefined || category !== undefined || productType !== undefined || keywords !== undefined ||
+       if (name !== undefined || price !== undefined || badge !== undefined || category !== undefined || productType !== undefined || keywords !== undefined || sku !== undefined ||
            showInBestsellers !== undefined || showInNewArrivals !== undefined || showInGrossing !== undefined) {
           return res.status(403).json({ error: 'Stocker can only modify inventory quantity.' });
        }
@@ -1304,8 +1346,25 @@ app.patch('/api/products/:id', requireAdmin, async (req, res) => {
       return res.status(403).json({ error: 'Only superadmin can control homepage placement.' });
     }
 
+    // Everything here is written straight into the product document —
+    // reject wrong types instead of storing objects/arrays/NaN.
+    const strFields = { name, badge, category, sku, productType };
+    for (const [k, v] of Object.entries(strFields)) {
+      if (v !== undefined && typeof v !== 'string') return res.status(400).json({ error: `${k} must be text` });
+    }
+    if (name !== undefined && !name.trim()) return res.status(400).json({ error: 'Name cannot be empty' });
+    if (stockQuantity !== undefined && (!Number.isInteger(Number(stockQuantity)) || Number(stockQuantity) < 0)) {
+      return res.status(400).json({ error: 'Stock must be a whole number of 0 or more' });
+    }
+    if (price !== undefined && (!Number.isFinite(Number(price)) || Number(price) <= 0)) {
+      return res.status(400).json({ error: 'Price must be a positive number' });
+    }
+    if (keywords !== undefined && typeof keywords !== 'string' && !Array.isArray(keywords)) {
+      return res.status(400).json({ error: 'keywords must be text' });
+    }
+
     const updateData = {};
-    if (name !== undefined) updateData.name = name;
+    if (name !== undefined) updateData.name = name.trim();
     if (price !== undefined) updateData.price = Number(price);
     if (badge !== undefined) updateData.badge = badge;
     if (stockQuantity !== undefined) updateData.stockQuantity = Number(stockQuantity);
@@ -1453,14 +1512,20 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
   }
 });
 
+const ORDER_STATUSES = ['confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
+
 // Update order status
 app.patch('/api/orders/:orderId/status', requireAdmin, requireSuperAdmin, async (req, res) => {
   try {
     const { status } = req.body;
+    if (!ORDER_STATUSES.includes(status)) return res.status(400).json({ error: `Status must be one of: ${ORDER_STATUSES.join(', ')}` });
     const order = await ordersRef.findOne({ _id: req.params.orderId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
     const oldStatus = order.status;
+    if (oldStatus === status) return res.json({ message: 'Status unchanged', emailSent: false, emailError: 'status unchanged, no email sent' });
     await ordersRef.updateOne({ _id: req.params.orderId }, { $set: { status } });
+    if (status === 'cancelled') await adjustStockForOrder(order, +1);
+    else if (oldStatus === 'cancelled') await adjustStockForOrder(order, -1);
     order.status = status;
     const emailResult = await sendOrderEmail(order);
     logAdminActivity(req.adminSession.username, 'Update Order Status', `Changed order ${req.params.orderId} status from ${oldStatus} to ${status}`);
@@ -1476,6 +1541,9 @@ app.patch('/api/orders/:orderId/status', requireAdmin, requireSuperAdmin, async 
 
 app.post('/api/orders/:orderId/send-update', requireAdmin, async (req, res) => {
   try {
+    if (req.adminSession.role === 'watcher') {
+      return res.status(403).json({ error: 'Watcher accounts have view-only access.' });
+    }
     const order = await ordersRef.findOne({ _id: req.params.orderId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
     const emailResult = await sendOrderEmail(order, true);
@@ -1489,18 +1557,6 @@ app.post('/api/orders/:orderId/send-update', requireAdmin, async (req, res) => {
 });
 
 
-
-// Catch-all for anything that didn't match an API route or a static file
-// above - previously fell through to Express's bare "Cannot GET /..." page,
-// an unbranded dead end with no nav and no way back. JSON for API paths
-// (so client-side error handling that expects JSON doesn't break), the
-// branded page for everything else.
-app.use((req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'Not found' });
-  }
-  res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
-});
 
 // ── Health check endpoint ──────────────────────────────────────
 // Used by cloud providers (Render, Railway) for uptime probes,
@@ -1524,6 +1580,18 @@ app.get('/api/health', async (req, res) => {
       error: err.message
     });
   }
+});
+
+// Catch-all for anything that didn't match an API route or a static file
+// above - previously fell through to Express's bare "Cannot GET /..." page,
+// an unbranded dead end with no nav and no way back. JSON for API paths
+// (so client-side error handling that expects JSON doesn't break), the
+// branded page for everything else.
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
 });
 
 app.use((err, req, res, next) => {

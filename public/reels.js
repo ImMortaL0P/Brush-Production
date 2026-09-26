@@ -147,7 +147,7 @@
       loadMedia(slide.nextElementSibling);
       loadMedia(slide.nextElementSibling?.nextElementSibling);
       if (Number(slide.dataset.n) >= rendered - 3) appendBatch();
-      history.replaceState(null, '', `${location.pathname}?${new URLSearchParams({ ...(genreSelect.value ? { genre: genreSelect.value } : {}), p: slide.dataset.id })}`);
+      history.replaceState(history.state, '', `${location.pathname}?${new URLSearchParams({ ...(genreSelect.value ? { genre: genreSelect.value } : {}), p: slide.dataset.id })}`);
     });
   }, { root: feed, threshold: [0.6] });
 

@@ -16,6 +16,77 @@
 // the bar is ever a dead click.
 // ========================================
 (function () {
+  // ---- Back button closes overlays ----
+  // On a phone, the product window, cart, filter/sort sheets and menu all
+  // look like separate screens, so people press Back to leave them. Without
+  // a history entry that left the whole page instead (and could restore it
+  // from the back-forward cache frozen mid-overlay). Each overlay registers
+  // here: opening pushes a same-URL history entry, Back closes the overlay,
+  // and closing it any other way pops that entry again.
+  const BrushBack = (() => {
+    const registry = {};          // name -> { close(fromHistory), isOpen() }
+    let pendingBack = false;      // a UI close is waiting for its popstate
+    let queued = [];              // opens that arrived during that wait
+
+    const push = (name) => history.pushState({ ...(history.state || {}), brushOverlay: name }, '');
+    const current = () => (history.state && history.state.brushOverlay) || null;
+
+    // Pages keep their own URL up to date with replaceState (the store's
+    // filters, the poster feed's current poster). Done while an overlay's
+    // entry is on top, that URL would be lost when the entry is popped, so
+    // remember it and carry it back down to the page's own entry.
+    const nativeReplace = history.replaceState.bind(history);
+    let carriedUrl = null;
+    history.replaceState = function (state, title, url) {
+      nativeReplace(state, title, url);
+      if (current()) carriedUrl = location.href;
+    };
+    const restoreUrl = () => {
+      if (!current() && carriedUrl) {
+        if (carriedUrl !== location.href) nativeReplace(history.state, '', carriedUrl);
+        carriedUrl = null;
+      }
+    };
+
+    window.addEventListener('popstate', () => {
+      if (pendingBack) {
+        pendingBack = false;
+        restoreUrl();
+        queued.forEach(push);
+        queued = [];
+        return;
+      }
+      const top = current();
+      Object.entries(registry).forEach(([name, o]) => {
+        if (name !== top && o.isOpen()) o.close(true);
+      });
+      restoreUrl();
+    });
+
+    return {
+      register(name, close, isOpen) { registry[name] = { close, isOpen }; },
+      opened(name) {
+        if (current() === name) return;
+        if (pendingBack) queued.push(name); else push(name);
+      },
+      // Closed by the UI (not by Back): drop the entry we pushed. Pass
+      // {navigating: true} when a link is about to leave the page anyway.
+      closed(name, opts = {}) {
+        queued = queued.filter(n => n !== name);
+        if (current() !== name) return;
+        if (opts.navigating) {
+          const { brushOverlay, ...rest } = history.state;
+          nativeReplace(Object.keys(rest).length ? rest : null, '');
+          carriedUrl = null;
+          return;
+        }
+        pendingBack = true;
+        history.back();
+      },
+    };
+  })();
+  window.BrushBack = BrushBack;
+
   const PRODUCT_TYPES = [
     { label: 'Posters', type: 'Posters', icon: 'fa-image' },
     { label: 'T-Shirts', type: 'Apparel', icon: 'fa-shirt' },
@@ -45,7 +116,7 @@
             <img src="img/site/brush-logo-360.webp" alt="Brush" width="124" height="32">
           </a>
 
-          <div class="nav-links" id="nav-links">
+          <div class="nav-links" id="nav-links" data-lenis-prevent>
             <a href="index.html">Home</a>
             <div class="nav-dropdown" id="nav-categories">
               <button type="button" class="nav-dd-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-dd-panel">
@@ -94,6 +165,13 @@
           </div>
         </nav>
       `;
+      // Place the pill below the announcement bar before first paint, so it
+      // doesn't start over the bar and hop down once navbar-scroll.js runs.
+      if (showBar) {
+        const bar = this.querySelector('#announcement-bar');
+        const gap = window.matchMedia('(max-width: 480px)').matches ? 10 : 16;
+        this.querySelector('#navbar').style.setProperty('--nav-top', (bar.offsetHeight + gap) + 'px');
+      }
       this.initDropdown();
       this.initSkipLink();
       this.markCurrentPage();
@@ -151,16 +229,26 @@
     initMobileMenu() {
       const toggle = this.querySelector('#menu-toggle');
       const links = this.querySelector('#nav-links');
-      const setOpen = (open) => {
+      const setOpen = (open, how = {}) => {
         if (links.classList.contains('open') === open) return;
         links.classList.toggle('open', open);
         toggle.classList.toggle('active', open);
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
         this.lockScroll(open);
+        if (open) BrushBack.opened('menu');
+        else if (!how.fromHistory) BrushBack.closed('menu', { navigating: !!how.navigating });
       };
+      BrushBack.register('menu', () => setOpen(false, { fromHistory: true }), () => links.classList.contains('open'));
       toggle.addEventListener('click', () => setOpen(!links.classList.contains('open')));
-      links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+      links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+        const url = new URL(a.href, location.href);
+        const samePage = url.pathname === location.pathname && url.search === location.search;
+        setOpen(false, { navigating: !samePage });
+      }));
+      // Restored from the back-forward cache: never come back with the
+      // sheet open over a scroll-locked page.
+      window.addEventListener('pageshow', (e) => { if (e.persisted) setOpen(false, { fromHistory: true }); });
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && links.classList.contains('open')) {
           setOpen(false);

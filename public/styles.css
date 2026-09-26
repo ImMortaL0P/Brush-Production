@@ -832,8 +832,16 @@ main:focus {
 .hero {
   position: relative;
   width: 100%;
-  height: 100vh;
-  min-height: 600px;
+  /* min-height (not height) + a flex column with top padding that clears
+     the announcement bar and floating navbar: on short screens the hero
+     grows instead of pushing its content up underneath the navbar. svh
+     keeps it to the visible screen on mobile browsers with a URL bar. */
+  min-height: max(600px, 100vh);
+  min-height: max(600px, 100svh);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 150px 0 12vh;
   overflow: hidden;
 }
 
@@ -882,8 +890,7 @@ main:focus {
 }
 
 .hero-content {
-  position: absolute;
-  bottom: 12%;
+  position: relative;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
@@ -2393,44 +2400,6 @@ global-footer {
   line-height: 1.4;
 }
 
-/* Full-bleed poster strip along the footer's bottom edge — same
-   duplicate-the-track-and-translate-50% technique as .marquee-track up top. */
-.footer-marquee {
-  overflow: hidden;
-  margin-top: 40px;
-  border-top: 1px solid var(--border);
-  padding-top: 28px;
-  padding-bottom: 28px;
-}
-
-.footer-marquee-track {
-  display: flex;
-  gap: 16px;
-  width: max-content;
-  animation: footerMarquee 40s linear infinite;
-}
-
-.footer-marquee-track img {
-  width: 130px;
-  height: 90px;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-  opacity: 0.8;
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
-}
-
-.footer-marquee-track img:hover {
-  opacity: 1;
-  transform: scale(1.05);
-}
-
-@keyframes footerMarquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-
 /* ===== VIEW ALL BUTTON ===== */
 .view-all-wrap {
   text-align: center;
@@ -2657,13 +2626,9 @@ body.custom-cursor-active * {
     transform: none !important;
   }
 
-  /* Both marquees are infinite auto-scrolling loops with no user control to
-     stop them — exactly the kind of motion reduced-motion exists to opt out
-     of. .marquee-track predates this build and never had this handled;
-     fixing it alongside the new .footer-marquee-track rather than leaving
-     an old, worse version of the same gap sitting right next to the fix. */
-  .marquee-track,
-  .footer-marquee-track {
+  /* The ticker is an infinite auto-scrolling loop with no user control to
+     stop it — exactly the kind of motion reduced-motion exists to opt out of. */
+  .marquee-track {
     animation: none !important;
   }
 }
@@ -3603,8 +3568,8 @@ body.custom-cursor-active * {
     text-align: center;
   }
 
-  .hero-content {
-    bottom: 18%;
+  .hero {
+    padding: 140px 0 16vh;
   }
 
   .scroll-nav {
@@ -3749,6 +3714,17 @@ body.custom-cursor-active * {
 /* Classes for what used to be inline styles in the modal markup (now the
    shared <site-overlays> component, site-overlays.js). */
 site-overlays { display: contents; }
+/* Homepage "Are you an organisation?" band */
+.b2b-cta-section { border-top: 1px solid var(--border); }
+.app-content .b2b-cta-title {
+  font-size: var(--text-h2);
+  margin-bottom: 1rem;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.b2b-cta-text { font-size: var(--text-large); margin-bottom: 2rem; }
+/* The image carries a drop shadow; the shared .app-image clip cut it off. */
+.b2b-cta-media { overflow: visible; }
 .institutional-cta-img {
   width: 100%;
   height: auto;

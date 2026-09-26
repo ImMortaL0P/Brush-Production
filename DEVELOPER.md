@@ -28,11 +28,12 @@ The primary database is **MongoDB Atlas** (driver: `mongodb` npm package). Colle
 
 `productTypes.js` defines a multi-product-type configuration:
 
-- **Posters** — variant axes: Size (A5 → A1) × Paper GSM (170/300)
-- **Decorative Plates** — variant axis: Round size (8″/10″/12″)
+- **Posters** — variant axis: Size (A5, A4, A3, 8×10″ … 18×24″), priced from the Qikink rate table
+- **T-Shirts** (`apparel`) — style × print × size, priced from the Qikink rate table
 - **Wallpaper** — variant axis: Roll dimensions
+- **Stickers, Collectibles** — no variants; each product keeps its own price
 
-Pricing is computed server-side via `priceWithVariants()`, preventing client-side price tampering.
+Pricing is computed server-side via `priceWithVariants()`, preventing client-side price tampering. `public/cart.js` mirrors the table for display — regenerate it with `python3 tools/sync-cart-config.py` after editing `productTypes.js`.
 
 ## Admin Roles
 
@@ -49,10 +50,15 @@ The admin system supports three roles:
 | File                    | Purpose                                                   |
 | ----------------------- | --------------------------------------------------------- |
 | `index.html`            | Main storefront — hero, categories, bestsellers, new arrivals |
-| `all_products.html`     | Full catalog with multi-category filtering and search     |
+| `all_products.html` + `store.js` / `store.css` | Store: category tabs, faceted filters, sort, grid; state in the URL |
+| `poster-reels.html` + `reels.js` / `reels.css` | "Browse Posters": full-screen swipe feed, double-tap to add to cart |
 | `checkout.html`         | Multi-step checkout pipeline with Razorpay integration    |
-| `admin.html`            | Role-based admin dashboard                                |
+| `admin.html` + `admin.js` / `admin.css` | Role-based admin dashboard (orders, inventory, add product, pricing, activity log) |
 | `order-confirmation.html` | Order status tracking + PDF invoice download            |
+| `global-navbar.js`      | `<global-navbar>` on every page; also Back-button handling for overlays (`BrushBack`) |
+| `global-footer.js`      | `<global-footer>` on every page                           |
+| `site-overlays.js`      | `<site-overlays>`: search, login/account/orders, product modal, cart drawer, toast |
+| `img-utils.js`          | `BrushImg`: resized WebP thumbnails (`img/w480`, `img/w1080`) with fallbacks — regenerate with `python3 tools/make-thumbs.py` |
 | `script.js`             | Core rendering logic, auth state, modals, toasts          |
 | `cart.js`               | localStorage cart module with variant-aware line items     |
 | `styles.css`            | Global design system — CSS variables, dark/light theming  |
@@ -89,11 +95,11 @@ The admin system supports three roles:
 ## Security
 
 1. **Razorpay Keys:** `RAZORPAY_KEY_SECRET` is server-only via `dotenv`. The public `KEY_ID` is served via `/api/config/razorpay`.
-2. **Payment Integrity:** Server computes order amounts independently and verifies Razorpay signatures before confirming orders.
+2. **Payment Integrity:** Server computes order amounts independently and verifies Razorpay signatures before confirming orders. If Razorpay can't be reached, online payment is refused (503) — the fake `order_mock_` payment path only exists when `ALLOW_MOCK_PAYMENTS=true`, for local development.
 3. **Session TTLs:** Admin tokens expire after 12 hours, user tokens after 7 days. A background sweeper purges expired sessions every 15 minutes.
 4. **Rate Limiting:** `express-rate-limit` on auth and payment endpoints.
 5. **Security Headers:** `helmet` CSP policy on all responses.
-6. **Input Sanitization:** `sanitizePlain()` rejects NoSQL injection objects (`$gt`, `$ne`, etc.) from request body fields.
+6. **Input Sanitization:** Fields used in queries must be strings/integers (`isNonEmptyString`, integer checks on order items), so objects like `{"$gt": ...}` can't act as MongoDB operators; shopper text is stored via `cleanText()` (trimmed, length-capped).
 7. **Secrets:** `.env`, `serviceAccountKey.json` are strictly `.gitignore`d.
 
 ## Environment Variables
