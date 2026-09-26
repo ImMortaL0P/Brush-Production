@@ -116,7 +116,13 @@ body.preloader-active {
   --bg-secondary: color-mix(in srgb, var(--brand-cream) 90%, var(--brand-tan));
   --bg-card: color-mix(in srgb, var(--brand-cream) 82%, white);
   --bg-card-hover: color-mix(in srgb, var(--brand-cream) 92%, white);
-  --accent: #FF4C24; /* portfolio accent — constant across themes; it only ever sits against ink or white */
+  /* Light mode deepens the brand orange so text on it (white on buttons,
+     badges) and text in it (labels, links on cream) meets WCAG AA:
+     white 5.7:1, cream 4.9:1, secondary surface 4.6:1. Dark mode keeps
+     the vivid #FF4C24 (--brand-maroon, below), which reads 6:1 on black.
+     --accent-rgb stays vivid in both: it only feeds translucent glows and
+     tints, which carry no text. */
+  --accent: #C0320E;
   --accent-rgb: 255, 76, 36;
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
   --on-accent: #FFFFFF;
