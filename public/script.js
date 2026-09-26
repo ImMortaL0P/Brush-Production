@@ -2010,16 +2010,16 @@ document.addEventListener('DOMContentLoaded', () => {
           user.address = address;
           localStorage.setItem('brushUser', JSON.stringify(user));
           document.getElementById('profile-msg').textContent = 'Profile updated!';
-          document.getElementById('profile-msg').style.color = 'green';
+          document.getElementById('profile-msg').style.color = 'var(--success)';
         } else if (res.status === 401) {
           handleSessionExpiry();
         } else {
           document.getElementById('profile-msg').textContent = 'Update failed';
-          document.getElementById('profile-msg').style.color = 'red';
+          document.getElementById('profile-msg').style.color = 'var(--sale-red)';
         }
       } catch (err) {
         document.getElementById('profile-msg').textContent = 'Network error';
-        document.getElementById('profile-msg').style.color = 'red';
+        document.getElementById('profile-msg').style.color = 'var(--sale-red)';
       }
     });
   }

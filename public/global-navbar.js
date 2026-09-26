@@ -36,6 +36,7 @@
     connectedCallback() {
       const showBar = this.hasAttribute('announcement');
       this.innerHTML = `
+        <a href="#main-content" class="skip-link">Skip to content</a>
         ${showBar ? `<div class="announcement-bar" id="announcement-bar">
           🎨 Flat ₹54 shipping on every order &nbsp;|&nbsp; <a href="index.html#bestsellers">Shop Bestsellers →</a>
         </div>` : ''}
@@ -93,6 +94,7 @@
         </nav>
       `;
       this.initDropdown();
+      this.initSkipLink();
       this.markCurrentPage();
       this.initMobileMenu();
       this.initCartBadge();
@@ -103,6 +105,19 @@
       } else {
         this.initFallbacks();
       }
+    }
+
+    // Keyboard users land on the page's <main> instead of tabbing through
+    // the whole bar on every page load.
+    initSkipLink() {
+      this.querySelector('.skip-link').addEventListener('click', (e) => {
+        const main = document.getElementById('main-content') || document.querySelector('main');
+        if (!main) return;
+        e.preventDefault();
+        if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+        main.focus({ preventScroll: true });
+        main.scrollIntoView();
+      });
     }
 
     markCurrentPage() {

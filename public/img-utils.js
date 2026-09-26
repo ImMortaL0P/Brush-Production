@@ -89,5 +89,16 @@
       '" data-fallback="img/placeholders/fallback.webp" onerror="BrushImg.onError(this)"';
   }
 
+  // Every product image starts at opacity 0 and fades in once it gets
+  // .loaded (styles.css). script.js sets it via inline onload on the cards
+  // it renders, but other templates (checkout summary, order confirmation)
+  // never did, so their poster mockups stayed invisible. One capture-phase
+  // listener covers every page that loads this file.
+  var FADE_IN = '.mockup-frame, .mockup-poster, .mockup-hover, .plain-product-image, .modal-plain-image';
+  document.addEventListener('load', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.matches(FADE_IN)) t.classList.add('loaded');
+  }, true);
+
   window.BrushImg = { src: src, attrs: attrs, urlAttrs: urlAttrs, onError: onError, original: original, isDummy: isDummy };
 })();

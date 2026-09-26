@@ -670,6 +670,31 @@ global-navbar {
   width: 100%;
 }
 
+/* Skip link — off-screen until focused by keyboard, then pinned top-left
+   above the navbar. */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 10000;
+  padding: 10px 18px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  font-size: var(--text-small);
+  border-radius: var(--radius-md);
+  transform: translateY(-200%);
+  transition: transform var(--transition-fast);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+main:focus {
+  outline: none;
+}
+
 /* Current page — same underline as hover, held on, so visitors always
    know where they are (global-navbar.js stamps aria-current). */
 .nav-links a[aria-current="page"],
@@ -3687,6 +3712,26 @@ body.custom-cursor-active * {
   background: transparent; border: 1px solid var(--sale-red); color: var(--sale-red);
   border-radius: var(--radius-md); cursor: pointer; font-weight: 600;
 }
+
+/* Classes for what used to be inline styles in the modal markup (now the
+   shared <site-overlays> component, site-overlays.js). */
+site-overlays { display: contents; }
+.auth-success { color: var(--success); }
+.auth-submit-btn--secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+.auth-submit-btn--secondary:hover { border-color: var(--accent); }
+.profile-subform {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+}
+.orders-modal-title { font-family: var(--font-heading); margin-top: 0; }
+.orders-modal-title + .order-history-section { margin-top: 1.5rem; }
+.modal-stock-status { margin-top: 5px; font-weight: 600; font-size: 0.9rem; }
+.accordion-list { padding-left: 20px; text-align: left; margin: 10px 0; }
 /* --- Global Search Overlay --- */
 .search-overlay {
   position: fixed;

@@ -10,9 +10,10 @@
   <meta name="description" content="Your Brush order has been confirmed! Track your premium poster delivery.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=21">
   <style>
     .confirmation-page {
       min-height: 100vh;
@@ -323,7 +324,7 @@
       }
     }
   </style>
-  <script src="global-navbar.js?v=4"></script>
+  <script src="global-navbar.js?v=5"></script>
   <script src="global-footer.js?v=1"></script>
 </head>
 
@@ -350,7 +351,7 @@
   <script src="scroll.js?v=2"></script>
   <script src="navbar-scroll.js?v=3"></script>
   <script src="micro-interactions.js"></script>
-  <script src="img-utils.js?v=1"></script>
+  <script src="img-utils.js?v=2"></script>
   <script src="cart.js?v=4"></script>
   <script>
 
@@ -456,7 +457,7 @@
                   <div class="order-item-row">
                     <div class="order-item-img">
                       <div class="mockup-wrapper">
-                        <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
+                        <img src="assets/mockup_2-w480.webp" class="mockup-frame" alt="" width="480" height="733" decoding="async">
                         <img ${BrushImg.urlAttrs(item.image, 480)} class="mockup-poster" alt="${escapeHtml(item.name)}">
                         <img ${BrushImg.urlAttrs(item.image, 480)} class="mockup-hover" alt="${escapeHtml(item.name)}">
                       </div>
