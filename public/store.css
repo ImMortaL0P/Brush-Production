@@ -721,7 +721,8 @@
   .store-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .store-card-body { padding: 10px 10px 12px; }
   .store-card-body h3 { font-size: 0.85rem; }
-  .store-card-meta { font-size: 0.68rem; }
+  .store-card-meta { font-size: 0.72rem; }
+  .store-breadcrumb a { padding: 10px 0; }
   .store-card-body .price-current { font-size: 0.98rem; }
   .store-card-body .price-original { font-size: 0.75rem; }
   .store-card-body .price-discount { font-size: 0.7rem; }

@@ -631,6 +631,7 @@ global-navbar {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 8px 0; /* 48px tap target around the 32px logo */
 }
 
 .nav-brand img {
@@ -3468,6 +3469,18 @@ body.custom-cursor-active * {
   .product-modal {
     width: 100vw;
   }
+  /* Keep the image to ~55% of the screen so the title, price, size and
+     Add button are visible without scrolling on a phone. */
+  .modal-plain-image-wrapper { max-width: min(100%, 44dvh); }
+  .modal-image-col .mockup-wrapper { max-width: min(100%, 36dvh); margin-inline: auto; }
+  .modal-info-col { padding: 22px 18px 30px; }
+  /* Add button stays reachable while reading the details below it. */
+  .modal-add-to-cart {
+    position: sticky;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 3;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
 }
 
 /* ===== ADD TO CART BUTTON FEEDBACK ===== */
@@ -5279,5 +5292,28 @@ img {
     width: 100%;
     height: 100% !important;
     object-fit: cover;
+  }
+}
+
+/* =====================================================================
+   TOUCH TARGETS (phones & tablets)
+   Text links that read fine with a mouse were 15-24px tall on touch
+   screens. Padding (not font size) brings them to ~40px, compensating
+   margins keep the visual rhythm the same.
+   ===================================================================== */
+@media (max-width: 900px) {
+  .footer-column ul li { margin-bottom: 0; }
+  .footer-column ul li a,
+  .footer-bottom-links a,
+  .footer-contact a {
+    display: inline-block;
+    padding: 10px 0;
+  }
+  .footer-contact li { margin-bottom: 0; }
+  .footer-disclaimer { font-size: 0.75rem; }
+
+  .announcement-bar a {
+    display: inline-block;
+    padding: 6px 0;
   }
 }

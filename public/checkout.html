@@ -16,7 +16,7 @@
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
   <!-- Only needed once "Place Order" is clicked — async so it never blocks the page. -->
   <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-  <link rel="stylesheet" href="styles.css?v=24">
+  <link rel="stylesheet" href="styles.css?v=27">
   <style>
     /* ===== CHECKOUT PAGE STYLES ===== */
     .checkout-page {
@@ -43,10 +43,12 @@
     .checkout-breadcrumb {
       font-size: 0.8rem;
       color: var(--text-muted);
-      margin-bottom: 32px;
+      margin: -10px 0 22px;
     }
 
     .checkout-breadcrumb a {
+      display: inline-block;
+      padding: 10px 0;
       color: var(--accent);
     }
 
@@ -508,6 +510,39 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Phones: the summary sits below the whole form, so keep the total
+       and the Place Order action in a slim bar until it scrolls into view. */
+    .checkout-mobile-bar { display: none; }
+
+    @media (max-width: 768px) {
+      .checkout-mobile-bar:not([hidden]) {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 900;
+        padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+        background: color-mix(in srgb, var(--bg-primary) 94%, transparent);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid var(--border);
+        transition: transform var(--transition-med);
+      }
+
+      .checkout-mobile-bar.is-tucked { transform: translateY(110%); }
+
+      .checkout-mobile-total { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
+      .checkout-mobile-total small { font-size: var(--text-micro); color: var(--text-muted); }
+      .checkout-mobile-total strong { font-family: var(--font-heading); font-size: 1.2rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+      .checkout-mobile-total button { align-self: flex-start; padding: 4px 0; font-size: var(--text-micro); font-weight: 600; color: var(--text-secondary); text-decoration: underline; }
+      .checkout-mobile-bar .place-order-btn { width: auto; margin: 0; padding: 14px 22px; }
+
+      .checkout-page { padding-bottom: 80px; }
+    }
   </style>
   <script src="global-navbar.js?v=7"></script>
 </head>
@@ -647,6 +682,14 @@
         <p class="secure-note"><i class="fa-solid fa-lock"></i> Secure checkout — Your data is protected</p>
       </div>
 
+    </div>
+    <div class="checkout-mobile-bar" id="checkout-mobile-bar" hidden>
+      <div class="checkout-mobile-total">
+        <small>Total</small>
+        <strong id="checkout-mobile-amount">₹0</strong>
+        <button type="button" id="checkout-mobile-details">View price details</button>
+      </div>
+      <button type="button" class="place-order-btn" id="checkout-mobile-place">Place Order</button>
     </div>
   </main>
 
@@ -846,7 +889,21 @@
         `;
 
         priceBreakdown.innerHTML = breakdownHTML;
+        document.getElementById('checkout-mobile-amount').textContent = `₹${c.total}`;
+        document.getElementById('checkout-mobile-bar').hidden = false;
       }
+
+      // ---- Phone sticky total bar ----
+      const mobileBar = document.getElementById('checkout-mobile-bar');
+      document.getElementById('checkout-mobile-place').addEventListener('click', () => {
+        document.getElementById('place-order-btn').click();
+      });
+      document.getElementById('checkout-mobile-details').addEventListener('click', () => {
+        document.getElementById('order-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      new IntersectionObserver(([entry]) => {
+        mobileBar.classList.toggle('is-tucked', entry.isIntersecting);
+      }).observe(document.getElementById('place-order-btn'));
 
       renderSummary();
 
