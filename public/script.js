@@ -83,8 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.lenis) window.lenis.stop();
   }
 
+  // Everything that takes a lock. If none of these is actually open, the
+  // page must not stay locked — this self-heals any counter drift (the
+  // symptom was a page that stopped scrolling / responding after closing
+  // a product on a phone).
+  const LOCKING_OVERLAYS = '.product-modal.open, .cart-drawer.open, .nav-links.open, .store-facets-panel.open, .store-sort-sheet.open';
+
   function unlockPageScroll() {
     scrollLockCount = Math.max(0, scrollLockCount - 1);
+    if (scrollLockCount > 0 && !document.querySelector(LOCKING_OVERLAYS)) scrollLockCount = 0;
     if (scrollLockCount === 0) {
       document.body.style.overflow = '';
       if (window.lenis) window.lenis.start();
@@ -726,15 +733,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const wasOpen = cartDrawer.classList.contains('open');
     cartDrawer.classList.add('open');
     cartOverlay.classList.add('open');
-    if (!wasOpen) lockPageScroll();
+    if (!wasOpen) {
+      lockPageScroll();
+      if (window.BrushBack) BrushBack.opened('cart');
+    }
   }
 
-  function closeCart() {
+  function closeCart(fromHistory) {
     const wasOpen = cartDrawer.classList.contains('open');
     cartDrawer.classList.remove('open');
     cartOverlay.classList.remove('open');
-    if (wasOpen) unlockPageScroll();
+    if (wasOpen) {
+      unlockPageScroll();
+      if (fromHistory !== true && window.BrushBack) BrushBack.closed('cart', { navigating: closeCart.navigating });
+    }
   }
+  if (window.BrushBack && cartDrawer) BrushBack.register('cart', () => closeCart(true), () => cartDrawer.classList.contains('open'));
 
   // Cart icon in navbar opens drawer
   const cartNavBtn = document.querySelector('.nav-action-btn[aria-label="Cart"]');
@@ -1262,7 +1276,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const wasOpen = productModal.classList.contains('open');
     productModal.classList.add('open');
     productModalOverlay.classList.add('open');
-    if (!wasOpen) lockPageScroll();
+    if (!wasOpen) {
+      lockPageScroll();
+      if (window.BrushBack) BrushBack.opened('product');
+    }
 
     try {
       const res = await fetch(`${API_BASE}/products/${productId}`);
@@ -1341,13 +1358,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function closeProductModal() {
+  function closeProductModal(fromHistory) {
     const wasOpen = productModal.classList.contains('open');
     productModal.classList.remove('open');
     productModalOverlay.classList.remove('open');
-    if (wasOpen) unlockPageScroll();
+    if (wasOpen) {
+      unlockPageScroll();
+      if (fromHistory !== true && window.BrushBack) BrushBack.closed('product');
+    }
     currentProduct = null;
   }
+  if (window.BrushBack && productModal) BrushBack.register('product', () => closeProductModal(true), () => productModal.classList.contains('open'));
+
+  // Back-forward cache restore: the page comes back exactly as it was left,
+  // which could be mid-overlay with scrolling locked. Reset to a clean page.
+  window.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    if (productModal) { productModal.classList.remove('open'); productModalOverlay.classList.remove('open'); }
+    if (cartDrawer) { cartDrawer.classList.remove('open'); cartOverlay.classList.remove('open'); }
+    scrollLockCount = 0;
+    document.body.style.overflow = '';
+    if (window.lenis) window.lenis.start();
+  });
 
   if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeProductModal);
   if (productModalOverlay) productModalOverlay.addEventListener('click', closeProductModal);

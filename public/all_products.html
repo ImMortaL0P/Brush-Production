@@ -14,11 +14,11 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=27">
+  <link rel="stylesheet" href="styles.css?v=28">
   <link rel="stylesheet" href="store.css?v=2">
-  <script src="global-navbar.js?v=7"></script>
+  <script src="global-navbar.js?v=9"></script>
   <script src="site-overlays.js?v=2"></script>
-  <script src="global-footer.js?v=3" defer></script>
+  <script src="global-footer.js?v=4" defer></script>
 </head>
 <body class="page-layered store-page">
 
@@ -37,7 +37,7 @@
     </div>
 
     <div class="store-layout">
-      <aside class="store-facets-panel" id="store-facets-panel" aria-label="Filters">
+      <aside class="store-facets-panel" id="store-facets-panel" aria-label="Filters" data-lenis-prevent>
         <div class="sheet-handle" aria-hidden="true"></div>
         <div class="store-facets" id="store-facets">
           <div class="facet-head"><h2>Filters</h2></div>
@@ -98,7 +98,7 @@
       <button type="button" id="open-sort"><i class="fa-solid fa-arrow-down-wide-short" aria-hidden="true"></i><span><strong>Sort</strong><small id="store-sort-current">Relevance</small></span></button>
       <button type="button" id="open-filters"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span><strong>Filter</strong><small>Genre, price…</small></span><span class="filter-badge" id="store-filter-badge" hidden>0</span></button>
     </div>
-    <div class="store-sort-sheet" id="store-sort-sheet" role="dialog" aria-modal="true" aria-label="Sort by">
+    <div class="store-sort-sheet" id="store-sort-sheet" role="dialog" aria-modal="true" aria-label="Sort by" data-lenis-prevent>
       <div class="sheet-handle" aria-hidden="true"></div>
       <h2>Sort by</h2>
       <div class="facet-list" id="store-sort-sheet-list"></div>
@@ -113,11 +113,11 @@
 
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js"></script>
   <script src="scroll.js?v=2"></script>
-  <script src="navbar-scroll.js?v=3"></script>
+  <script src="navbar-scroll.js?v=4"></script>
   <script src="micro-interactions.js"></script>
   <script src="img-utils.js?v=2"></script>
   <script src="cart.js?v=4"></script>
-  <script src="script.js?v=25"></script>
-  <script src="store.js?v=1"></script>
+  <script src="script.js?v=26"></script>
+  <script src="store.js?v=2"></script>
 </body>
 </html>

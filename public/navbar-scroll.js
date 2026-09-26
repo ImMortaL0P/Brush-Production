@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const announcementBar = document.getElementById('announcement-bar');
   const progressEl = document.getElementById('scroll-progress');
-  const REST_GAP = window.matchMedia('(max-width: 480px)').matches ? 10 : 16;
+  const narrow = window.matchMedia('(max-width: 480px)');
+  let REST_GAP = narrow.matches ? 10 : 16;
 
   let barHeight = announcementBar ? announcementBar.offsetHeight : 0;
   let ticking = false;
@@ -42,8 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.addEventListener('scroll', requestUpdate, { passive: true });
+  // The bar's height changes when the web font swaps in (and on rotation).
+  // Measuring it only once — and again on 'resize', which mobile browsers
+  // fire when the address bar collapses on the first scroll — made the
+  // navbar jump into place the moment you started scrolling. Track it
+  // continuously instead.
+  if (announcementBar && 'ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      barHeight = announcementBar.offsetHeight;
+      requestUpdate();
+    }).observe(announcementBar);
+  }
   window.addEventListener('resize', () => {
     barHeight = announcementBar ? announcementBar.offsetHeight : 0;
+    REST_GAP = narrow.matches ? 10 : 16;
     requestUpdate();
   });
   update();

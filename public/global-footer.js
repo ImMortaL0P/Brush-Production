@@ -8,8 +8,6 @@
 // index.html#... everywhere else.
 // ========================================
 (function () {
-  const THUMBS = ['dream', 'anime-girl', 'weathering-with-you', 'japanese-zen', 'dahlia', 'space-frontier',
-    'japan-travel', 'zeus', 'board-finish', 'avengers', 'godfather'];
 
   class GlobalFooter extends HTMLElement {
     connectedCallback() {
@@ -17,9 +15,6 @@
       const onHome = /(^|\/)(index\.html)?$/.test(path);
       const home = onHome ? '' : 'index.html';
       const year = new Date().getFullYear();
-      const thumbs = THUMBS.map(t =>
-        `<img loading="lazy" decoding="async" width="130" height="90" src="assets/misc/footer-thumbs/${t}.jpg" alt="">`
-      ).join('');
 
       this.innerHTML = `
         <footer class="site-footer" id="footer">
@@ -91,9 +86,6 @@
                 <a href="policies.html#privacy-policy">Cookies</a>
               </div>
             </div>
-          </div>
-          <div class="footer-marquee" aria-hidden="true">
-            <div class="footer-marquee-track">${thumbs}${thumbs}</div>
           </div>
         </footer>
       `;
