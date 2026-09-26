@@ -26,7 +26,7 @@
           <div class="container">
             <div class="footer-grid">
               <div class="footer-brand">
-                <img src="img/site/brush-logo.png" alt="Brush" width="140" height="36" loading="lazy" class="footer-logo">
+                <img src="img/site/brush-logo-360.webp" alt="Brush" width="140" height="36" loading="lazy" class="footer-logo">
                 <div class="footer-parent">
                   <span class="footer-parent-label">A part of</span>
                   <span class="footer-parent-name">KRAFT STUDIOS</span>
@@ -41,9 +41,10 @@
               </div>
 
               <nav class="footer-column" aria-label="Shop">
-                <h4>Shop</h4>
+                <h2>Shop</h2>
                 <ul>
                   <li><a href="all_products.html">Shop All</a></li>
+                  <li><a href="poster-reels.html">Browse Posters</a></li>
                   <li><a href="${home}#bestsellers">Bestsellers</a></li>
                   <li><a href="${home}#newarrival">New Arrivals</a></li>
                   <li><a href="${home}#categories">Categories</a></li>
@@ -53,7 +54,7 @@
               </nav>
 
               <nav class="footer-column" aria-label="Help">
-                <h4>Help</h4>
+                <h2>Help</h2>
                 <ul>
                   <li><a href="${home}#faq">FAQs</a></li>
                   <li><a href="policies.html#shipping-policy">Shipping Policy</a></li>
@@ -64,7 +65,7 @@
               </nav>
 
               <div class="footer-column footer-newsletter">
-                <h4>Stay Updated</h4>
+                <h2>Stay Updated</h2>
                 <p>Subscribe to get notified about new collections, exclusive drops, and discounts.</p>
                 <form class="newsletter-form" novalidate>
                   <input type="email" name="email" placeholder="Enter your email" aria-label="Email for newsletter" autocomplete="email" required>

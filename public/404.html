@@ -11,9 +11,11 @@
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=27">
   <style>
     .not-found-main {
       min-height: calc(100dvh - 70px);
@@ -57,14 +59,14 @@
       justify-content: center;
     }
   </style>
-  <script src="global-navbar.js?v=4"></script>
-  <script src="global-footer.js?v=1"></script>
+  <script src="global-navbar.js?v=7"></script>
+  <script src="global-footer.js?v=3" defer></script>
 </head>
 <body>
 
   <global-navbar></global-navbar>
 
-  <main class="not-found-main">
+  <main id="main-content" class="not-found-main">
     <div class="not-found-code">404</div>
     <h1 class="not-found-title">This page took a wrong turn</h1>
     <p class="not-found-text">The page you're looking for doesn't exist, moved, or the link's just plain broken. Let's get you back on track.</p>

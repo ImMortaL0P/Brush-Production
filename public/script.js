@@ -100,7 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const percentEl = document.getElementById('preloader-percent');
     const fillEl = document.getElementById('preloader-fill');
     // Critical, above-the-fold assets — the "first half" of the site the preloader waits on.
-    const criticalImages = Array.from(document.querySelectorAll('.hero-slide img, .nav-brand img, .preloader-logo'));
+    // Only the first hero slide is visible at load; the other two fade in
+    // later and load in the background, so they don't hold the page back.
+    const criticalImages = Array.from(document.querySelectorAll('.hero-slide.active img, .nav-brand img, .preloader-logo'));
     const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
 
     const total = criticalImages.length + 1; // +1 for web fonts
@@ -146,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loaded = total;
         updateProgress();
       }
-    }, 5000);
+    }, 3500);
 
     updateProgress();
   }
@@ -1250,6 +1252,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Exposed for pages that render their own product UI (poster reels).
+  window.BrushOpenProduct = (id) => openProductModal(id);
+
   async function openProductModal(productId) {
     // Guarded the same way as openCart() — harmless in practice today (the
     // overlay blocks clicks reaching another product card while open) but
@@ -2010,16 +2015,16 @@ document.addEventListener('DOMContentLoaded', () => {
           user.address = address;
           localStorage.setItem('brushUser', JSON.stringify(user));
           document.getElementById('profile-msg').textContent = 'Profile updated!';
-          document.getElementById('profile-msg').style.color = 'green';
+          document.getElementById('profile-msg').style.color = 'var(--success)';
         } else if (res.status === 401) {
           handleSessionExpiry();
         } else {
           document.getElementById('profile-msg').textContent = 'Update failed';
-          document.getElementById('profile-msg').style.color = 'red';
+          document.getElementById('profile-msg').style.color = 'var(--sale-red)';
         }
       } catch (err) {
         document.getElementById('profile-msg').textContent = 'Network error';
-        document.getElementById('profile-msg').style.color = 'red';
+        document.getElementById('profile-msg').style.color = 'var(--sale-red)';
       }
     });
   }

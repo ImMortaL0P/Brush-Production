@@ -36,12 +36,13 @@
     connectedCallback() {
       const showBar = this.hasAttribute('announcement');
       this.innerHTML = `
+        <a href="#main-content" class="skip-link">Skip to content</a>
         ${showBar ? `<div class="announcement-bar" id="announcement-bar">
           🎨 Flat ₹54 shipping on every order &nbsp;|&nbsp; <a href="index.html#bestsellers">Shop Bestsellers →</a>
         </div>` : ''}
         <nav class="navbar" id="navbar">
           <a href="index.html" class="nav-brand" aria-label="Brush home">
-            <img src="img/site/brush-logo.png" alt="Brush" width="124" height="32">
+            <img src="img/site/brush-logo-360.webp" alt="Brush" width="124" height="32">
           </a>
 
           <div class="nav-links" id="nav-links">
@@ -54,6 +55,7 @@
                 <div class="nav-dd-col">
                   <p class="nav-dd-heading">Shop by product</p>
                   ${typeLinks}
+                  <a href="poster-reels.html" class="nav-dd-item nav-dd-item--feature"><i class="fa-solid fa-film"></i><span>Browse Posters</span></a>
                 </div>
                 <div class="nav-dd-col nav-dd-col-genres">
                   <p class="nav-dd-heading">Poster genres</p>
@@ -93,6 +95,7 @@
         </nav>
       `;
       this.initDropdown();
+      this.initSkipLink();
       this.markCurrentPage();
       this.initMobileMenu();
       this.initCartBadge();
@@ -103,6 +106,19 @@
       } else {
         this.initFallbacks();
       }
+    }
+
+    // Keyboard users land on the page's <main> instead of tabbing through
+    // the whole bar on every page load.
+    initSkipLink() {
+      this.querySelector('.skip-link').addEventListener('click', (e) => {
+        const main = document.getElementById('main-content') || document.querySelector('main');
+        if (!main) return;
+        e.preventDefault();
+        if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+        main.focus({ preventScroll: true });
+        main.scrollIntoView();
+      });
     }
 
     markCurrentPage() {

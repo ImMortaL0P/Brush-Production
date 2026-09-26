@@ -10,9 +10,11 @@
   <link rel="icon" href="assets/misc/favicon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=27">
   <style>
     .about-container {
       max-width: 900px;
@@ -55,6 +57,8 @@
     .about-contact-item span {
       color: var(--text-primary);
       font-weight: 500;
+      display: inline-block;
+      padding: 10px 0;
     }
     @media (max-width: 640px) {
       .about-contact {
@@ -62,8 +66,8 @@
       }
     }
   </style>
-  <script src="global-navbar.js?v=4"></script>
-  <script src="global-footer.js?v=1"></script>
+  <script src="global-navbar.js?v=7"></script>
+  <script src="global-footer.js?v=3" defer></script>
 </head>
 <body>
 
@@ -77,9 +81,9 @@
     </div>
   </header>
 
-  <main class="about-container">
+  <main id="main-content" class="about-container">
     <div class="about-brand">
-      <img src="img/site/brush-logo.png" alt="Brush" width="170" height="44" class="about-logo">
+      <img src="img/site/brush-logo-360.webp" alt="Brush" width="170" height="44" class="about-logo">
       <p>At Brush, we're not just selling products — we're sharing our lifelong friendship, creativity, and commitment to delivering exceptional art to your doorstep.</p>
       <div class="footer-social">
         <a href="https://twitter.com/lost_storiess" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
@@ -89,25 +93,26 @@
       </div>
     </div>
 
+    <h2 class="sr-only">Why shop with Brush</h2>
     <div class="features-grid">
       <div class="feature-item">
         <span class="feature-icon"><i class="fa-solid fa-truck-fast"></i></span>
-        <h4>Flat Shipping</h4>
+        <h3>Flat Shipping</h3>
         <p>One ₹54 charge per order</p>
       </div>
       <div class="feature-item">
         <span class="feature-icon"><i class="fa-solid fa-rotate-left"></i></span>
-        <h4>Easy Returns</h4>
+        <h3>Easy Returns</h3>
         <p>Hassle-free exchange & refund</p>
       </div>
       <div class="feature-item">
         <span class="feature-icon"><i class="fa-solid fa-award"></i></span>
-        <h4>Premium Quality</h4>
+        <h3>Premium Quality</h3>
         <p>300 GSM matte-finish prints</p>
       </div>
       <div class="feature-item">
         <span class="feature-icon"><i class="fa-solid fa-palette"></i></span>
-        <h4>Wide Variety</h4>
+        <h3>Wide Variety</h3>
         <p>500+ designs across collections</p>
       </div>
     </div>

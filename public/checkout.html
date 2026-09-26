@@ -10,10 +10,13 @@
   <meta name="description" content="Complete your purchase at Brush. Secure checkout for premium posters and wall art.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <!-- Only needed once "Place Order" is clicked — async so it never blocks the page. -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+  <link rel="stylesheet" href="styles.css?v=27">
   <style>
     /* ===== CHECKOUT PAGE STYLES ===== */
     .checkout-page {
@@ -40,10 +43,12 @@
     .checkout-breadcrumb {
       font-size: 0.8rem;
       color: var(--text-muted);
-      margin-bottom: 32px;
+      margin: -10px 0 22px;
     }
 
     .checkout-breadcrumb a {
+      display: inline-block;
+      padding: 10px 0;
       color: var(--accent);
     }
 
@@ -505,8 +510,41 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Phones: the summary sits below the whole form, so keep the total
+       and the Place Order action in a slim bar until it scrolls into view. */
+    .checkout-mobile-bar { display: none; }
+
+    @media (max-width: 768px) {
+      .checkout-mobile-bar:not([hidden]) {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 900;
+        padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+        background: color-mix(in srgb, var(--bg-primary) 94%, transparent);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid var(--border);
+        transition: transform var(--transition-med);
+      }
+
+      .checkout-mobile-bar.is-tucked { transform: translateY(110%); }
+
+      .checkout-mobile-total { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
+      .checkout-mobile-total small { font-size: var(--text-micro); color: var(--text-muted); }
+      .checkout-mobile-total strong { font-family: var(--font-heading); font-size: 1.2rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+      .checkout-mobile-total button { align-self: flex-start; padding: 4px 0; font-size: var(--text-micro); font-weight: 600; color: var(--text-secondary); text-decoration: underline; }
+      .checkout-mobile-bar .place-order-btn { width: auto; margin: 0; padding: 14px 22px; }
+
+      .checkout-page { padding-bottom: 80px; }
+    }
   </style>
-  <script src="global-navbar.js?v=4"></script>
+  <script src="global-navbar.js?v=7"></script>
 </head>
 
 <body class="page-layered">
@@ -519,7 +557,7 @@
 
 
   <!-- Checkout -->
-  <main class="checkout-page">
+  <main id="main-content" class="checkout-page">
     <div class="checkout-layout" id="checkout-layout">
 
       <!-- Left: Form -->
@@ -534,19 +572,19 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="name">Full Name *</label>
-                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                <input type="text" id="name" name="name" placeholder="Enter your full name" autocomplete="name" required>
                 <span class="error-msg" id="name-error">Please enter your name</span>
               </div>
               <div class="form-group">
                 <label for="email">Email *</label>
-                <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
                 <span class="error-msg" id="email-error">Please enter a valid email</span>
               </div>
             </div>
             <div class="form-row single">
               <div class="form-group">
                 <label for="phone">Phone Number *</label>
-                <input type="tel" id="phone" name="phone" placeholder="10-digit mobile number" required>
+                <input type="tel" id="phone" name="phone" placeholder="10-digit mobile number" autocomplete="tel" inputmode="tel" required>
                 <span class="error-msg" id="phone-error">Please enter a valid 10-digit phone number</span>
               </div>
             </div>
@@ -558,19 +596,19 @@
             <div class="form-row single">
               <div class="form-group">
                 <label for="address">Address *</label>
-                <input type="text" id="address" name="address" placeholder="House no, Street, Locality" required>
+                <input type="text" id="address" name="address" placeholder="House no, Street, Locality" autocomplete="street-address" required>
                 <span class="error-msg" id="address-error">Please enter your address</span>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="city">City *</label>
-                <input type="text" id="city" name="city" placeholder="City" required>
+                <input type="text" id="city" name="city" placeholder="City" autocomplete="address-level2" required>
                 <span class="error-msg" id="city-error">Please enter your city</span>
               </div>
               <div class="form-group">
                 <label for="state">State *</label>
-                <select id="state" name="state" required>
+                <select id="state" name="state" autocomplete="address-level1" required>
                   <option value="" disabled selected>Select State</option>
                   <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
                   <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option>
@@ -589,7 +627,7 @@
             <div class="form-row single">
               <div class="form-group">
                 <label for="pincode">PIN Code *</label>
-                <input type="text" id="pincode" name="pincode" placeholder="6-digit PIN code" maxlength="6" required>
+                <input type="text" id="pincode" name="pincode" placeholder="6-digit PIN code" maxlength="6" inputmode="numeric" autocomplete="postal-code" required>
                 <span class="error-msg" id="pincode-error">Please enter a valid 6-digit PIN code</span>
               </div>
             </div>
@@ -645,13 +683,21 @@
       </div>
 
     </div>
+    <div class="checkout-mobile-bar" id="checkout-mobile-bar" hidden>
+      <div class="checkout-mobile-total">
+        <small>Total</small>
+        <strong id="checkout-mobile-amount">₹0</strong>
+        <button type="button" id="checkout-mobile-details">View price details</button>
+      </div>
+      <button type="button" class="place-order-btn" id="checkout-mobile-place">Place Order</button>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js"></script>
   <script src="scroll.js?v=2"></script>
   <script src="navbar-scroll.js?v=3"></script>
   <script src="micro-interactions.js"></script>
-  <script src="img-utils.js?v=1"></script>
+  <script src="img-utils.js?v=2"></script>
   <script src="cart.js?v=4"></script>
 
   <!-- Checkout toast notification (replaces blocking alert() popups) -->
@@ -713,6 +759,16 @@
   </style>
 
   <script>
+
+    // Cart lines come from localStorage — escape before interpolating.
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
     // Lightweight toast for checkout — matches the pattern used on other pages
     let checkoutToastTimer;
@@ -787,14 +843,14 @@
             <div class="summary-item-image">
               ${Cart.typeConfigFor(item.productType) === Cart.PRODUCT_TYPES.poster ? `
               <div class="mockup-wrapper">
-                <img src="assets/mockup_2.jpg" class="mockup-frame" alt="Frame">
-                <img ${BrushImg.urlAttrs(item.image, 480)} class="mockup-poster" alt="${item.name}">
-                <img ${BrushImg.urlAttrs(item.image, 480)} class="mockup-hover" alt="${item.name}">
-              </div>` : `<img ${BrushImg.urlAttrs(item.image, 480)} class="summary-plain-img" alt="${item.name}">`}
+                <img src="assets/mockup_2-w480.webp" class="mockup-frame" alt="" width="480" height="733" decoding="async">
+                <img ${BrushImg.urlAttrs(item.image, 480)} class="mockup-poster" alt="${escapeHtml(item.name)}">
+                <img ${BrushImg.urlAttrs(item.image, 480)} class="mockup-hover" alt="${escapeHtml(item.name)}">
+              </div>` : `<img ${BrushImg.urlAttrs(item.image, 480)} class="summary-plain-img" alt="${escapeHtml(item.name)}">`}
               <span class="qty-badge">${item.quantity}</span>
             </div>
             <div class="summary-item-details">
-              <h4>${item.name}</h4>
+              <h4>${escapeHtml(item.name)}</h4>
               ${(() => { const cfg = Cart.typeConfigFor(item.productType); const line = (cfg.variantGroups || []).map(g => { const o = g.options.find(o => o.value === (item.variants || {})[g.key]); return o ? o.label : ''; }).filter(Boolean).join(' · '); return line ? `<span class="item-variants">${line}</span>` : ''; })()}
               <span class="item-price">₹${item.price} × ${item.quantity} = ₹${item.price * item.quantity}</span>
             </div>
@@ -833,7 +889,21 @@
         `;
 
         priceBreakdown.innerHTML = breakdownHTML;
+        document.getElementById('checkout-mobile-amount').textContent = `₹${c.total}`;
+        document.getElementById('checkout-mobile-bar').hidden = false;
       }
+
+      // ---- Phone sticky total bar ----
+      const mobileBar = document.getElementById('checkout-mobile-bar');
+      document.getElementById('checkout-mobile-place').addEventListener('click', () => {
+        document.getElementById('place-order-btn').click();
+      });
+      document.getElementById('checkout-mobile-details').addEventListener('click', () => {
+        document.getElementById('order-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      new IntersectionObserver(([entry]) => {
+        mobileBar.classList.toggle('is-tucked', entry.isIntersecting);
+      }).observe(document.getElementById('place-order-btn'));
 
       renderSummary();
 
@@ -849,6 +919,23 @@
         });
       });
 
+
+      // ---- Input normalization ----
+      // Autofill and copy-paste bring numbers in as "+91 92347 55686" or
+      // "09234755686", which the strict 10-digit check below would reject.
+      // Reduce to the bare 10-digit mobile number instead of erroring.
+      const phoneInput = document.getElementById('phone');
+      phoneInput.addEventListener('change', () => {
+        let digits = phoneInput.value.replace(/\D/g, '');
+        if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);
+        else if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+        if (digits.length === 10) phoneInput.value = digits;
+      });
+      const pincodeInput = document.getElementById('pincode');
+      pincodeInput.addEventListener('input', () => {
+        const digits = pincodeInput.value.replace(/\D/g, '').slice(0, 6);
+        if (digits !== pincodeInput.value) pincodeInput.value = digits;
+      });
 
       // ---- Form validation ----
       function validateField(id, validFn) {
@@ -1006,6 +1093,9 @@
                 razorpay_signature: "mock_signature_bypass"
               });
             } else {
+              if (typeof Razorpay === 'undefined') {
+                throw new Error('the payment window is still loading — please try again in a moment');
+              }
               const rzp = new Razorpay(options);
               rzp.on('payment.failed', function (response){
                 showCheckoutToast('Payment Failed: ' + response.error.description);

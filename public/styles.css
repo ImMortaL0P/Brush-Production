@@ -116,13 +116,19 @@ body.preloader-active {
   --bg-secondary: color-mix(in srgb, var(--brand-cream) 90%, var(--brand-tan));
   --bg-card: color-mix(in srgb, var(--brand-cream) 82%, white);
   --bg-card-hover: color-mix(in srgb, var(--brand-cream) 92%, white);
-  --accent: #FF4C24; /* portfolio accent — constant across themes; it only ever sits against ink or white */
+  /* Light mode deepens the brand orange so text on it (white on buttons,
+     badges) and text in it (labels, links on cream) meets WCAG AA:
+     white 5.7:1, cream 4.9:1, secondary surface 4.6:1. Dark mode keeps
+     the vivid #FF4C24 (--brand-maroon, below), which reads 6:1 on black.
+     --accent-rgb stays vivid in both: it only feeds translucent glows and
+     tints, which carry no text. */
+  --accent: #C0320E;
   --accent-rgb: 255, 76, 36;
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
   --on-accent: #FFFFFF;
   --text-primary: #111111;                   /* portfolio --ink */
   --text-secondary: #4a4a45;
-  --text-muted: #6f6e69;
+  --text-muted: #666560;               /* ≥4.5:1 on every light surface (WCAG AA) */
   --border: rgba(17, 17, 17, 0.16);          /* hairline ink rule — the brutalist 1px borders */
   --border-light: rgba(17, 17, 17, 0.09);
   --border-color: var(--border-light); /* alias — modal/form markup references this name */
@@ -241,11 +247,11 @@ body.preloader-active {
    class, so this covers every current usage (and any future one) without
    editing markup in each of the ~7 pages that reference this file. */
 :root img[src*="Brush Text Arial.png"],
-:root img[src*="brush-logo.png"] {
+:root img[src*="brush-logo"] {
   filter: invert(1) hue-rotate(180deg);
 }
 :root[data-theme="dark"] img[src*="Brush Text Arial.png"],
-:root[data-theme="dark"] img[src*="brush-logo.png"] {
+:root[data-theme="dark"] img[src*="brush-logo"] {
   filter: none;
 }
 
@@ -625,6 +631,7 @@ global-navbar {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 8px 0; /* 48px tap target around the 32px logo */
 }
 
 .nav-brand img {
@@ -668,6 +675,31 @@ global-navbar {
 
 .nav-links a:hover::after {
   width: 100%;
+}
+
+/* Skip link — off-screen until focused by keyboard, then pinned top-left
+   above the navbar. */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 10000;
+  padding: 10px 18px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  font-size: var(--text-small);
+  border-radius: var(--radius-md);
+  transform: translateY(-200%);
+  transition: transform var(--transition-fast);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+main:focus {
+  outline: none;
 }
 
 /* Current page — same underline as hover, held on, so visitors always
@@ -955,7 +987,7 @@ global-navbar {
   transform: translateX(-50%);
   z-index: 2;
   display: flex;
-  gap: 10px;
+  gap: 14px;
 }
 
 .hero-dot {
@@ -966,6 +998,17 @@ global-navbar {
   border: none;
   cursor: pointer;
   transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+/* 10px dot, 24px tap target (WCAG 2.5.8) via a transparent ring. */
+.hero-dot {
+  position: relative;
+}
+
+.hero-dot::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
 }
 
 .hero-dot.active {
@@ -1124,6 +1167,7 @@ global-navbar {
   border-color: var(--accent);
 }
 
+.feature-item h3,
 .feature-item h4 {
   font-family: var(--font-heading);
   font-size: 1rem;
@@ -2010,6 +2054,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   flex-shrink: 0;
 }
 
+.testimonial-author-info h3,
 .testimonial-author-info h5 {
   font-size: 0.9rem;
   font-weight: 600;
@@ -2172,6 +2217,7 @@ global-footer {
   background: rgba(var(--accent-rgb), 0.1);
 }
 
+.footer-column h2,
 .footer-column h4 {
   font-family: var(--font-heading);
   font-size: 0.95rem;
@@ -3423,6 +3469,18 @@ body.custom-cursor-active * {
   .product-modal {
     width: 100vw;
   }
+  /* Keep the image to ~55% of the screen so the title, price, size and
+     Add button are visible without scrolling on a phone. */
+  .modal-plain-image-wrapper { max-width: min(100%, 44dvh); }
+  .modal-image-col .mockup-wrapper { max-width: min(100%, 36dvh); margin-inline: auto; }
+  .modal-info-col { padding: 22px 18px 30px; }
+  /* Add button stays reachable while reading the details below it. */
+  .modal-add-to-cart {
+    position: sticky;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 3;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
 }
 
 /* ===== ADD TO CART BUTTON FEEDBACK ===== */
@@ -3687,6 +3745,48 @@ body.custom-cursor-active * {
   background: transparent; border: 1px solid var(--sale-red); color: var(--sale-red);
   border-radius: var(--radius-md); cursor: pointer; font-weight: 600;
 }
+
+/* Classes for what used to be inline styles in the modal markup (now the
+   shared <site-overlays> component, site-overlays.js). */
+site-overlays { display: contents; }
+.institutional-cta-img {
+  width: 100%;
+  height: auto;
+  max-width: 400px;
+  margin: 0 auto;
+  display: block;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+.auth-success { color: var(--success); }
+.auth-link-row { text-align: center; margin-top: 15px; }
+.auth-link-row--end { text-align: right; margin: 0 0 15px; }
+.auth-link {
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+.auth-link:hover { text-decoration: underline; }
+.auth-link--muted { color: var(--text-secondary); }
+.auth-submit-btn--secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+.auth-submit-btn--secondary:hover { border-color: var(--accent); }
+.profile-subform {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+}
+.orders-modal-title { font-family: var(--font-heading); margin-top: 0; }
+.orders-modal-title + .order-history-section { margin-top: 1.5rem; }
+.modal-stock-status { margin-top: 5px; font-weight: 600; font-size: 0.9rem; }
+.accordion-list { padding-left: 20px; text-align: left; margin: 10px 0; }
 /* --- Global Search Overlay --- */
 .search-overlay {
   position: fixed;
@@ -4896,6 +4996,13 @@ img {
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
   z-index: 5;
 }
+.nav-links .nav-dd-item.nav-dd-item--feature {
+  margin-top: 6px;
+  border-top: 1px solid var(--border-light);
+  padding-top: 12px;
+  color: var(--accent);
+}
+
 /* invisible bridge so the pointer can travel from toggle to panel */
 .nav-dd-panel::before { content: ''; position: absolute; left: 0; right: 0; top: -24px; height: 24px; }
 .nav-dropdown.open .nav-dd-panel {
@@ -5185,5 +5292,28 @@ img {
     width: 100%;
     height: 100% !important;
     object-fit: cover;
+  }
+}
+
+/* =====================================================================
+   TOUCH TARGETS (phones & tablets)
+   Text links that read fine with a mouse were 15-24px tall on touch
+   screens. Padding (not font size) brings them to ~40px, compensating
+   margins keep the visual rhythm the same.
+   ===================================================================== */
+@media (max-width: 900px) {
+  .footer-column ul li { margin-bottom: 0; }
+  .footer-column ul li a,
+  .footer-bottom-links a,
+  .footer-contact a {
+    display: inline-block;
+    padding: 10px 0;
+  }
+  .footer-contact li { margin-bottom: 0; }
+  .footer-disclaimer { font-size: 0.75rem; }
+
+  .announcement-bar a {
+    display: inline-block;
+    padding: 6px 0;
   }
 }
