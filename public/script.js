@@ -91,6 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // The navbar's mobile menu (global-navbar.js) shares this same counter.
+  window.BrushScrollLock = { lock: lockPageScroll, unlock: unlockPageScroll };
+
   // ---- Preloader ----
   const preloader = document.getElementById('preloader');
   if (preloader) {
@@ -156,34 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // ---- Mobile menu toggle ----
-  const menuToggle = document.getElementById('menu-toggle');
-  const navLinks = document.getElementById('nav-links');
-
-  if (menuToggle && navLinks) {
-    menuToggle.addEventListener('click', () => {
-      menuToggle.classList.toggle('active');
-      navLinks.classList.toggle('open');
-      if (navLinks.classList.contains('open')) {
-        lockPageScroll();
-      } else {
-        unlockPageScroll();
-      }
-    });
-
-    navLinks.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        menuToggle.classList.remove('active');
-        // Only unlock if this link click is what's actually closing an open
-        // menu (on desktop these links are always visible/clickable with
-        // the menu never "open" in the mobile sense — mustn't decrement a
-        // lock that was never acquired).
-        if (navLinks.classList.contains('open')) {
-          unlockPageScroll();
-        }
-        navLinks.classList.remove('open');
-      });
-    });
-  }
+  // Owned by global-navbar.js so it works on every page, including the
+  // ones that don't load this script.
 
 
   // ---- Global Search ----
@@ -1737,6 +1714,23 @@ document.addEventListener('DOMContentLoaded', () => {
   if (new URLSearchParams(window.location.search).get('login') === '1' && !localStorage.getItem('brushUser')) {
     openAuthModal();
     history.replaceState(null, '', window.location.pathname + window.location.hash);
+  }
+
+  // Same idea for the navbar's Account / Orders icons on pages without the
+  // modals (global-navbar.js links them here with ?open=account|orders).
+  const openParam = new URLSearchParams(window.location.search).get('open');
+  if (openParam === 'account' || openParam === 'orders') {
+    history.replaceState(null, '', window.location.pathname + window.location.hash);
+    const stored = localStorage.getItem('brushUser');
+    if (!stored) {
+      openAuthModal();
+    } else {
+      // Deferred: the modal openers are declared further down this file.
+      setTimeout(() => {
+        const user = JSON.parse(stored);
+        openParam === 'orders' ? openOrdersModal(user) : openProfileModal(user);
+      }, 0);
+    }
   }
 
   function openAuthModal() {

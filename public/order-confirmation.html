@@ -4,15 +4,15 @@
   <script src="api-base.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="theme.js"></script>
+  <script src="theme.js?v=2"></script>
   <title>Order Confirmed — Brush</title>
-  <meta name="description" content="Your Brush order has been confirmed! Track your premium poster delivery.">
   <link rel="icon" href="assets/misc/favicon.png" type="image/png">
+  <meta name="description" content="Your Brush order has been confirmed! Track your premium poster delivery.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
   <style>
     .confirmation-page {
       min-height: 100vh;
@@ -238,7 +238,7 @@
       gap: 12px;
       background: rgba(var(--sale-red-rgb), 0.08);
       border: 1px solid var(--sale-red);
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       padding: 14px;
     }
 
@@ -323,8 +323,8 @@
       }
     }
   </style>
-  <link rel="icon" type="image/png" href="assets/misc/favicon.png">
-  <script src="global-navbar.js?v=3"></script>
+  <script src="global-navbar.js?v=4"></script>
+  <script src="global-footer.js?v=1"></script>
 </head>
 
 <body>
@@ -343,6 +343,8 @@
       </div>
     </div>
   </main>
+
+  <global-footer></global-footer>
 
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js"></script>
   <script src="scroll.js?v=2"></script>

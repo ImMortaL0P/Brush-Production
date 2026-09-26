@@ -4,36 +4,17 @@
   <script src="api-base.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="theme.js"></script>
+  <script src="theme.js?v=2"></script>
   <title>Style Options — Brush</title>
-  <meta name="description" content="View style options, designs, and product showcase for institutional printing.">
   <link rel="icon" href="assets/misc/favicon.png" type="image/png">
+  <meta name="description" content="View style options, designs, and product showcase for institutional printing.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
   <style>
-    .style-header {
-      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-      padding: 100px 0 60px;
-      text-align: center;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .style-header h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(2.2rem, 5vw, 3.5rem);
-      margin-bottom: 14px;
-      text-wrap: balance;
-      text-transform: capitalize;
-    }
-    .style-header p {
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin: 0 auto;
-      font-size: 1.1rem;
-      line-height: 1.6;
-    }
+    #page-title { text-transform: capitalize; }
     .style-container {
       max-width: 1200px;
       margin: 0 auto;
@@ -43,8 +24,10 @@
       margin-bottom: 5rem;
     }
     .style-section-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2rem;
+      font-family: var(--font-heading);
+      font-size: var(--text-h2);
+      font-weight: 800;
+      letter-spacing: var(--tracking-tight);
       margin-bottom: 2rem;
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 1rem;
@@ -89,13 +72,14 @@
       border-radius: var(--radius-md, 8px);
     }
   </style>
-  <script src="global-navbar.js?v=3"></script>
+  <script src="global-navbar.js?v=4"></script>
+  <script src="global-footer.js?v=1"></script>
 </head>
 <body>
   <global-navbar></global-navbar>
 
   <main>
-    <div class="style-header">
+    <div class="page-header">
       <h1 id="page-title">Style Options</h1>
       <p id="page-desc">Explore the various styles, designs, and examples we offer.</p>
       <div class="style-subnav">
@@ -177,19 +161,7 @@
     </div>
   </main>
 
-  <footer class="site-footer" style="padding: 2rem 0; text-align: center; border-top: 1px solid var(--border-color);">
-    <div class="container">
-      <div style="margin-bottom: 20px;">
-        <img src="img/site/brush-logo.png" alt="Brush Logo" style="height: 30px; width: auto; filter: grayscale(100%) opacity(0.7);">
-      </div>
-      <p style="color: var(--text-secondary);">© 2026 Brush. All rights reserved.</p>
-      <div style="margin-top: 10px; display: flex; justify-content: center; gap: 15px;">
-        <a href="index.html" style="color: var(--text-secondary); text-decoration: none;">Home</a>
-        <a href="institutional.html" style="color: var(--text-secondary); text-decoration: none;">Institutional</a>
-        <a href="policies.html" style="color: var(--text-secondary); text-decoration: none;">Policies</a>
-      </div>
-    </div>
-  </footer>
+  <global-footer></global-footer>
 
   <div class="search-overlay" id="search-overlay">
     <div class="search-container">
@@ -323,7 +295,7 @@
   <div class="profile-modal" id="orders-modal" data-lenis-prevent>
     <button class="modal-close-btn" id="orders-close-btn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
     <div class="auth-box">
-      <h2 style="font-family: 'Outfit', sans-serif; margin-top:0;">Your Orders</h2>
+      <h2 style="font-family: var(--font-heading); margin-top:0;">Your Orders</h2>
       <div class="order-history-section" style="margin-top: 1.5rem;">
         <div id="orders-history-list">
           <!-- Orders injected here -->
@@ -477,6 +449,6 @@
   <script src="navbar-scroll.js?v=3"></script>
   <script src="micro-interactions.js"></script>
   <script src="cart.js?v=4" defer></script>
-  <script src="script.js?v=21" defer></script>
+  <script src="script.js?v=22" defer></script>
 </body>
 </html>

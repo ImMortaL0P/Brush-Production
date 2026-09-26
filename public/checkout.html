@@ -4,16 +4,16 @@
   <script src="api-base.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="theme.js"></script>
+  <script src="theme.js?v=2"></script>
   <title>Checkout — Brush</title>
-  <meta name="description" content="Complete your purchase at Brush. Secure checkout for premium posters and wall art.">
   <link rel="icon" href="assets/misc/favicon.png" type="image/png">
+  <meta name="description" content="Complete your purchase at Brush. Secure checkout for premium posters and wall art.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
   <style>
     /* ===== CHECKOUT PAGE STYLES ===== */
     .checkout-page {
@@ -271,7 +271,7 @@
     }
     .summary-items::-webkit-scrollbar-thumb {
       background: var(--border-light);
-      border-radius: 4px;
+      border-radius: var(--radius-md);
     }
 
     .summary-item {
@@ -375,7 +375,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 6px;
+      border-radius: var(--radius-md);
     }
     .price-row.total {
       padding-top: 16px;
@@ -506,8 +506,7 @@
       }
     }
   </style>
-  <link rel="icon" type="image/png" href="assets/misc/favicon.png">
-  <script src="global-navbar.js?v=3"></script>
+  <script src="global-navbar.js?v=4"></script>
 </head>
 
 <body class="page-layered">
@@ -603,7 +602,7 @@
               <label class="payment-option selected" data-method="cod">
                 <input type="radio" name="payment" value="cod" checked>
                 <div class="payment-label">
-                  <h5>Cash on Delivery <span style="font-size: 0.7rem; background: var(--accent); color: var(--on-accent); padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 700;">+ ₹34 fee</span></h5>
+                  <h5>Cash on Delivery <span style="font-size: 0.7rem; background: var(--accent); color: var(--on-accent); padding: 2px 6px; border-radius: var(--radius-md); margin-left: 6px; font-weight: 700;">+ ₹34 fee</span></h5>
                   <p>Pay when your order arrives</p>
                 </div>
                 <span class="payment-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
@@ -692,7 +691,7 @@
     #cod-confirm-modal .modal-content {
       background-color: var(--bg-card, #fff);
       padding: 24px;
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       width: 90%;
       max-width: 400px;
       position: relative;
@@ -1025,15 +1024,6 @@
       });
 
 
-      // ---- Mobile menu ----
-      const menuToggle = document.getElementById('menu-toggle');
-      const navLinks = document.getElementById('nav-links');
-      if (menuToggle && navLinks) {
-        menuToggle.addEventListener('click', () => {
-          menuToggle.classList.toggle('active');
-          navLinks.classList.toggle('open');
-        });
-      }
 
     });
   </script>
