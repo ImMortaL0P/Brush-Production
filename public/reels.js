@@ -4,8 +4,8 @@
 // A full-screen, one-poster-at-a-time feed, like short-video reels:
 // swipe / scroll / arrow-key to the next poster, double-tap (or the bag
 // button) to add it to the cart in the chosen size, heart to save it.
-// Posters only. The feed is endless: the catalogue is shuffled and
-// appended in batches, reshuffling once it has all been shown.
+// Posters only. The feed is endless: the catalogue is ordered from newest
+// to oldest and appended in batches, looping once it has all been shown.
 // ========================================
 (function () {
   const BATCH = 6;
@@ -24,7 +24,7 @@
 
   let posters = [];
   let pool = [];        // current genre, in feed order
-  let queue = [];       // what's left to append before the next reshuffle
+  let queue = [];       // what's left to append before the next loop
   let rendered = 0;
   let activeSlide = null;
   const sizeFor = {};   // chosen size per poster id
@@ -32,15 +32,6 @@
   let liked = new Set();
   try { liked = new Set(JSON.parse(localStorage.getItem(LIKED_KEY)) || []); } catch (e) {}
   const saveLiked = () => { try { localStorage.setItem(LIKED_KEY, JSON.stringify([...liked])); } catch (e) {} };
-
-  function shuffle(list) {
-    const a = list.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
 
   function sizeOptions() {
     const cfg = (typeof Cart !== 'undefined' && Cart.PRODUCT_TYPES && Cart.PRODUCT_TYPES.poster) || null;
@@ -98,7 +89,7 @@
         // Loop the catalogue, but never start the new round with the
         // poster that ended the last one.
         const last = pool.length > 1 && rendered ? feed.lastElementChild?.dataset.id : null;
-        queue = shuffle(pool);
+        queue = pool.slice();
         if (last && String(queue[0].id) === last) queue.push(queue.shift());
       }
       html += slideHtml(queue.shift(), rendered++);
@@ -109,11 +100,16 @@
 
   function buildFeed(firstId) {
     const g = genreSelect.value;
-    pool = posters.filter(p => !g || (p.category || '') === g);
-    // Real artwork and in-stock posters lead; the rest still appear.
-    const ranked = shuffle(pool).sort((a, b) =>
-      (BrushImg.isDummy(a) ? 1 : 0) - (BrushImg.isDummy(b) ? 1 : 0) || (stockOf(a) <= 0 ? 1 : 0) - (stockOf(b) <= 0 ? 1 : 0));
-    queue = ranked;
+    // Filter and sort: latest added first (higher id), with real
+    // artwork and in-stock posters still leading dummy / out-of-stock ones.
+    pool = posters
+      .filter(p => !g || (p.category || '') === g)
+      .sort((a, b) =>
+        (BrushImg.isDummy(a) ? 1 : 0) - (BrushImg.isDummy(b) ? 1 : 0)
+        || (stockOf(a) <= 0 ? 1 : 0) - (stockOf(b) <= 0 ? 1 : 0)
+        || (Number(b.id) || 0) - (Number(a.id) || 0)
+      );
+    queue = pool.slice();
     if (firstId) {
       const i = queue.findIndex(p => String(p.id) === String(firstId));
       if (i > 0) queue.unshift(queue.splice(i, 1)[0]);
