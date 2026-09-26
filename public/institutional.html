@@ -4,36 +4,16 @@
   <script src="api-base.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="theme.js"></script>
+  <script src="theme.js?v=2"></script>
   <title>Institutional & Corporate — Brush</title>
-  <meta name="description" content="Custom printing solutions for organisations and institutions. Get certificates, letterheads, visiting cards, envelopes, and flyers tailored to your brand.">
   <link rel="icon" href="assets/misc/favicon.png" type="image/png">
+  <meta name="description" content="Custom printing solutions for organisations and institutions. Get certificates, letterheads, visiting cards, envelopes, and flyers tailored to your brand.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
   <style>
-    .b2b-header {
-      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-      padding: 100px 0 60px;
-      text-align: center;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .b2b-header h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(2.2rem, 5vw, 3.5rem);
-      margin-bottom: 14px;
-      text-wrap: balance;
-    }
-    .b2b-header p {
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin: 0 auto 2rem;
-      font-size: 1.1rem;
-      line-height: 1.6;
-      text-wrap: pretty;
-    }
 
     .b2b-container {
       max-width: 1200px;
@@ -42,8 +22,10 @@
     }
 
     .b2b-section-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2rem;
+      font-family: var(--font-heading);
+      font-size: var(--text-h2);
+      font-weight: 800;
+      letter-spacing: var(--tracking-tight);
       text-align: center;
       margin-bottom: 3rem;
     }
@@ -89,7 +71,7 @@
       top: 1.5rem;
       right: 1.5rem;
       background: var(--accent);
-      color: #fff;
+      color: var(--on-accent);
       padding: 0.5rem 1rem;
       border-radius: 30px;
       font-size: 0.85rem;
@@ -112,7 +94,7 @@
     }
 
     .b2b-showcase-header h3 {
-      font-family: 'Outfit', sans-serif;
+      font-family: var(--font-heading);
       font-size: 2rem;
       margin: 0;
     }
@@ -188,7 +170,7 @@
       margin: 0 auto;
     }
     .b2b-form-section h2 {
-      font-family: 'Outfit', sans-serif;
+      font-family: var(--font-heading);
       font-size: 1.8rem;
       margin-bottom: 1rem;
       text-align: center;
@@ -210,7 +192,6 @@
       gap: 1.5rem;
     }
     @media (max-width: 768px) {
-      .b2b-header { padding: 80px 20px 40px; }
       .b2b-container { padding: 2.5rem 16px; }
       .b2b-showcase { gap: 2.5rem; margin-bottom: 3.5rem; }
       .b2b-form-section { padding: 1.5rem; }
@@ -251,7 +232,7 @@
     }
     .b2b-submit {
       background: var(--accent);
-      color: #fff;
+      color: var(--on-accent);
       border: none;
       padding: 1rem 2rem;
       font-size: 1rem;
@@ -288,17 +269,19 @@
       cursor: pointer;
     }
   </style>
-  <script src="global-navbar.js?v=3"></script>
+  <script src="global-navbar.js?v=4"></script>
+  <script src="global-footer.js?v=1"></script>
 </head>
 <body>
 
   <global-navbar></global-navbar>
 
-  <header class="b2b-header">
+  <header class="page-header">
     <div class="container">
+      <span class="section-tag">Brush for Business</span>
       <h1>Custom Brand Printing</h1>
       <p>Premium quality prints tailored for organizations, institutions, and corporate events. From certificates to business cards, we've got your brand covered.</p>
-      <a href="#quote-form" class="hero-cta" style="display: inline-block;">Get a Custom Quote</a>
+      <a href="#quote-form" class="hero-cta">Get a Custom Quote</a>
     </div>
   </header>
 
@@ -611,19 +594,8 @@
   </main>
 
   <!-- Footer placeholder (matches about_us) -->
-  <footer class="site-footer" style="padding: 2rem 0; text-align: center; border-top: 1px solid var(--border-color); margin-top: 4rem;">
-    <div class="container">
-      <div style="margin-bottom: 20px;">
-        <img src="img/site/brush-logo.png" alt="Brush Logo" style="height: 30px; width: auto; filter: grayscale(100%) opacity(0.7);">
-      </div>
-      <p style="color: var(--text-secondary);">© 2024 Brush. Powered by Kraft Studios.</p>
-      <div style="margin-top: 10px; display: flex; justify-content: center; gap: 15px;">
-        <a href="index.html" style="color: var(--text-secondary); text-decoration: none;">Home</a>
-        <a href="policies.html" style="color: var(--text-secondary); text-decoration: none;">Policies</a>
-        <a href="mailto:admin@brush.ind.in" style="color: var(--text-secondary); text-decoration: none;">Contact Support</a>
-      </div>
-    </div>
-  </footer>
+
+  <global-footer></global-footer>
 
   <!-- Basic scripts structure -->
   <div class="search-overlay" id="search-overlay">
@@ -758,7 +730,7 @@
   <div class="profile-modal" id="orders-modal" data-lenis-prevent>
     <button class="modal-close-btn" id="orders-close-btn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
     <div class="auth-box">
-      <h2 style="font-family: 'Outfit', sans-serif; margin-top:0;">Your Orders</h2>
+      <h2 style="font-family: var(--font-heading); margin-top:0;">Your Orders</h2>
       <div class="order-history-section" style="margin-top: 1.5rem;">
         <div id="orders-history-list">
           <!-- Orders injected here -->
@@ -902,6 +874,6 @@
   <script src="navbar-scroll.js?v=3"></script>
   <script src="micro-interactions.js"></script>
   <script src="cart.js?v=4" defer></script>
-  <script src="script.js?v=21" defer></script>
+  <script src="script.js?v=22" defer></script>
 </body>
 </html>

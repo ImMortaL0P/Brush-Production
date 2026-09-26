@@ -33,7 +33,7 @@
   width: 180px;
   height: 3px;
   background: var(--border);
-  border-radius: 3px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -41,7 +41,7 @@
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, var(--accent), var(--accent-hover));
-  border-radius: 3px;
+  border-radius: var(--radius-md);
   transition: width 0.25s ease;
 }
 
@@ -432,7 +432,7 @@ input[type="radio"] {
 }
 
 input[type="checkbox"] {
-  border-radius: 5px;
+  border-radius: var(--radius-md);
 }
 
 input[type="radio"] {
@@ -621,6 +621,17 @@ global-navbar {
   letter-spacing: var(--tracking-tight);
 }
 
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-brand img {
+  height: 32px;
+  width: auto;
+}
+
 .nav-brand span {
   color: var(--accent);
 }
@@ -656,6 +667,17 @@ global-navbar {
 }
 
 .nav-links a:hover::after {
+  width: 100%;
+}
+
+/* Current page — same underline as hover, held on, so visitors always
+   know where they are (global-navbar.js stamps aria-current). */
+.nav-links a[aria-current="page"],
+.nav-dd-toggle.is-current {
+  color: var(--text-primary);
+}
+
+.nav-links a[aria-current="page"]::after {
   width: 100%;
 }
 
@@ -708,7 +730,7 @@ global-navbar {
   margin: 0;
   z-index: 9999;
   pointer-events: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   object-fit: cover;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   transition: transform 0.7s cubic-bezier(0.55, 0, 0.85, 0.35), opacity 0.7s ease-in;
@@ -1151,6 +1173,88 @@ global-navbar {
   letter-spacing: var(--tracking-normal);
 }
 
+/* ===== PAGE HEADER (inner pages) =====
+   One intro band for every secondary page (About, Policies, B2B, Style
+   Options...) — they each used to carry their own copy with drifting
+   padding, font and size. Reuses .section-tag / heading scale tokens so
+   an inner page reads as part of the same system as the homepage. */
+.page-header {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  padding: 140px 24px 64px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(520px circle at 50% 0%, rgba(var(--accent-rgb), calc(var(--glow-opacity-2) * 0.8)), transparent 60%);
+}
+
+.page-header .container {
+  padding: 0;
+}
+
+.page-header h1 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h1);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: 14px;
+  text-wrap: balance;
+}
+
+.page-header p {
+  color: var(--text-secondary);
+  font-size: var(--text-large);
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+  text-wrap: pretty;
+}
+
+.page-header p + .hero-cta,
+.page-header p + div {
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    padding: 112px 20px 44px;
+  }
+}
+
+/* ===== SECONDARY BUTTON =====
+   Outline companion to .hero-cta — same height, weight and radius so a
+   primary/secondary pair lines up wherever they sit side by side. */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 27px; /* hero-cta's 12px/28px minus the 1px border */
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.06);
+}
+
 /* Animated Logo — Infinite Blur Pulse */
 .hero-logo-container {
   margin: 0 0 1.1rem 0;
@@ -1225,7 +1329,7 @@ body.preloader-active .hero-content .hero-trust-badges {
 .hero-counter {
   margin-top: 1.5rem;
   margin-bottom: 2rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--brand-cream); /* hero photo's fixed dark scrim, not the page bg — stays light in both themes */
@@ -1988,6 +2092,11 @@ body.preloader-active .hero-content .hero-trust-badges {
 
 
 /* ===== FOOTER ===== */
+/* Rendered by global-footer.js; the host is a plain block wrapper. */
+global-footer {
+  display: block;
+}
+
 .site-footer {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
@@ -2164,6 +2273,78 @@ body.preloader-active .hero-content .hero-trust-badges {
 
 .footer-bottom-links a:hover {
   color: var(--accent);
+}
+
+/* Brand block details (moved out of inline styles when the footer became
+   the shared <global-footer> component). */
+.footer-logo {
+  height: 36px;
+  width: auto;
+  margin-bottom: 0.5rem;
+}
+
+.footer-parent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.footer-parent-label {
+  font-size: var(--text-micro);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.footer-parent-name {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.newsletter-status {
+  min-height: 1.2em;
+  margin: 8px 0 12px !important;
+  font-size: var(--text-micro) !important;
+  color: var(--success) !important;
+}
+
+.newsletter-status.is-error {
+  color: var(--sale-red) !important;
+}
+
+.footer-contact li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.footer-contact i {
+  width: 16px;
+  text-align: center;
+  color: var(--accent);
+}
+
+.footer-contact a {
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.footer-contact a:hover {
+  color: var(--accent);
+}
+
+.footer-disclaimer {
+  display: inline-block;
+  max-width: 800px;
+  margin-top: 8px;
+  font-size: 0.85em;
+  line-height: 1.4;
 }
 
 /* Full-bleed poster strip along the footer's bottom edge — same
@@ -2537,7 +2718,7 @@ body.custom-cursor-active * {
 }
 .cart-drawer-body::-webkit-scrollbar-thumb {
   background: var(--border-light);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
 }
 
 /* Empty cart state */
@@ -2748,7 +2929,7 @@ body.custom-cursor-active * {
   background: var(--bg-secondary);
   color: var(--text-primary);
   padding: 1rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2987,7 +3168,7 @@ body.custom-cursor-active * {
   gap: 1rem;
   background: rgba(255,255,255,0.03);
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
 }
 
@@ -3011,7 +3192,7 @@ body.custom-cursor-active * {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-family: 'Inter', sans-serif;
   cursor: pointer;
 }
@@ -3034,7 +3215,7 @@ body.custom-cursor-active * {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
@@ -3068,7 +3249,7 @@ body.custom-cursor-active * {
   background: var(--accent);
   color: var(--on-accent);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
@@ -3105,7 +3286,7 @@ body.custom-cursor-active * {
 .review-item {
   background: rgba(255,255,255,0.03);
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .review-header {
@@ -3140,7 +3321,7 @@ body.custom-cursor-active * {
   max-width: 140px;
   max-height: 140px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
 }
 
@@ -3150,7 +3331,7 @@ body.custom-cursor-active * {
   gap: 1rem;
   background: rgba(255,255,255,0.02);
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
 }
 
@@ -3163,7 +3344,7 @@ body.custom-cursor-active * {
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-family: inherit;
 }
 
@@ -3177,7 +3358,7 @@ body.custom-cursor-active * {
   background: var(--text-primary);
   color: var(--bg-primary);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -3195,7 +3376,7 @@ body.custom-cursor-active * {
   background: var(--bg-primary);
   color: var(--text-secondary);
   border: 1px dashed var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
   cursor: pointer;
   transition: border-color var(--transition-fast), color var(--transition-fast);
@@ -3210,7 +3391,7 @@ body.custom-cursor-active * {
   max-width: 100px;
   max-height: 100px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
 }
 
@@ -3266,7 +3447,7 @@ body.custom-cursor-active * {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(var(--bg-primary-rgb), 0.98);
+    background: var(--bg-primary);
     flex-direction: column;
     justify-content: flex-start;
     gap: 28px;
@@ -3439,7 +3620,7 @@ body.custom-cursor-active * {
   width: 90%; max-width: 450px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   z-index: 2001;
   opacity: 0; visibility: hidden;
   transition: opacity 0.35s var(--ease-premium), visibility 0.35s var(--ease-premium), transform 0.35s var(--ease-premium);
@@ -3489,22 +3670,22 @@ body.custom-cursor-active * {
 .form-group input, .form-group textarea {
   padding: 0.75rem; background: var(--bg-primary);
   border: 1px solid var(--border-color); color: var(--text-primary);
-  border-radius: 6px; font-family: inherit;
+  border-radius: var(--radius-md); font-family: inherit;
 }
 .auth-submit-btn {
   padding: 0.75rem; background: var(--accent); color: var(--on-accent);
-  border: none; border-radius: 6px; font-weight: 700; cursor: pointer;
+  border: none; border-radius: var(--radius-md); font-weight: 700; cursor: pointer;
   margin-top: 1rem;
 }
 .auth-error { color: var(--sale-red); font-size: 0.85rem; text-align: center; }
 
 .order-history-section { margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
 #order-history-list { display: flex; flex-direction: column; gap: 1rem; max-height: 200px; overflow-y: auto; }
-.order-item { background: var(--bg-primary); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
+.order-item { background: var(--bg-primary); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
 .logout-btn {
   margin-top: 2rem; width: 100%; padding: 0.75rem;
   background: transparent; border: 1px solid var(--sale-red); color: var(--sale-red);
-  border-radius: 6px; cursor: pointer; font-weight: 600;
+  border-radius: var(--radius-md); cursor: pointer; font-weight: 600;
 }
 /* --- Global Search Overlay --- */
 .search-overlay {
@@ -3535,7 +3716,7 @@ body.custom-cursor-active * {
   max-width: 450px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 20px 40px rgba(0,0,0,0.8);
   padding: 10px;
   position: relative;
@@ -3565,7 +3746,7 @@ body.custom-cursor-active * {
   margin-top: 10px;
   max-height: 300px;
   overflow-y: auto;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: none;
 }
 .search-suggestions.active {
@@ -3577,7 +3758,7 @@ body.custom-cursor-active * {
   gap: 15px;
   padding: 10px 15px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: background 0.2s;
   color: var(--text-primary);
   text-decoration: none;
@@ -3587,7 +3768,7 @@ body.custom-cursor-active * {
 }
 .suggestion-item .mockup-wrapper {
   width: 40px;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
 }
 .suggestion-item-details {
   display: flex;
@@ -3847,7 +4028,7 @@ body.custom-cursor-active * {
   background: var(--accent);
   color: var(--on-accent);
   padding: 6px 14px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -3930,7 +4111,7 @@ body.custom-cursor-active * {
   border: 1px solid var(--border-light);
   padding: 6px 16px;
   font-size: 0.75rem;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   cursor: not-allowed;
   opacity: 0.9;
 }
@@ -4082,7 +4263,7 @@ img {
   padding: 4px 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .ws-title {
@@ -4294,7 +4475,7 @@ img {
 
 .product-accordion summary {
   padding: 1.2rem 0;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-heading);
   font-weight: 600;
   font-size: 1.1rem;
   cursor: pointer;
@@ -4639,7 +4820,7 @@ img {
   align-items: center;
   gap: 5px;
   padding: 4px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid transparent;
   background: none;
   color: var(--text-secondary);
@@ -4652,7 +4833,7 @@ img {
   width: 64px;
   height: 64px;
   object-fit: cover;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   background: var(--bg-secondary);
   opacity: 0.7;
   transition: opacity 0.2s ease;
@@ -4736,7 +4917,7 @@ img {
   gap: 12px;
   padding: 9px 10px;
   margin: 0 -10px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   color: var(--text-primary);
   font-weight: 600;
   transition: background 0.15s ease;
@@ -4747,7 +4928,7 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(var(--accent-rgb), 0.12);
   color: var(--accent);
   font-size: 0.85rem;
@@ -4879,7 +5060,7 @@ img {
 .star-input-stars:hover label { background: var(--star-off); }
 .star-input-stars label:hover,
 .star-input-stars label:hover ~ label { background: var(--star-on); transform: scale(1.12); }
-.star-input input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.star-input input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--radius-md); }
 .star-input label.pop { animation: starPop 0.35s ease; }
 @keyframes starPop { 0% { transform: scale(1); } 45% { transform: scale(1.35); } 100% { transform: scale(1); } }
 .star-input-caption { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }

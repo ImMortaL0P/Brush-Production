@@ -4,29 +4,19 @@
   <script src="api-base.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="theme.js"></script>
+  <script src="theme.js?v=2"></script>
   <title>Policies — Brush</title>
+  <meta name="description" content="Brush shipping, cancellation, returns, refund, privacy and terms of service policies.">
   <link rel="icon" href="assets/misc/favicon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
   <style>
-    .policies-header {
-      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-      padding: 100px 0 50px;
-      text-align: center;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .policies-header h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 3rem;
-      margin-bottom: 10px;
-    }
     .policies-nav {
       position: sticky;
-      top: 70px;
+      top: 84px;
       background: var(--bg-primary);
       z-index: 100;
       border-bottom: 1px solid var(--border-color);
@@ -54,11 +44,13 @@
     }
     .policy-section {
       margin-bottom: 60px;
-      scroll-margin-top: 140px;
+      scroll-margin-top: 150px;
     }
     .policy-section h2 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2rem;
+      font-family: var(--font-heading);
+      font-size: var(--text-h2);
+      font-weight: 800;
+      letter-spacing: var(--tracking-tight);
       margin-bottom: 20px;
       border-bottom: 2px solid var(--accent);
       padding-bottom: 10px;
@@ -77,17 +69,19 @@
       padding-left: 20px;
     }
   </style>
-  <script src="global-navbar.js?v=3"></script>
+  <script src="global-navbar.js?v=4"></script>
+  <script src="global-footer.js?v=1"></script>
 </head>
 <body>
   <div class="scroll-progress" id="scroll-progress"></div>
   <!-- Navbar -->
   <global-navbar></global-navbar>
 
-  <header class="policies-header">
+  <header class="page-header">
     <div class="container">
+      <span class="section-tag">Help Centre</span>
       <h1>Our Policies</h1>
-      <p style="color: var(--text-secondary);">Everything you need to know about our services and guidelines.</p>
+      <p>Everything you need to know about our services and guidelines.</p>
     </div>
   </header>
 
@@ -194,15 +188,7 @@
     </section>
   </main>
 
-  <footer class="site-footer" style="padding: 2rem 0; text-align: center; border-top: 1px solid var(--border-color);">
-    <div class="container">
-      <p>© 2024 Brush. All rights reserved.</p>
-      <div style="margin-top: 10px; display: flex; justify-content: center; gap: 15px;">
-        <a href="index.html" style="color: var(--text-secondary); text-decoration: none;">Home</a>
-        <a href="mailto:admin@brush.ind.in" style="color: var(--text-secondary); text-decoration: none;">Contact Support</a>
-      </div>
-    </div>
-  </footer>
+  <global-footer></global-footer>
 
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js"></script>
   <script src="scroll.js?v=2"></script>

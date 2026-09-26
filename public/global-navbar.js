@@ -8,6 +8,12 @@
 // "Categories" is a dropdown: product types on the left, poster genres on
 // the right, each deep-linking into all_products.html's filters. On
 // mobile (sheet menu) it becomes a tap-to-expand accordion.
+//
+// The navbar also owns the behavior every page needs from it — mobile
+// menu, current-page highlight, cart badge — and gives the search / cart /
+// account buttons a sensible fallback on pages that don't ship the full
+// overlay markup (search overlay, cart drawer, auth modal), so no icon in
+// the bar is ever a dead click.
 // ========================================
 (function () {
   const PRODUCT_TYPES = [
@@ -34,8 +40,8 @@
           🎨 Flat ₹54 shipping on every order &nbsp;|&nbsp; <a href="index.html#bestsellers">Shop Bestsellers →</a>
         </div>` : ''}
         <nav class="navbar" id="navbar">
-          <a href="index.html" class="nav-brand" aria-label="Brush home" style="display: flex; align-items: center; gap: 8px;">
-            <img src="img/site/brush-logo.png" alt="Brush" width="124" height="32" style="height: 32px; width: auto;">
+          <a href="index.html" class="nav-brand" aria-label="Brush home">
+            <img src="img/site/brush-logo.png" alt="Brush" width="124" height="32">
           </a>
 
           <div class="nav-links" id="nav-links">
@@ -66,27 +72,174 @@
             <button class="nav-action-btn" id="search-btn" aria-label="Search">
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
-            <a href="javascript:void(0)" class="nav-action-btn" aria-label="Orders">
+            <a href="index.html?open=orders" class="nav-action-btn" aria-label="Orders">
               <i class="fa-solid fa-box-open"></i>
             </a>
             <button class="nav-action-btn" data-theme-toggle aria-label="Toggle light / dark mode">
               <i class="fa-solid fa-moon theme-toggle-icon-dark"></i>
               <i class="fa-solid fa-sun theme-toggle-icon-light"></i>
             </button>
-            <a href="javascript:void(0)" class="nav-action-btn" aria-label="Account">
+            <a href="index.html?open=account" class="nav-action-btn" aria-label="Account">
               <i class="fa-regular fa-user"></i>
             </a>
-            <a href="javascript:void(0)" class="nav-action-btn" id="cart-nav-btn" aria-label="Cart">
+            <a href="checkout.html" class="nav-action-btn" id="cart-nav-btn" aria-label="Cart">
               <i class="fa-solid fa-bag-shopping"></i>
               <span class="cart-count" id="nav-cart-count" style="display: none;">0</span>
             </a>
-            <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
+            <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
               <span></span><span></span><span></span>
             </button>
           </div>
         </nav>
       `;
       this.initDropdown();
+      this.markCurrentPage();
+      this.initMobileMenu();
+      this.initCartBadge();
+      // Fallbacks need to know which overlays the page actually has, so they
+      // wait for the rest of the document (and its deferred scripts).
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => this.initFallbacks());
+      } else {
+        this.initFallbacks();
+      }
+    }
+
+    markCurrentPage() {
+      const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      this.querySelectorAll('.nav-links > a').forEach((a) => {
+        const url = new URL(a.getAttribute('href'), window.location.href);
+        const target = (url.pathname.split('/').pop() || 'index.html').toLowerCase();
+        // "Shop All" only counts as current when no category filter narrows it.
+        const current = target === page && !url.hash &&
+          !(target === 'all_products.html' && (params.get('type') || params.get('category')));
+        if (current) a.setAttribute('aria-current', 'page');
+      });
+      if (page === 'all_products.html' && (params.get('type') || params.get('category'))) {
+        this.querySelector('.nav-dd-toggle').classList.add('is-current');
+      }
+    }
+
+    // Scroll lock is shared with script.js's modals/drawer when present
+    // (its lock is ref-counted), otherwise handled here directly.
+    lockScroll(lock) {
+      if (window.BrushScrollLock) {
+        lock ? window.BrushScrollLock.lock() : window.BrushScrollLock.unlock();
+        return;
+      }
+      document.body.style.overflow = lock ? 'hidden' : '';
+      if (window.lenis) lock ? window.lenis.stop() : window.lenis.start();
+    }
+
+    initMobileMenu() {
+      const toggle = this.querySelector('#menu-toggle');
+      const links = this.querySelector('#nav-links');
+      const setOpen = (open) => {
+        if (links.classList.contains('open') === open) return;
+        links.classList.toggle('open', open);
+        toggle.classList.toggle('active', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        this.lockScroll(open);
+      };
+      toggle.addEventListener('click', () => setOpen(!links.classList.contains('open')));
+      links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && links.classList.contains('open')) {
+          setOpen(false);
+          toggle.focus();
+        }
+      });
+      // Rotating to / resizing into the desktop layout must not leave the
+      // page scroll-locked behind a sheet that is no longer shown.
+      window.matchMedia('(min-width: 1025px)').addEventListener('change', (e) => {
+        if (e.matches) setOpen(false);
+      });
+    }
+
+    // Reads the cart straight from storage so the badge is right on every
+    // page, including ones that don't load cart.js; stays live via cart.js's
+    // change events when present and the storage event across tabs.
+    initCartBadge() {
+      const badge = this.querySelector('#nav-cart-count');
+      const render = () => {
+        let count = 0;
+        try {
+          const cart = JSON.parse(localStorage.getItem('brush_cart')) || [];
+          count = cart.reduce((n, item) => n + (Number(item.quantity) || 0), 0);
+        } catch (e) {}
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
+      };
+      render();
+      window.addEventListener('storage', (e) => { if (e.key === 'brush_cart') render(); });
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof Cart !== 'undefined' && Cart.onChange) Cart.onChange(render);
+      });
+    }
+
+    initFallbacks() {
+      // Search: pages without the overlay get a lightweight one injected,
+      // using the same markup/classes so it looks identical.
+      if (!document.getElementById('search-overlay')) this.injectSearch();
+
+      // Cart / account / orders: the hrefs above already point somewhere
+      // useful (checkout, or the homepage which opens the right modal). On
+      // pages that DO have the drawer/modals, script.js intercepts the click.
+      const cartBtn = this.querySelector('#cart-nav-btn');
+      if (!document.getElementById('cart-drawer') && /checkout\.html$/.test(window.location.pathname)) {
+        cartBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const summary = document.querySelector('.order-summary, .checkout-summary');
+          if (summary) summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+      if (!document.getElementById('auth-modal')) {
+        const loggedIn = (() => { try { return !!localStorage.getItem('brushUser'); } catch (e) { return false; } })();
+        const account = this.querySelector('a[aria-label="Account"]');
+        const orders = this.querySelector('a[aria-label="Orders"]');
+        account.href = loggedIn ? 'index.html?open=account' : 'index.html?login=1';
+        orders.href = loggedIn ? 'index.html?open=orders' : 'index.html?login=1';
+      }
+    }
+
+    injectSearch() {
+      const overlay = document.createElement('div');
+      overlay.className = 'search-overlay';
+      overlay.id = 'search-overlay';
+      overlay.innerHTML = `
+        <div class="search-container" role="dialog" aria-modal="true" aria-label="Search">
+          <button type="button" class="search-close-btn" aria-label="Close search"><i class="fa-solid fa-xmark"></i></button>
+          <form class="global-search-form" role="search">
+            <input type="search" name="search" placeholder="Search posters, categories, themes..." autocomplete="off" aria-label="Search products">
+            <button type="submit" aria-label="Submit search"><i class="fa-solid fa-magnifying-glass"></i></button>
+          </form>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const input = overlay.querySelector('input');
+      const searchBtn = this.querySelector('#search-btn');
+      const close = () => {
+        overlay.classList.remove('open');
+        searchBtn.focus();
+      };
+      searchBtn.addEventListener('click', () => {
+        overlay.classList.add('open');
+        setTimeout(() => input.focus(), 100);
+      });
+      overlay.querySelector('.search-close-btn').addEventListener('click', close);
+      overlay.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-container')) close();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.classList.contains('open')) close();
+      });
+      overlay.querySelector('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const q = input.value.trim();
+        if (q) window.location.href = 'all_products.html?search=' + encodeURIComponent(q);
+      });
     }
 
     initDropdown() {
