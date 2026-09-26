@@ -1,5 +1,0 @@
-From: "Admin" <admin_brush@mangalam.cc>
-To: "Test" <test@example.com>
-Subject: Test via curl
-
-Hello world
