@@ -15,15 +15,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
 
   <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
 
-  <link rel="stylesheet" href="styles.css?v=21">
-  <script src="global-navbar.js?v=5"></script>
-  <script src="site-overlays.js?v=1"></script>
-  <script src="global-footer.js?v=1"></script>
+  <link rel="stylesheet" href="styles.css?v=22">
+  <script src="global-navbar.js?v=6"></script>
+  <script src="site-overlays.js?v=2"></script>
+  <script src="global-footer.js?v=2" defer></script>
 </head>
 
 <body class="preloader-active">
@@ -46,13 +47,13 @@
   <section class="hero" id="hero">
     <div class="hero-slider" id="hero-slider">
       <div class="hero-slide active">
-        <img src="img/site/hero-1.webp" fetchpriority="high" decoding="async" width="1920" height="1080" alt="Space frontier poster collection in a stylish room">
+        <img src="img/site/hero-1.webp" fetchpriority="high" width="1440" height="720" alt="Space frontier poster collection in a stylish room">
       </div>
       <div class="hero-slide">
-        <img src="img/site/hero-2.webp" decoding="async" width="1920" height="1080" alt="Modern art poster collection displayed on wall">
+        <img src="img/site/hero-2.webp" fetchpriority="low" decoding="async" width="1440" height="720" alt="Modern art poster collection displayed on wall">
       </div>
       <div class="hero-slide">
-        <img src="img/site/hero-3.webp" decoding="async" width="1920" height="1080" alt="Trippy poster collection in vibrant room setup">
+        <img src="img/site/hero-3.webp" fetchpriority="low" decoding="async" width="1440" height="720" alt="Trippy poster collection in vibrant room setup">
       </div>
     </div>
     <div class="hero-overlay"></div>
@@ -123,25 +124,26 @@
   <!-- Features Strip -->
   <section class="features-strip bg-layered">
     <div class="container">
+      <h2 class="sr-only">Why shop with Brush</h2>
       <div class="features-grid">
         <div class="feature-item fade-in">
           <span class="feature-icon"><i class="fa-solid fa-truck-fast"></i></span>
-          <h4>Flat Shipping</h4>
+          <h3>Flat Shipping</h3>
           <p>One ₹54 charge per order, however many items</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-1">
           <span class="feature-icon"><i class="fa-solid fa-rotate-left"></i></span>
-          <h4>Easy Returns</h4>
+          <h3>Easy Returns</h3>
           <p>Hassle-free exchange & refund</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-2">
           <span class="feature-icon"><i class="fa-solid fa-award"></i></span>
-          <h4>Premium Quality</h4>
+          <h3>Premium Quality</h3>
           <p>300 GSM matte-finish prints</p>
         </div>
         <div class="feature-item fade-in fade-in-delay-3">
           <span class="feature-icon"><i class="fa-solid fa-palette"></i></span>
-          <h4>Wide Variety</h4>
+          <h3>Wide Variety</h3>
           <p>500+ designs across collections</p>
         </div>
       </div>
@@ -334,7 +336,7 @@
   <!-- Trending / Grossing CTA Banner -->
   <section class="cta-banner" id="grossing">
     <div class="cta-banner-bg">
-      <img src="img/site/hero-3.webp" decoding="async" alt="Trending wall art setup in a modern room" loading="lazy">
+      <img src="img/site/hero-3.webp" decoding="async" width="1440" height="720" alt="Trending wall art setup in a modern room" loading="lazy">
     </div>
     <div class="cta-banner-content fade-in">
       <span class="section-tag">🔥 Trending Now</span>
@@ -438,7 +440,7 @@
           <div class="testimonial-author">
             <div class="testimonial-avatar">AK</div>
             <div class="testimonial-author-info">
-              <h5>Arjun Kumar</h5>
+              <h3>Arjun Kumar</h3>
               <p>Verified Buyer</p>
             </div>
           </div>
@@ -450,7 +452,7 @@
           <div class="testimonial-author">
             <div class="testimonial-avatar">PS</div>
             <div class="testimonial-author-info">
-              <h5>Priya Sharma</h5>
+              <h3>Priya Sharma</h3>
               <p>Verified Buyer</p>
             </div>
           </div>
@@ -462,7 +464,7 @@
           <div class="testimonial-author">
             <div class="testimonial-avatar">RV</div>
             <div class="testimonial-author-info">
-              <h5>Rohit Verma</h5>
+              <h3>Rohit Verma</h3>
               <p>Verified Buyer</p>
             </div>
           </div>
@@ -657,7 +659,7 @@
           </div>
         </div>
         <div class="app-image fade-in fade-in-delay-2">
-          <img src="img/site/institutional.webp" alt="Institutional Supplies" loading="lazy" style="border-radius: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); width: 100%; max-width: 400px; margin: 0 auto; display: block;">
+          <img src="img/site/institutional.webp" alt="Institutional Supplies" loading="lazy" decoding="async" width="800" height="533" class="institutional-cta-img">
         </div>
       </div>
     </div>
@@ -683,7 +685,7 @@
           </div>
         </div>
         <div class="app-image fade-in fade-in-delay-2">
-          <img src="img/site/app-preview.webp" alt="Brush mobile app preview showing poster browsing interface" loading="lazy">
+          <img src="img/site/app-preview.webp" alt="Brush mobile app preview showing poster browsing interface" loading="lazy" decoding="async" width="900" height="600">
         </div>
       </div>
     </div>
@@ -877,7 +879,7 @@
   <script src="micro-interactions.js" defer></script>
   <script src="img-utils.js?v=2" defer></script>
   <script src="cart.js?v=4" defer></script>
-  <script src="script.js?v=23" defer></script>
+  <script src="script.js?v=24" defer></script>
 </body>
 
 </html>

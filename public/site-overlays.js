@@ -46,8 +46,8 @@
               <label for="login-password">Password</label>
               <input type="password" id="login-password" autocomplete="current-password" required>
             </div>
-            <div style="text-align: right; margin-bottom: 15px;">
-              <a href="javascript:void(0)" id="forgot-password-link" style="color: var(--accent); font-size: 0.9rem; text-decoration: none;">Forgot Password?</a>
+            <div class="auth-link-row auth-link-row--end">
+              <button type="button" class="auth-link" id="forgot-password-link">Forgot Password?</button>
             </div>
             <button type="submit" class="auth-submit-btn">Log In</button>
             <div class="auth-error" id="login-error"></div>
@@ -63,8 +63,8 @@
             </div>
             <button type="submit" class="auth-submit-btn">Send Reset Link</button>
             <div class="auth-error" id="reset-error"></div>
-            <div style="text-align: center; margin-top: 15px;">
-              <a href="javascript:void(0)" id="back-to-login-link" style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;">Back to Log In</a>
+            <div class="auth-link-row">
+              <button type="button" class="auth-link auth-link--muted" id="back-to-login-link">Back to Log In</button>
             </div>
           </form>
 

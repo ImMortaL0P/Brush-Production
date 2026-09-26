@@ -122,7 +122,7 @@ body.preloader-active {
   --on-accent: #FFFFFF;
   --text-primary: #111111;                   /* portfolio --ink */
   --text-secondary: #4a4a45;
-  --text-muted: #6f6e69;
+  --text-muted: #666560;               /* ≥4.5:1 on every light surface (WCAG AA) */
   --border: rgba(17, 17, 17, 0.16);          /* hairline ink rule — the brutalist 1px borders */
   --border-light: rgba(17, 17, 17, 0.09);
   --border-color: var(--border-light); /* alias — modal/form markup references this name */
@@ -241,11 +241,11 @@ body.preloader-active {
    class, so this covers every current usage (and any future one) without
    editing markup in each of the ~7 pages that reference this file. */
 :root img[src*="Brush Text Arial.png"],
-:root img[src*="brush-logo.png"] {
+:root img[src*="brush-logo"] {
   filter: invert(1) hue-rotate(180deg);
 }
 :root[data-theme="dark"] img[src*="Brush Text Arial.png"],
-:root[data-theme="dark"] img[src*="brush-logo.png"] {
+:root[data-theme="dark"] img[src*="brush-logo"] {
   filter: none;
 }
 
@@ -980,7 +980,7 @@ main:focus {
   transform: translateX(-50%);
   z-index: 2;
   display: flex;
-  gap: 10px;
+  gap: 14px;
 }
 
 .hero-dot {
@@ -991,6 +991,17 @@ main:focus {
   border: none;
   cursor: pointer;
   transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+/* 10px dot, 24px tap target (WCAG 2.5.8) via a transparent ring. */
+.hero-dot {
+  position: relative;
+}
+
+.hero-dot::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
 }
 
 .hero-dot.active {
@@ -1149,6 +1160,7 @@ main:focus {
   border-color: var(--accent);
 }
 
+.feature-item h3,
 .feature-item h4 {
   font-family: var(--font-heading);
   font-size: 1rem;
@@ -2035,6 +2047,7 @@ body.preloader-active .hero-content .hero-trust-badges {
   flex-shrink: 0;
 }
 
+.testimonial-author-info h3,
 .testimonial-author-info h5 {
   font-size: 0.9rem;
   font-weight: 600;
@@ -2197,6 +2210,7 @@ global-footer {
   background: rgba(var(--accent-rgb), 0.1);
 }
 
+.footer-column h2,
 .footer-column h4 {
   font-family: var(--font-heading);
   font-size: 0.95rem;
@@ -3716,7 +3730,29 @@ body.custom-cursor-active * {
 /* Classes for what used to be inline styles in the modal markup (now the
    shared <site-overlays> component, site-overlays.js). */
 site-overlays { display: contents; }
+.institutional-cta-img {
+  width: 100%;
+  height: auto;
+  max-width: 400px;
+  margin: 0 auto;
+  display: block;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
 .auth-success { color: var(--success); }
+.auth-link-row { text-align: center; margin-top: 15px; }
+.auth-link-row--end { text-align: right; margin: 0 0 15px; }
+.auth-link {
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+.auth-link:hover { text-decoration: underline; }
+.auth-link--muted { color: var(--text-secondary); }
 .auth-submit-btn--secondary {
   background: var(--bg-secondary);
   color: var(--text-primary);

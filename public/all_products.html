@@ -11,9 +11,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="styles.css?v=22">
   
   <style>
     body {
@@ -48,6 +49,31 @@
       margin-bottom: 1rem;
       padding-bottom: 1rem;
       border-bottom: 1px solid var(--border-color);
+    }
+    .filter-search {
+      position: relative;
+    }
+    .filter-search input {
+      width: 100%;
+      padding: 12px 12px 12px 36px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 0.9rem;
+      transition: border-color var(--transition-fast);
+    }
+    .filter-search input:focus {
+      border-color: var(--accent);
+    }
+    .filter-search i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      pointer-events: none;
     }
     .filter-group {
       margin-bottom: 1.5rem;
@@ -370,9 +396,9 @@
       }
     }
   </style>
-  <script src="global-navbar.js?v=5"></script>
-  <script src="site-overlays.js?v=1"></script>
-  <script src="global-footer.js?v=1"></script>
+  <script src="global-navbar.js?v=6"></script>
+  <script src="site-overlays.js?v=2"></script>
+  <script src="global-footer.js?v=2" defer></script>
 </head>
 <body class="page-layered">
 
@@ -386,9 +412,9 @@
     <aside class="filter-sidebar fade-in">
       <h3>Search & Filters</h3>
       <div class="filter-group">
-        <div style="position: relative;">
-          <input type="text" id="search-input" placeholder="Search products..." style="width: 100%; padding: 12px 12px 12px 35px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
-          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+        <div class="filter-search">
+          <input type="search" id="search-input" placeholder="Search products..." aria-label="Search products" autocomplete="off">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
         </div>
       </div>
       <div class="filter-group" id="type-filters">
@@ -425,7 +451,7 @@
     </aside>
 
     <!-- Main List -->
-    <main>
+    <main id="main-content">
       <div class="list-view-header fade-in">
         <h2 id="collection-title">All Products</h2>
         <span style="color: var(--text-secondary); font-size: 0.9rem;" id="results-count">Loading...</span>
@@ -889,6 +915,6 @@ const typeParam = urlParams.get('type');
     loadAllProducts();
 
     </script>
-  <script src="script.js?v=23"></script>
+  <script src="script.js?v=24"></script>
 </body>
 </html>

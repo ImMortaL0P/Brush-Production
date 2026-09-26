@@ -100,7 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const percentEl = document.getElementById('preloader-percent');
     const fillEl = document.getElementById('preloader-fill');
     // Critical, above-the-fold assets — the "first half" of the site the preloader waits on.
-    const criticalImages = Array.from(document.querySelectorAll('.hero-slide img, .nav-brand img, .preloader-logo'));
+    // Only the first hero slide is visible at load; the other two fade in
+    // later and load in the background, so they don't hold the page back.
+    const criticalImages = Array.from(document.querySelectorAll('.hero-slide.active img, .nav-brand img, .preloader-logo'));
     const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
 
     const total = criticalImages.length + 1; // +1 for web fonts
@@ -146,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loaded = total;
         updateProgress();
       }
-    }, 5000);
+    }, 3500);
 
     updateProgress();
   }

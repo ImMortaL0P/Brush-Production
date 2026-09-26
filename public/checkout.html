@@ -11,10 +11,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
   <script src="https://kit.fontawesome.com/84df58c29a.js" crossorigin="anonymous" defer></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <link rel="stylesheet" href="styles.css?v=21">
+  <!-- Only needed once "Place Order" is clicked — async so it never blocks the page. -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+  <link rel="stylesheet" href="styles.css?v=22">
   <style>
     /* ===== CHECKOUT PAGE STYLES ===== */
     .checkout-page {
@@ -507,7 +509,7 @@
       }
     }
   </style>
-  <script src="global-navbar.js?v=5"></script>
+  <script src="global-navbar.js?v=6"></script>
 </head>
 
 <body class="page-layered">
@@ -520,7 +522,7 @@
 
 
   <!-- Checkout -->
-  <main class="checkout-page">
+  <main id="main-content" class="checkout-page">
     <div class="checkout-layout" id="checkout-layout">
 
       <!-- Left: Form -->
@@ -1034,6 +1036,9 @@
                 razorpay_signature: "mock_signature_bypass"
               });
             } else {
+              if (typeof Razorpay === 'undefined') {
+                throw new Error('the payment window is still loading — please try again in a moment');
+              }
               const rzp = new Razorpay(options);
               rzp.on('payment.failed', function (response){
                 showCheckoutToast('Payment Failed: ' + response.error.description);

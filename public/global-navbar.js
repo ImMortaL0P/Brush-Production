@@ -42,7 +42,7 @@
         </div>` : ''}
         <nav class="navbar" id="navbar">
           <a href="index.html" class="nav-brand" aria-label="Brush home">
-            <img src="img/site/brush-logo.png" alt="Brush" width="124" height="32">
+            <img src="img/site/brush-logo-360.webp" alt="Brush" width="124" height="32">
           </a>
 
           <div class="nav-links" id="nav-links">
